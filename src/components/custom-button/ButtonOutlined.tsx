@@ -14,7 +14,7 @@ const CustomButton = styled(Button)({
     backgroundColor: '#565add',
     padding: '10px 30px',
     borderRadius: '50px',
-    gap: '5px',
+    gap: '10px',
     fontSize: '16px',
     alignContent: 'center',
     textTransform: 'none',
