@@ -6,7 +6,7 @@ import PageWrapper from "@/sections/page-wrapper/PageWrapper";
 export async function generateMetadata() {
     const title = "Dokee - Быстрый перевод документов";
     const description = "Dokee - это сервис по переводу стандартных документов личного характера, которыми пользуется каждый гражданин. Мы ориентируемся на минимальную затрату времени для согласования заказа. Всего в 3 клика Вы сможете узнать стоимость перевода документа и знать точную дату его получения.";
-    const ogImage = `https://dokee.vercel.app/images/dokee-logo.jpg`;
+    const ogImage = `https://dokee-blush.vercel.app/images/dokee-logo.jpg`;
 
     return {
         title,
@@ -14,7 +14,7 @@ export async function generateMetadata() {
         openGraph: {
             title,
             description,
-            url: `https://dokee.vercel.app`,
+            url: `https://dokee-blush.vercel.app`,
             type: 'website',
             images: [
                 {
