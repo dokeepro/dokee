@@ -1,0 +1,32 @@
+.wrapper {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-content: center;
+  justify-content: space-between;
+  justify-items: center;
+  align-items: center;
+  color: var(--black);
+  border: 1px solid #d6e0ec;
+  border-radius: 15px;
+  padding: 16px 24px;
+  background-color: white;
+  transition: background-color 0.3s, border-color 0.3s;
+
+  h3 {
+    max-width: 295px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.eGov {
+  border-color: #1fff50;
+}
+
+.wrapper.active {
+  background-color: #eff0ff;
+  border-color: #565add;
+  color: var(--blue);
+}

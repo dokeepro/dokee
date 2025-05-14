@@ -1,0 +1,43 @@
+.header {
+  display: flex;
+  margin: 0 auto;
+  padding: 25px 36px;
+  max-width: 1320px;
+  width: 100%;
+  border-radius: 30px;
+  justify-content: space-between;
+  align-content: center;
+  position: sticky;
+  top: 1%;
+  align-items: center;
+  z-index: 99;
+  justify-items: center;
+  background: var(--background);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  @media screen and (max-width: 1280px) {
+    width: 90%;
+  }
+}
+
+.nav {
+  display: flex;
+  gap: 50px;
+  align-items: center;
+  justify-items: center;
+  justify-content: center;
+}
+
+.navLinks{
+  display: flex;
+  gap: 20px;
+
+  a{
+    display: flex;
+    transition: 0.2s ease-in-out;
+
+    &:hover{
+      text-decoration: underline;
+    }
+  }
+}

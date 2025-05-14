@@ -1,0 +1,47 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  max-width: 1440px;
+  width: 100%;
+  gap: 20px;
+  margin: 3% auto;
+  position: relative;
+
+  img{
+    display: flex;
+    width: 150px;
+    height: auto;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+  }
+
+  p{
+    display: flex;
+    max-width: 534px;
+    width: 100%;
+    margin: 0 auto;
+    color: var(--black);
+  }
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  margin: 0 auto;
+  justify-content: center;
+    align-items: center;
+
+  h1 {
+    display: flex;
+    font-size: 60px;
+    font-weight: 400;
+    color: var(--black);
+    text-align: center;
+
+    &:last-child {
+      color: var(--blue);
+    }
+  }
+}
