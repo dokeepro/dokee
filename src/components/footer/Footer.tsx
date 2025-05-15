@@ -24,30 +24,31 @@ const Footer = () => {
                         '&:hover': {
                             backgroundColor: '#464acb',
                         },
-                    }}
-                >
+                    }}>
                     <MdOutlineKeyboardArrowUp/>
                 </Button>
-                <div className={styles.footerLinks}>
-                    <Link href="#">Калькулятор</Link>
-                    <Link href="#">Предложить документ</Link>
-                    <Link href="#">Контакты</Link>
-                    <Link href="#">Частые вопросы</Link>
+                <div className={styles.footerLinksWrapper}>
+                    <div className={styles.footerLinks}>
+                        <Link href="#">Калькулятор</Link>
+                        <Link href="#">Предложить документ</Link>
+                        <Link href="#">Контакты</Link>
+                        <Link href="#">Частые вопросы</Link>
+                    </div>
+                    <div className={styles.footerLinks}>
+                        <Link href="#">+ 380 0509517841</Link>
+                        <Link href="#">dokee@gmail.com</Link>
+                    </div>
                 </div>
-                <div className={styles.footerLinks}>
-                    <Link href="#">+ 380 0509517841</Link>
-                    <Link href="#">dokee@gmail.com</Link>
-                </div>
-                <div>
+                <div className={styles.footerSocials}>
                     <Tooltip title="Instagram">
                         <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
-                            <FaInstagram />
+                            <FaInstagram/>
                         </IconButton>
                     </Tooltip>
 
                     <Tooltip title="Facebook">
                         <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
-                            <FaFacebookF />
+                        <FaFacebookF />
                         </IconButton>
                     </Tooltip>
 

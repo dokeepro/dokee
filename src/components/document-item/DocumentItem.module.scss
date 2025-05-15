@@ -13,11 +13,24 @@
   background-color: white;
   transition: background-color 0.3s, border-color 0.3s;
 
+  @media screen and (max-width: 768px) {
+    padding: 12px;
+  }
+
   h3 {
     max-width: 295px;
     width: 100%;
     font-size: 16px;
     font-weight: 500;
+    font-family: Involve, sans-serif;
+
+    @media screen and (max-width: 768px) {
+      font-size: 14px;
+    }
+
+    @media screen and (max-width: 390px) {
+      font-size: 16px;
+    }
   }
 }
 

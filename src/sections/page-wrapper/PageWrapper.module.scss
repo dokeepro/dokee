@@ -9,5 +9,15 @@
   @media screen and (max-width: 1440px) {
     width: 90%;
   }
+
+  @media screen and (max-width: 1028px) {
+    width: 97%;
+    gap: 40px;
+  }
+
+  @media screen and (max-width: 390px) {
+    width: 95%;
+    gap: 40px;
+  }
 }
 

@@ -2,7 +2,7 @@
 
 import React, {useState} from 'react';
 import styles from "./TypeOfDocument.module.scss";
-import {Button} from "@mui/material";
+import {Button, useMediaQuery} from "@mui/material";
 import uaFlag from "@/assets/icons/ua-icon.png";
 import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
@@ -14,6 +14,7 @@ const TypeOfDocument = () => {
 
     const [activePage, setActivePage] = useState(1);
     const [activeCountry, setActiveCountry] = useState('kz');
+    const isMobileView = useMediaQuery('(max-width:768px)');
 
     return (
         <div className={styles.wrapper}>
@@ -32,8 +33,7 @@ const TypeOfDocument = () => {
                             backgroundColor: '#565add',
                             color: '#fff',
                         },
-                    }}
-                >
+                    }}>
                     <Image src={kzFlag} alt="ua" width={16} height={16}/>
                     Казахстан
                 </Button>
@@ -51,8 +51,7 @@ const TypeOfDocument = () => {
                             backgroundColor: '#565add',
                             color: '#fff',
                         },
-                    }}
-                >
+                    }}>
                     <Image src={uaFlag} alt="kz" width={16} height={16}/>
                     Украина
                 </Button>
@@ -76,7 +75,7 @@ const TypeOfDocument = () => {
                                     border: '1px solid #d6e0ec',
                                     textTransform: 'none',
                                     fontSize: '14px',
-                                    width: '57px',
+                                    width: isMobileView ? '26px' : '57px',
                                     borderRadius: '10px',
                                     '&:hover': {
                                         backgroundColor: '#565add',

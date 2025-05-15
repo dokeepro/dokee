@@ -25,19 +25,15 @@ const Page = () => {
             <AnimatedSection>
                 <MainSection />
             </AnimatedSection>
-
             <AnimatedSection>
                 <TypeOfDocument />
             </AnimatedSection>
-
             <AnimatedSection>
                 <WhatRecieve />
             </AnimatedSection>
-
             <AnimatedSection>
                 <OfferDocument />
             </AnimatedSection>
-
             <AnimatedSection>
                 <FAQ />
             </AnimatedSection>

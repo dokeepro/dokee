@@ -7,6 +7,10 @@
   margin: 3% auto;
   position: relative;
 
+  @media screen and (max-width: 768px) {
+    margin: 80px auto 0 auto;
+  }
+
   img{
     display: flex;
     width: 150px;
@@ -14,6 +18,10 @@
     right: 0;
     bottom: 0;
     position: absolute;
+
+    @media screen and (max-width: 1028px) {
+      display: none;
+    }
   }
 
   p{
@@ -21,7 +29,15 @@
     max-width: 534px;
     width: 100%;
     margin: 0 auto;
+    font-weight: 500;
     color: var(--black);
+    text-align: center;
+    font-family: Involve, sans-serif;
+
+    @media screen and (max-width: 768px) {
+     font-size: 14px;
+      max-width: 380px;
+    }
   }
 }
 
@@ -36,9 +52,13 @@
   h1 {
     display: flex;
     font-size: 60px;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--black);
     text-align: center;
+
+    @media screen and (max-width: 768px) {
+      font-size: 28px;
+    }
 
     &:last-child {
       color: var(--blue);

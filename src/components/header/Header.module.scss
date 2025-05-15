@@ -26,18 +26,89 @@
   align-items: center;
   justify-items: center;
   justify-content: center;
+
+
 }
 
-.navLinks{
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 50px 20px;
+  gap: 70px;
+}
+
+.drawerContentLinks{
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  a {
+    display: flex;
+    font-size: 28px;
+    font-weight: 400;
+    color: white;
+    width: fit-content;
+    position: relative;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: white;
+      transition: width 0.3s ease-in-out;
+    }
+
+    &:hover::after,
+    &:focus::after,
+    &:active::after {
+      width: 100%;
+    }
+  }
+}
+
+.drawerContentHeader {
+  display: flex;
+  width: 90%;
+  justify-content: space-between;
+  align-items: center;
+  justify-items: center;
+  margin: 0 auto;
+}
+
+.navLinks {
   display: flex;
   gap: 20px;
 
-  a{
-    display: flex;
-    transition: 0.2s ease-in-out;
+  @media screen and (max-width: 1078px) {
+    display: none;
+  }
 
-    &:hover{
-      text-decoration: underline;
+  a {
+    display: flex;
+    position: relative;
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      border-radius: 50px;
+      height: 1px;
+      background-color: currentColor;
+      transition: width 0.3s ease-in-out;
+    }
+
+    &:hover::after {
+      width: 100%;
     }
   }
 }

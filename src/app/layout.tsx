@@ -2,6 +2,7 @@ import "./globals.css";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
+import LenisScriptLoader from "@/components/smooth-scroll/LenisScriptLoader";
 
 export async function generateMetadata() {
     const title = "Dokee - Быстрый перевод документов";
@@ -43,6 +44,7 @@ export default function RootLayout({
         <html lang="en">
         <body>
         <Header/>
+        <LenisScriptLoader/>
         <PageWrapper>
             {children}
         </PageWrapper>

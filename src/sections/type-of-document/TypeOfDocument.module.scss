@@ -1,12 +1,15 @@
 .wrapper {
   display: flex;
   flex-direction: column;
-
 }
 
 .toggles {
   display: flex;
   gap: 0;
+
+  @media screen and (max-width: 768px) {
+    margin: 0 auto;
+  }
 }
 
 .pagination {
@@ -25,6 +28,10 @@
   flex-direction: column;
   gap: 40px;
   background: white;
+
+  @media screen and (max-width: 768px) {
+    padding: 32px 15px;
+  }
 }
 
 .documentsHeader {
@@ -42,13 +49,36 @@
     span {
       color: var(--blue);
     }
+    
+    @media screen and (max-width: 768px) {
+      font-size: 20px;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
   }
 }
 
-.documentsContent{
+.documentsContent {
   display: grid;
   grid-template-columns: repeat(3, 2fr);
   gap: 16px;
+
+  @media screen and (max-width: 768px) {
+    grid-template-columns: repeat(2, 2fr);
+  }
+
+  @media screen and (max-width: 390px) {
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .documentNavigation {

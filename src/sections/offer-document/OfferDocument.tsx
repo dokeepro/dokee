@@ -1,11 +1,14 @@
 import React from 'react';
 import styles from "./OfferDocument.module.scss";
-import {Button} from "@mui/material";
+import {Button, useMediaQuery} from "@mui/material";
 import Image from "next/image";
 import doc from "@/assets/icons/file-download.svg"
 import { GrSend } from "react-icons/gr";
 
 const OfferDocument = () => {
+
+    const isMobileView = useMediaQuery('(max-width:768px)');
+
     return (
         <div className={styles.wrapper}>
             <div className={styles.titles}>
@@ -22,7 +25,8 @@ const OfferDocument = () => {
                 <form>
                     <div className={styles.dropArea}>
                         <Image src={doc} alt={"document"} width={120} height={120}/>
-                        <p>Перетяните или<a href="#">загрузите</a>файлы в это окно</p>
+                        {isMobileView ? <p><a href="#">Загрузите</a>файлы в это окно</p> :
+                            <p>Перетяните или<a href="#">загрузите</a>файлы в это окно</p>}
                     </div>
                     <Button
                         sx={{
