@@ -98,15 +98,15 @@ const TypeOfDocument = () => {
         const amount = totalValue;
 
         const productName = ['Оплата послуги'];
-        const productCount = [1];
-        const productPrice = [amount];
+        const productCount = ['1']; // <-- має бути рядок
+        const productPrice = [amount.toFixed(2)]; // <-- рядок з фіксованим форматом
 
         const signatureFields = [
             merchantAccount,
             merchantDomainName,
             orderReference,
-            orderDate,
-            amount,
+            orderDate.toString(),
+            amount.toFixed(2),
             'KZT',
             productName[0],
             productCount[0],
@@ -120,12 +120,12 @@ const TypeOfDocument = () => {
         form.action = 'https://secure.wayforpay.com/pay/';
         form.style.display = 'none';
 
-        const fields: Record<string, string | number | (string | number)[]> = {
+        const fields: Record<string, string | string[]> = {
             merchantAccount,
             merchantDomainName,
             orderReference,
-            orderDate,
-            amount,
+            orderDate: orderDate.toString(),
+            amount: amount.toFixed(2),
             currency: 'KZT',
             productName,
             productCount,
@@ -140,22 +140,21 @@ const TypeOfDocument = () => {
             merchantSignature,
         };
 
-
         for (const key in fields) {
             const value = fields[key];
             if (Array.isArray(value)) {
-                value.forEach(v => {
+                value.forEach((v) => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
                     input.name = `${key}[]`;
-                    input.value = v.toString();
+                    input.value = v;
                     form.appendChild(input);
                 });
             } else {
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
-                input.value = value.toString();
+                input.value = value;
                 form.appendChild(input);
             }
         }
@@ -163,6 +162,7 @@ const TypeOfDocument = () => {
         document.body.appendChild(form);
         form.submit();
     };
+
 
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
