@@ -115,13 +115,18 @@ const TypeOfDocument = () => {
         const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
         const merchantSignature = md5(signatureString);
 
-        const paymentData = {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://secure.wayforpay.com/pay/';
+        form.style.display = 'none';
+
+        const fields: Record<string, string | number | (string | number)[]> = {
             merchantAccount,
             merchantDomainName,
             orderReference,
             orderDate,
             amount,
-            currency: 'KZT' as const,
+            currency: 'KZT',
             productName,
             productCount,
             productPrice,
@@ -129,29 +134,34 @@ const TypeOfDocument = () => {
             clientLastName: 'Tsarenko',
             clientEmail: 'yaroslav7v@gmail.com',
             clientPhone: '0972796855',
-            language: 'UA' as const,
+            language: 'UA',
             returnUrl: `https://${merchantDomainName}/thank-you`,
             serviceUrl: `https://${merchantDomainName}/payment-callback`,
             merchantSignature,
         };
 
-        console.log('WayforPay data:', paymentData);
 
-        const scriptId = "wayforpay-script";
-        if (!document.getElementById(scriptId)) {
-            const script = document.createElement('script');
-            script.id = scriptId;
-            script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
-            script.async = true;
-            script.onload = () => {
-                const wayforpay = new window.Wayforpay();
-                wayforpay.run(paymentData);
-            };
-            document.body.appendChild(script);
-        } else {
-            const wayforpay = new window.Wayforpay();
-            wayforpay.run(paymentData);
+        for (const key in fields) {
+            const value = fields[key];
+            if (Array.isArray(value)) {
+                value.forEach(v => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = `${key}[]`;
+                    input.value = v.toString();
+                    form.appendChild(input);
+                });
+            } else {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value.toString();
+                form.appendChild(input);
+            }
         }
+
+        document.body.appendChild(form);
+        form.submit();
     };
 
     const handleFromLanguageChange = (value: string) => {
