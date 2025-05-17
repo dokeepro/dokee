@@ -18,14 +18,14 @@ const FaqItem: FC<FaqItemProps> = ({ question, answer, isOpen, onToggle }) => {
             sx={{
                 border: 'none',
                 background: "white",
-                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)", // Retain only one boxShadow
+                borderRadius: "25px",
+                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
             }}
         >
             <AccordionSummary
                 aria-controls="panel-content"
-                id="panel-header"
-            >
-                <Typography variant="h6">{question}</Typography>
+                id="panel-header">
+                <Typography variant="h6" sx={{ fontFamily: 'Involve, sans-serif' }}>{question}</Typography>
                 <Button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -46,7 +46,7 @@ const FaqItem: FC<FaqItemProps> = ({ question, answer, isOpen, onToggle }) => {
                 </Button>
             </AccordionSummary>
             <AccordionDetails>
-                <Typography>{answer}</Typography>
+                <Typography sx={{ fontFamily: 'Involve, sans-serif' }}>{answer}</Typography>
             </AccordionDetails>
         </Accordion>
     );

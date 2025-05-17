@@ -1,0 +1,89 @@
+.tariffItem {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d6e0ec;
+  width: 100%;
+  justify-content: space-between;
+
+  @media screen and (max-width: 768px) {
+    min-width: 326px;
+    border-radius: 24px !important;
+  }
+}
+
+.tariffTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h2 {
+    font-size: 32px;
+    font-weight: 600;
+
+    @media screen and (max-width: 768px) {
+      font-size: 20px;
+    }
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 500;
+    font-family: Involve, sans-serif;
+  }
+}
+
+.advantages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.advantageItem {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 24px 16px;
+  border: 1px solid #eff3f7;
+  border-radius: 10px;
+
+  &:first-child {
+    border: 1px solid #a5ffb9 !important;
+  }
+}
+
+.tariffItemInner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 40px 30px;
+
+  @media screen and (max-width: 768px) {
+    padding: 24px 16px;
+  }
+
+  h3 {
+    font-size: 32px;
+    font-weight: 600;
+    padding: 50px 0;
+
+    @media screen and (max-width: 768px) {
+      font-size: 20px;
+      font-weight: 600;
+      padding: 25px 0;
+    }
+  }
+}
+
+.tariffButton {
+  display: flex;
+  padding: 40px 32px;
+  border-top: 1px solid #d6e0ec;
+  background: #f9fafb;
+
+  @media screen and (max-width: 768px) {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 24px 16px;
+    border-radius: 0 0 24px 24px !important;
+  }
+}

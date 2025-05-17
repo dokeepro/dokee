@@ -6,13 +6,15 @@ import styles from "./DocumentItem.module.scss";
 
 interface DocumentItemProps {
     title: string;
+    onSelect: (title: string) => void;
 }
 
-const DocumentItem: FC<DocumentItemProps> = ({title}) => {
+const DocumentItem: FC<DocumentItemProps> = ({title, onSelect}) => {
     const [isActive, setIsActive] = useState(false);
 
     const handleCheckboxChange = () => {
         setIsActive(!isActive);
+        onSelect(title);
     };
 
     const isEGov = title === "E-GOV";

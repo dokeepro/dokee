@@ -7,6 +7,7 @@ import WhatRecieve from '@/sections/what-recieve/WhatRecieve';
 import TypeOfDocument from '@/sections/type-of-document/TypeOfDocument';
 import OfferDocument from '@/sections/offer-document/OfferDocument';
 import FAQ from '@/sections/faq/FAQ';
+import {DocumentProvider} from "@/context/DocumentContext";
 
 const AnimatedSection: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <motion.div
@@ -21,7 +22,7 @@ const AnimatedSection: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
 const Page = () => {
     return (
-        <>
+        <DocumentProvider>
             <AnimatedSection>
                 <MainSection />
             </AnimatedSection>
@@ -37,7 +38,7 @@ const Page = () => {
             <AnimatedSection>
                 <FAQ />
             </AnimatedSection>
-        </>
+        </DocumentProvider>
     );
 };
 

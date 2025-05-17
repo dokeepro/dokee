@@ -43,13 +43,13 @@
     display: flex;
     font-size: 32px;
     gap: 10px;
-    font-weight: 400;
+    font-weight: 600;
     color: var(--black);
 
     span {
       color: var(--blue);
     }
-    
+
     @media screen and (max-width: 768px) {
       font-size: 20px;
     }
@@ -81,6 +81,31 @@
   }
 }
 
+.languagePair {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 16px;
+  border-radius: 15px;
+  border: 1px solid #565add;
+
+  p {
+    display: flex;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.selectors {
+  display: flex;
+  width: 100%;
+  gap: 15px;
+  align-items: center;
+  justify-content: space-between;
+  justify-items: center;
+  align-content: center;
+}
+
 .documentNavigation {
   display: flex;
   gap: 20px;
@@ -88,4 +113,211 @@
   justify-content: flex-end;
   justify-items: flex-end;
   align-items: flex-end;
+
+  @media screen and (max-width: 768px) {
+    align-content: center;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+  }
+}
+
+.accordionDetails {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: 'CraftworkGrotesk', Arial, sans-serif;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.accordionWrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid #d5dfeb;
+}
+
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 15px;
+  font-family: 'CraftworkGrotesk', sans-serif;
+
+  p {
+    display: flex;
+    font-size: 16px;
+    font-weight: 500;
+    color: black;
+    font-family: 'CraftworkGrotesk', sans-serif;
+  }
+}
+
+.accordionTitle {
+  display: flex;
+  font-family: 'CraftworkGrotesk', Arial, sans-serif;
+  font-size: 16px;
+  gap: 5px;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.finalDocuments {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 23px;
+  border-radius: 15px;
+  border: 1px solid #d6e0ec;
+}
+
+.dropFile {
+  display: flex;
+  min-height: 510px;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid #d6e0ec;
+  border-radius: 15px;
+  padding: 24px 16px;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  transition: 0.2s ease-in-out;
+
+  h5 {
+    display: flex;
+    font-size: 12px;
+    color: var(--blue);
+    max-width: 625px;
+    font-weight: 500;
+    text-align: center;
+
+    &:first-child {
+      text-transform: uppercase;
+    }
+  }
+
+  h4 {
+    display: flex;
+    font-size: 14px;
+    color: var(--blue);
+    max-width: 625px;
+    font-weight: 500;
+    text-align: center;
+
+    &:first-child {
+      text-transform: uppercase;
+    }
+
+  }
+
+  &:hover {
+    border: 1px solid #565add;
+  }
+
+  p {
+
+
+    span {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+}
+
+.tariffAndLanguage {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.tariffItem {
+  display: flex;
+  flex-direction: column;
+  background: #eff0ff;
+  border: 1px solid #d6e0ec;
+  border-radius: 30px;
+  width: 100%;
+}
+
+.tariffTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h2 {
+    display: flex;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--black);
+  }
+
+  p {
+    display: flex;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: Involve, sans-serif;
+  }
+}
+
+.advantages {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.advantageItem {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  align-content: center;
+  padding: 24px 16px;
+  border: 1px solid #eff3f7;
+  border-radius: 10px;
+
+  &:first-child {
+    border: 1px solid #a5ffb9;
+  }
+}
+
+.tariffs {
+  display: flex;
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    overflow: scroll;
+    gap: 20px;
+  }
+}
+
+.tariffItemInner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 40px 30px;
+
+  h3 {
+    display: flex;
+    font-size: 32px;
+    font-weight: 600;
+    padding: 50px 0;
+  }
+}
+
+.tariffButton {
+  display: flex;
+  padding: 40px 32px;
+  border-top: 1px solid #f9fafb;
 }
