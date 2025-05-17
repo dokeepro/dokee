@@ -36,8 +36,8 @@ type WayforpayPaymentData = {
     amount: number;
     currency: 'KZT' | 'UAH' | 'USD' | 'EUR';
     productName: string[];
-    productCount: number[];
-    productPrice: number[];
+    productCount: string[];
+    productPrice: string[];
     clientFirstName: string;
     clientLastName: string;
     clientEmail: string;
@@ -47,7 +47,6 @@ type WayforpayPaymentData = {
     serviceUrl: string;
     merchantSignature: string;
 };
-
 
 declare global {
     interface Window {
@@ -98,8 +97,8 @@ const TypeOfDocument = () => {
         const amount = totalValue;
 
         const productName = ['Оплата послуги'];
-        const productCount = ['1']; // <-- має бути рядок
-        const productPrice = [amount.toFixed(2)]; // <-- рядок з фіксованим форматом
+        const productCount = ['1'];
+        const productPrice = [amount.toFixed(2)];
 
         const signatureFields = [
             merchantAccount,
@@ -112,21 +111,17 @@ const TypeOfDocument = () => {
             productCount[0],
             productPrice[0],
         ];
+
         const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
         const merchantSignature = md5(signatureString);
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'https://secure.wayforpay.com/pay/';
-        form.style.display = 'none';
-
-        const fields: Record<string, string | string[]> = {
+        const paymentData: WayforpayPaymentData = {
             merchantAccount,
             merchantDomainName,
             orderReference,
-            orderDate: orderDate.toString(),
-            amount: amount.toFixed(2),
-            currency: 'KZT',
+            orderDate,
+            amount: Number(amount.toFixed(2)),
+            currency: 'KZT', // ✅ Тепер все ок
             productName,
             productCount,
             productPrice,
@@ -140,29 +135,24 @@ const TypeOfDocument = () => {
             merchantSignature,
         };
 
-        for (const key in fields) {
-            const value = fields[key];
-            if (Array.isArray(value)) {
-                value.forEach((v) => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = `${key}[]`;
-                    input.value = v;
-                    form.appendChild(input);
-                });
-            } else {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = value;
-                form.appendChild(input);
-            }
+        const scriptId = 'wayforpay-widget-script';
+
+        const launchWidget = () => {
+            const wayforpay = new window.Wayforpay();
+            wayforpay.run(paymentData);
+        };
+
+        if (!window.Wayforpay) {
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
+            script.async = true;
+            script.onload = launchWidget;
+            document.body.appendChild(script);
+        } else {
+            launchWidget();
         }
-
-        document.body.appendChild(form);
-        form.submit();
     };
-
 
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
