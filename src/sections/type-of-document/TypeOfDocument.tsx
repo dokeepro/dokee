@@ -52,7 +52,7 @@ type WayforpayPaymentData = {
 declare global {
     interface Window {
         Wayforpay: {
-            new (): {
+            new(): {
                 run: (data: WayforpayPaymentData) => void;
             };
         };
@@ -84,78 +84,73 @@ const TypeOfDocument = () => {
 
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
         if (from && to) {
-            setLanguagePair({ from, to });
+            setLanguagePair({from, to});
         }
     };
 
-    const handlePay = async () => {
-        try {
+    const handlePay = () => {
+        const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT!;
+        const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET!;
+        const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN!;
 
-            const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT!;
-            const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET!;
-            const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN!;
+        const orderReference = `ORDER-${Date.now()}`;
+        const orderDate = Math.floor(Date.now() / 1000);
+        const amount = totalValue;
 
-            const orderReference = `ORDER-${Date.now()}`;
-            const orderDate = Math.floor(Date.now() / 1000);
+        const productName = ['Оплата послуги'];
+        const productCount = [1];
+        const productPrice = [amount];
 
-            const productName = ['Оплата послуги'];
-            const productCount = [1];
-            const productPrice = [totalValue];
+        const signatureFields = [
+            merchantAccount,
+            merchantDomainName,
+            orderReference,
+            orderDate,
+            amount,
+            'KZT',
+            productName[0],
+            productCount[0],
+            productPrice[0],
+        ];
+        const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
+        const merchantSignature = md5(signatureString);
 
-            const signatureFields = [
-                merchantAccount,
-                merchantDomainName,
-                orderReference,
-                orderDate,
-                totalValue,
-                'KZT',
-                productName[0],
-                productCount[0],
-                productPrice[0],
-            ];
+        const paymentData = {
+            merchantAccount,
+            merchantDomainName,
+            orderReference,
+            orderDate,
+            amount,
+            currency: 'KZT' as const,
+            productName,
+            productCount,
+            productPrice,
+            clientFirstName: 'Yaroslav',
+            clientLastName: 'Tsarenko',
+            clientEmail: 'yaroslav7v@gmail.com',
+            clientPhone: '0972796855',
+            language: 'UA' as const,
+            returnUrl: `https://${merchantDomainName}/thank-you`,
+            serviceUrl: `https://${merchantDomainName}/payment-callback`,
+            merchantSignature,
+        };
 
-            const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
-            const merchantSignature = md5(signatureString);
+        console.log('WayforPay data:', paymentData);
 
-            const data: WayforpayPaymentData = {
-                merchantAccount,
-                merchantDomainName,
-                orderReference,
-                orderDate,
-                amount: totalValue,
-                currency: 'KZT',
-                productName,
-                productCount,
-                productPrice,
-                clientFirstName: 'Yaroslav',
-                clientLastName: 'Tsarenko',
-                clientEmail: 'yaroslav7v@gmail.com',
-                clientPhone: '0972796855',
-                language: 'UA',
-                returnUrl: `https://${merchantDomainName}/thank-you`,
-                serviceUrl: `https://${merchantDomainName}/payment-callback`,
-                merchantSignature,
-            };
-
-            const scriptId = "wayforpay-script";
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
-                script.id = scriptId;
-                script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
-                script.async = true;
-                script.onload = () => {
-                    const wayforpay = new window.Wayforpay();
-                    wayforpay.run(data);
-                };
-                document.body.appendChild(script);
-            } else {
+        const scriptId = "wayforpay-script";
+        if (!document.getElementById(scriptId)) {
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
+            script.async = true;
+            script.onload = () => {
                 const wayforpay = new window.Wayforpay();
-                wayforpay.run(data);
-            }
-
-        } catch (error) {
-            console.error('Помилка при оплаті:', error);
-            alert('Щось пішло не так при створенні платежу.');
+                wayforpay.run(paymentData);
+            };
+            document.body.appendChild(script);
+        } else {
+            const wayforpay = new window.Wayforpay();
+            wayforpay.run(paymentData);
         }
     };
 
@@ -235,13 +230,13 @@ const TypeOfDocument = () => {
                             <p style={{color: "red"}}>{fromLanguage === toLanguage ? "Языковая пара не может быть одинаковой" : ""}</p>
                         </div>
                         <div className={styles.tariffs}>
-                        <TariffItem
+                            <TariffItem
                                 title="Normal"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    { iconSrc: timeIcon, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)' },
-                                    { iconSrc: garry, text: 'Обычная скорость перевода' },
-                                    { iconSrc: discount, text: 'на 15% дешевле средней цены на рынке' },
+                                    {iconSrc: timeIcon, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)'},
+                                    {iconSrc: garry, text: 'Обычная скорость перевода'},
+                                    {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
                                 price={499}
                                 borderRadius={['30px', '0', '0', '30px']}
@@ -252,9 +247,9 @@ const TypeOfDocument = () => {
                                 title="Express"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    { iconSrc: timeIconPurple, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)' },
-                                    { iconSrc: fast, text: 'Ускоряемся для быстрого перевода' },
-                                    { iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке' },
+                                    {iconSrc: timeIconPurple, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)'},
+                                    {iconSrc: fast, text: 'Ускоряемся для быстрого перевода'},
+                                    {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
                                 price={699}
                                 borderRadius={['0', '0', '0', '0']}
@@ -265,9 +260,9 @@ const TypeOfDocument = () => {
                                 title="Fast"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    { iconSrc: timeIconWhite, text: 'Гарантия доставки до  “Дата” 11:00 (Астаны)' },
-                                    { iconSrc: lightning, text: 'Молниеносный перевод' },
-                                    { iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке' },
+                                    {iconSrc: timeIconWhite, text: 'Гарантия доставки до  “Дата” 11:00 (Астаны)'},
+                                    {iconSrc: lightning, text: 'Молниеносный перевод'},
+                                    {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
                                 price={899}
                                 borderRadius={['0', '30px', '30px', '0']}
@@ -292,7 +287,8 @@ const TypeOfDocument = () => {
             case 4:
                 return <div className={styles.accordionWrapper}>
                     {selectedDocuments.map((doc, index) => (
-                        <Accordion key={index} sx={{boxShadow: "none", borderBottom: "1px solid #cccccc", padding: "10px 0"}}>
+                        <Accordion key={index}
+                                   sx={{boxShadow: "none", borderBottom: "1px solid #cccccc", padding: "10px 0"}}>
                             <AccordionSummary expandIcon={<IoIosArrowDown/>}>
                                 <h2 className={styles.accordionTitle}>
                                     Данные для {renderDocumentType(doc.name)}
@@ -341,7 +337,7 @@ const TypeOfDocument = () => {
                                 documentName={doc.name}
                                 documentFullName={`${doc.name}`}
                                 tariff={tariff || ''}
-                                languagePair={{ from: fromLanguage || '', to: toLanguage || '' }}
+                                languagePair={{from: fromLanguage || '', to: toLanguage || ''}}
                             />
                         ))}
                     </div>
