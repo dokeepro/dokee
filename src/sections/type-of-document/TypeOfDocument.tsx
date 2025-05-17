@@ -25,8 +25,8 @@ import {HiMiniArrowsRightLeft} from "react-icons/hi2";
 import TariffItem from '@/components/tariff-item/TariffItem';
 import {useDocumentContext} from "@/context/DocumentContext";
 import {IoIosArrowDown} from "react-icons/io";
+import md5 from 'blueimp-md5';
 import DocumentFinalItem from '@/components/document-final-item/DocumentFinalItem';
-import {newRequest} from "@/utils/newRequest";
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -90,23 +90,57 @@ const TypeOfDocument = () => {
 
     const handlePay = async () => {
         try {
-            const response = await newRequest.post('/payment/pay-for-service', {
+
+            const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT!;
+            const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET!;
+            const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN!;
+
+            const orderReference = `ORDER-${Date.now()}`;
+            const orderDate = Math.floor(Date.now() / 1000);
+
+            const productName = ['Оплата послуги'];
+            const productCount = [1];
+            const productPrice = [totalValue];
+
+            const signatureFields = [
+                merchantAccount,
+                merchantDomainName,
+                orderReference,
+                orderDate,
                 totalValue,
-                clientFirstName: 'Test',
-                clientLastName: 'User',
-                clientEmail: 'test@example.com',
-                clientPhone: '77712345678'
-            });
+                'KZT',
+                productName[0],
+                productCount[0],
+                productPrice[0],
+            ];
 
-            const data = response.data;
+            const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
+            const merchantSignature = md5(signatureString);
 
-            if (data.error) {
-                alert('Помилка: ' + data.error);
-                return;
-            }
+            const data: WayforpayPaymentData = {
+                merchantAccount,
+                merchantDomainName,
+                orderReference,
+                orderDate,
+                amount: totalValue,
+                currency: 'KZT',
+                productName,
+                productCount,
+                productPrice,
+                clientFirstName: 'Yaroslav',
+                clientLastName: 'Tsarenko',
+                clientEmail: 'yaroslav7v@gmail.com',
+                clientPhone: '0972796855',
+                language: 'UA',
+                returnUrl: `https://${merchantDomainName}/thank-you`,
+                serviceUrl: `https://${merchantDomainName}/payment-callback`,
+                merchantSignature,
+            };
 
-            if (typeof window !== 'undefined') {
+            const scriptId = "wayforpay-script";
+            if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
+                script.id = scriptId;
                 script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
                 script.async = true;
                 script.onload = () => {
@@ -114,7 +148,11 @@ const TypeOfDocument = () => {
                     wayforpay.run(data);
                 };
                 document.body.appendChild(script);
+            } else {
+                const wayforpay = new window.Wayforpay();
+                wayforpay.run(data);
             }
+
         } catch (error) {
             console.error('Помилка при оплаті:', error);
             alert('Щось пішло не так при створенні платежу.');
