@@ -46,18 +46,28 @@ type WayforpayPaymentData = {
     returnUrl: string;
     serviceUrl: string;
     merchantSignature: string;
+    auth: 'SimpleSignature';
+    transactionType: 'SALE';
+    paymentSystems: string;
+    defaultPaymentSystem: string;
+    holdTimeout: number;
+    orderTimeout: number;
+    orderLifetime: number;
 };
+
+interface WayforpayInstance {
+    run: (data: WayforpayPaymentData) => void;
+}
+
+interface WayforpayConstructor {
+    new(): WayforpayInstance;
+}
 
 declare global {
     interface Window {
-        Wayforpay: {
-            new(): {
-                run: (data: WayforpayPaymentData) => void;
-            };
-        };
+        Wayforpay: WayforpayConstructor;
     }
 }
-
 
 const TypeOfDocument = () => {
 
@@ -88,18 +98,42 @@ const TypeOfDocument = () => {
     };
 
     const handlePay = () => {
-        const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT!;
-        const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET!;
-        const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN!;
+        const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
+        const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET;
+        const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN;
+
+        // Check if running in development
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+
+        if (isDevelopment || currentHost === 'localhost') {
+            alert('WayForPay payments cannot be processed on localhost. Please deploy to a production environment with a valid domain name.');
+            console.error('WayForPay payments are not available in development mode');
+            return;
+        }
+
+        if (!merchantAccount || !merchantSecretKey || !merchantDomainName) {
+            alert('Payment configuration is missing. Please check your environment variables.');
+            console.error('WayForPay configuration is missing');
+            return;
+        }
+
+        // Validate domain
+        if (currentHost !== merchantDomainName) {
+            alert(`Payment can only be processed from the registered domain: ${merchantDomainName}`);
+            console.error(`Current domain (${currentHost}) does not match registered domain (${merchantDomainName})`);
+            return;
+        }
 
         const orderReference = `ORDER-${Date.now()}`;
         const orderDate = Math.floor(Date.now() / 1000);
-        const amount = totalValue;
+        const amount = Number(totalValue.toFixed(2));
 
         const productName = ['Оплата послуги'];
         const productCount = ['1'];
         const productPrice = [amount.toFixed(2)];
 
+        // Create signature string according to WayForPay documentation
         const signatureFields = [
             merchantAccount,
             merchantDomainName,
@@ -109,7 +143,7 @@ const TypeOfDocument = () => {
             'KZT',
             productName[0],
             productCount[0],
-            productPrice[0],
+            productPrice[0]
         ];
 
         const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
@@ -120,8 +154,8 @@ const TypeOfDocument = () => {
             merchantDomainName,
             orderReference,
             orderDate,
-            amount: Number(amount.toFixed(2)),
-            currency: 'KZT', // ✅ Тепер все ок
+            amount,
+            currency: 'KZT' as const,
             productName,
             productCount,
             productPrice,
@@ -133,26 +167,46 @@ const TypeOfDocument = () => {
             returnUrl: `https://${merchantDomainName}/thank-you`,
             serviceUrl: `https://${merchantDomainName}/payment-callback`,
             merchantSignature,
+            auth: 'SimpleSignature',
+            transactionType: 'SALE',
+            paymentSystems: 'card;privat24',
+            defaultPaymentSystem: 'card',
+            holdTimeout: 86400,
+            orderTimeout: 86400,
+            orderLifetime: 86400
         };
-
-        const scriptId = 'wayforpay-widget-script';
 
         const launchWidget = () => {
-            const wayforpay = new window.Wayforpay();
-            wayforpay.run(paymentData);
+            try {
+                if (typeof window !== 'undefined' && window.Wayforpay) {
+                    const wayforpay = new window.Wayforpay();
+                    wayforpay.run(paymentData);
+                } else {
+                    console.error('WayForPay widget is not loaded');
+                    alert('Payment system is not available. Please try again later.');
+                }
+            } catch (error) {
+                console.error('Error launching WayForPay widget:', error);
+                alert('Failed to initialize payment system. Please try again later.');
+            }
         };
 
-        if (!window.Wayforpay) {
+        // Load WayForPay script if not already loaded
+        if (typeof window !== 'undefined' && !window.Wayforpay) {
             const script = document.createElement('script');
-            script.id = scriptId;
             script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
             script.async = true;
             script.onload = launchWidget;
+            script.onerror = () => {
+                console.error('Failed to load WayForPay script');
+                alert('Failed to load payment system. Please check your internet connection and try again.');
+            };
             document.body.appendChild(script);
         } else {
             launchWidget();
         }
     };
+
 
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
@@ -260,7 +314,7 @@ const TypeOfDocument = () => {
                                 title="Fast"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    {iconSrc: timeIconWhite, text: 'Гарантия доставки до  “Дата” 11:00 (Астаны)'},
+                                    {iconSrc: timeIconWhite, text: 'Гарантия доставки до  "Дата" 11:00 (Астаны)'},
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
