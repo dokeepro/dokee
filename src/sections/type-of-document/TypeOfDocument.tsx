@@ -102,7 +102,6 @@ const TypeOfDocument = () => {
         const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET;
         const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN;
 
-        // Check if running in development
         const isDevelopment = process.env.NODE_ENV === 'development';
         const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
 
