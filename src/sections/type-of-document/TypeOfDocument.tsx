@@ -117,7 +117,6 @@ const TypeOfDocument = () => {
             return;
         }
 
-        // Validate domain
         if (currentHost !== merchantDomainName) {
             alert(`Payment can only be processed from the registered domain: ${merchantDomainName}`);
             console.error(`Current domain (${currentHost}) does not match registered domain (${merchantDomainName})`);
@@ -132,14 +131,14 @@ const TypeOfDocument = () => {
         const productCount = ['1'];
         const productPrice = [amount.toFixed(2)];
 
-        // Create signature string according to WayForPay documentation
+        const currency = 'UAH';
         const signatureFields = [
             merchantAccount,
             merchantDomainName,
             orderReference,
             orderDate.toString(),
             amount.toFixed(2),
-            'KZT',
+            currency,
             productName[0],
             productCount[0],
             productPrice[0]
@@ -154,7 +153,7 @@ const TypeOfDocument = () => {
             orderReference,
             orderDate,
             amount,
-            currency: 'KZT' as const,
+            currency,
             productName,
             productCount,
             productPrice,
