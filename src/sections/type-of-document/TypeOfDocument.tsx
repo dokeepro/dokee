@@ -77,6 +77,25 @@ const TypeOfDocument = () => {
     const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff} = useDocumentContext();
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
+    const [selectedSamples, setSelectedSamples] = useState<{ name: string; image: string }[] | null>(null);
+    console.log(addDocument)
+
+    const handleDocumentSelect = (title: string) => {
+        const selectedDocument = documentTypes[activeCountry].find((type) => type.name === title);
+
+        if (selectedDocument?.samples) {
+            setSelectedSamples(
+                selectedDocument.samples.map((sample) => ({
+                    name: sample.sample.name,
+                    image: typeof sample.sample.image === 'string' ? sample.sample.image : sample.sample.image.src,
+                }))
+            );
+        } else {
+            setSelectedSamples(null);
+            console.log(`Selected document: ${title}`);
+        }
+    };
+
 
     const totalValue = selectedDocuments.reduce((total) => {
         switch (tariff) {
@@ -189,7 +208,6 @@ const TypeOfDocument = () => {
             }
         };
 
-        // Load WayForPay script if not already loaded
         if (typeof window !== 'undefined' && !window.Wayforpay) {
             const script = document.createElement('script');
             script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
@@ -219,13 +237,6 @@ const TypeOfDocument = () => {
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
     };
-
-    const handleDocumentSelect = (title: string) => {
-        const typeMatch = title.match(/\((.*?)\)/);
-        const type = typeMatch ? typeMatch[1] : 'Unknown';
-        addDocument({name: title, type});
-    };
-
     const renderDocumentType = (name: string) => {
         const match = name.match(/\((.*?)\)/);
         const documentName = name.replace(/\s*\(.*?\)/, '');
@@ -242,15 +253,30 @@ const TypeOfDocument = () => {
     const renderContent = () => {
         switch (activePage) {
             case 1:
-                return <div className={styles.documentsContent}>
-                    {documentTypes[activeCountry].map((type, index) => (
-                        <DocumentItem
-                            key={index}
-                            title={type}
-                            onSelect={() => handleDocumentSelect(type)}
-                        />
-                    ))}
-                </div>;
+                return <>
+                    {selectedSamples ? (
+                        <div className={styles.documentsContent}>
+                            {selectedSamples.map((sample, index) => (
+                                <DocumentItem
+                                    key={index}
+                                    title={sample.name}
+                                    img={sample.image}
+                                    onSelect={() => console.log(`Selected sample: ${sample.name}`)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className={styles.documentsContent}>
+                            {documentTypes[activeCountry].map((type, index) => (
+                                <DocumentItem
+                                    key={index}
+                                    title={type.name}
+                                    onSelect={() => handleDocumentSelect(type.name)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </>;
             case 2:
                 return (
                     <div className={styles.tariffAndLanguage}>
@@ -406,6 +432,14 @@ const TypeOfDocument = () => {
             case 1:
                 return (
                     <div className={styles.documentNavigation}>
+                        {selectedSamples ?
+                            <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
+                                            onClick={() => setSelectedSamples(false || null)}>
+                                Назад
+                            </ButtonOutlined>
+                            :
+                            null
+                        }
                         <ButtonOutlined onClick={() => setActivePage(activePage + 1)} disabled={isNextDisabled}>
                             Продолжить
                         </ButtonOutlined>
@@ -475,7 +509,16 @@ const TypeOfDocument = () => {
     const renderTitle = () => {
         switch (activePage) {
             case 1:
-                return <h2>Выберите <span>тип</span> документа</h2>;
+                return <>
+                    {selectedSamples ?
+                        <div>
+                            <h2>Выберите <span>образец</span> документа</h2>
+                            <p>Обращаем внимание, что в случае выбора образца, Вам необходимо будет загрузить документ,
+                                который ему соответствует. В противном случае документ не будет переведен, а денежные
+                                средства будут возвращены Вам на счет согласно условий Возврата денежных средств</p>
+                        </div>
+                        :
+                        <h2>Выберите <span>тип</span> документа</h2>}</>;
             case 2:
                 return <h2>Выберите <span>язык и подходящий тариф</span></h2>;
             case 3:
@@ -483,7 +526,9 @@ const TypeOfDocument = () => {
             case 4:
                 return <h2>Введите <span>данные из документов</span></h2>;
             case 5:
-                return <h2>Общая стоимость: <span>{totalValue} ₸</span></h2>;
+                return <h2>Общая стоимость: <span>{totalValue} ₸</span>
+                </h2>
+                    ;
             default:
                 return null;
         }
