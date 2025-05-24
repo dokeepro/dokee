@@ -5,7 +5,7 @@ import arrow from "@/assets/images/arrow.svg"
 
 const MainSection = () => {
     return (
-        <div className={styles.wrapper}>
+        <div className={styles.wrapper} id="main">
             <div className={styles.title}>
                 <h1>Качественный перевод</h1>
                 <h1>личных документыв</h1>

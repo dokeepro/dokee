@@ -10,7 +10,6 @@ import logo from "@/assets/logos/dokee-logo.svg";
 import logoWhite from "@/assets/logos/logo-white.svg";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import { Drawer, useMediaQuery } from "@mui/material";
-import Link from 'next/link';
 
 const Header = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,23 +19,41 @@ const Header = () => {
         setIsDrawerOpen(open);
     };
 
+    const scrollToSection = (id: string) => {
+        if (id === "header") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            const section = document.getElementById(id);
+            if (section) {
+                const offset = id === "footer" ? 0 : window.innerHeight * 0.2;
+                const top = id === "footer"
+                    ? document.body.scrollHeight - window.innerHeight
+                    : section.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
+            } else {
+                console.error(`Element with id "${id}" not found.`);
+            }
+        }
+    };
+
     return (
-        <header className={styles.header}>
-            <Image src={logo} alt="logo" width={132} height={30} />
+        <header className={styles.header} id="header">
+            <Image src={logo} alt="logo" width={132} height={30} onClick={() => scrollToSection("header")}/>
             <div className={styles.nav}>
                 <div className={styles.navLinks}>
-                    <Link href="/#">Калькулятор</Link>
-                    <Link href="/#">Предложить документ</Link>
-                    <Link href="/#">Контакты</Link>
-                    <Link href="/#">Частые вопросы</Link>
+                    <button onClick={() => scrollToSection("calculator")}>Калькулятор</button>
+                    <button onClick={() => scrollToSection("propose-document")}>Предложить документ</button>
+                    <button onClick={() => scrollToSection("footer")}>Контакты</button>
+                    <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                 </div>
                 {isMobileView ? (
                     <ButtonOutlined onClick={toggleDrawer(true)}>
-                        <Image src={burgerIcon} alt={"icon"} width={24} height={24} />
+                        <Image src={burgerIcon} alt={"icon"} width={24} height={24}/>
                     </ButtonOutlined>
                 ) : (
-                    <ButtonOutlined>
-                        <Image src={whatsIcon} alt={"icon"} width={24} height={24} />
+                    <ButtonOutlined
+                        onClick={() => window.open("https://wa.me/+380972796855", "_blank")}>
+                        <Image src={whatsIcon} alt={"icon"} width={24} height={24}/>
                         Whatsapp
                     </ButtonOutlined>
                 )}
@@ -52,19 +69,24 @@ const Header = () => {
                 }}>
                 <div className={styles.drawerContent}>
                     <div className={styles.drawerContentHeader}>
-                        <Image src={logoWhite} alt="logo" width={132} height={30} />
+                        <Image src={logoWhite} alt="logo" width={132} height={30}/>
                         <ButtonOutlined white={true} onClick={toggleDrawer(false)}>
-                            <Image src={burgerIconBlue} alt={"icon"} width={24} height={24} />
+                            <Image src={burgerIconBlue} alt={"icon"} width={24} height={24}/>
                         </ButtonOutlined>
                     </div>
                     <div className={styles.drawerContentLinks}>
-                        <Link href="/#">Калькулятор</Link>
-                        <Link href="/#">Предложить документ</Link>
-                        <Link href="/#">Контакты</Link>
-                        <Link href="/#">Частые вопросы</Link>
+                        <button onClick={() => scrollToSection("calculator")}>Калькулятор</button>
+                        <button onClick={() => scrollToSection("propose-document")}>Предложить документ</button>
+                        <button onClick={() => scrollToSection("footer")}>Контакты</button>
+                        <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                     </div>
-                    <ButtonOutlined white={true} sx={{width: "fit-content"}}>
-                        <Image src={whatsIcon} alt={"icon"} width={24} height={24} />
+
+                    <ButtonOutlined
+                        white={true}
+                        sx={{width: "fit-content"}}
+                        onClick={() => window.open("https://wa.me/+380972796855", "_blank")}
+                    >
+                        <Image src={whatsIcon} alt={"icon"} width={24} height={24}/>
                         Whatsapp
                     </ButtonOutlined>
                 </div>

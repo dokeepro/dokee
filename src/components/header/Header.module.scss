@@ -15,6 +15,10 @@
   background: var(--background);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
+  img{
+    cursor: pointer;
+  }
+
   @media screen and (max-width: 1280px) {
     width: 90%;
   }
@@ -43,8 +47,12 @@
   flex-direction: column;
   gap: 24px;
 
-  a {
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
     display: flex;
+    font-family: Involve, sans-serif;
     font-size: 28px;
     font-weight: 400;
     color: white;
@@ -89,9 +97,15 @@
     display: none;
   }
 
-  a {
+  button {
     display: flex;
     position: relative;
+    outline: none;
+    cursor: pointer;
+    border: none;
+    font-size: 16px;
+    background: none;
+    font-family: Involve, sans-serif;
     text-decoration: none;
     transition: color 0.2s ease-in-out;
 

@@ -7,7 +7,7 @@ import BenefitItem from "@/components/benefit-item/BenefitItem";
 
 const WhatRecieve = () => {
     return (
-        <div className={styles.wrapper}>
+        <div className={styles.wrapper} id="calculator">
             <h1>Что вы получите?</h1>
             <p>В сфере переводов есть 3 важнейших фактора, на которые мы ориентируемся</p>
             <div className={styles.content}>

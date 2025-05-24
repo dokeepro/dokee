@@ -84,7 +84,7 @@ const TypeOfDocument = () => {
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
     const [loading, setLoading] = useState(false);
-    const [localLanguagePair, setLocalLanguagePair] = useState<string | null>(null);
+    const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -126,6 +126,16 @@ const TypeOfDocument = () => {
             setLanguagePair(formatted);
             setLocalLanguagePair(formatted);
         }
+    };
+
+    const handleNextStep = () => {
+        setActivePage(activePage + 1);
+        document.getElementById("documents")?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const handlePreviousStep = () => {
+        setActivePage(activePage - 1);
+        document.getElementById("documents")?.scrollIntoView({ behavior: "smooth" });
     };
 
     const capitalize = (str: string) =>
@@ -477,7 +487,7 @@ const TypeOfDocument = () => {
                                 documentName={doc.name}
                                 documentFullName={`${doc.name}`}
                                 tariff={tariff || ''}
-                                languagePair={localLanguagePair || 'fdfdf'}
+                                languagePair={localLanguagePair || ''}
                             />
                         ))}
                     </div>
@@ -503,7 +513,7 @@ const TypeOfDocument = () => {
                             null
                         }
                         <ButtonOutlined onClick={
-                            selectedSamples ? handleBackToList : () => setActivePage(activePage + 1)}
+                            selectedSamples ? handleBackToList : () => handleNextStep()}
                                         disabled={isNextDisabled}>
                             Продолжить
                         </ButtonOutlined>
@@ -513,11 +523,11 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => setActivePage(activePage - 1)}>
+                                        onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => setActivePage(activePage + 1)}
+                            onClick={() => handleNextStep()}
                         >
                             Продолжить
                         </ButtonOutlined>
@@ -527,11 +537,11 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => setActivePage(activePage - 1)}>
+                                        onClick={() => handlePreviousStep()}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => setActivePage(activePage + 1)}
+                            onClick={() => handleNextStep()}
                         >
                             Продолжить
                         </ButtonOutlined>
@@ -559,10 +569,9 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            loading={loading}
                             onClick={() => handleSendData()}
                         >
-                            Перейти к оплате
+                            {loading ? 'Обработка...' : 'Перейти к оплате'}
                         </ButtonOutlined>
                     </div>
                 );
@@ -600,7 +609,7 @@ const TypeOfDocument = () => {
     }
 
     return (
-        <div className={styles.wrapper}>
+        <div className={styles.wrapper} id="documents">
             <div className={styles.toggles}>
                 <Button
                     onClick={() => setActiveCountry('KZ')}

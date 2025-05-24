@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import logoFooter from "@/assets/logos/dokee-footer.svg";
 import styles from "./Footer.module.scss"
@@ -9,10 +11,24 @@ import {BsTwitterX} from "react-icons/bs";
 import Image from "next/image";
 
 const Footer = () => {
+
+    const scrollToSection = (id: string) => {
+        if (id === "header") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            const section = document.getElementById(id);
+            if (section) {
+                section.scrollIntoView({ behavior: "smooth" });
+            } else {
+                console.error(`Element with id "${id}" not found.`);
+            }
+        }
+    };
+
     return (
-        <footer className={styles.footer}>
+        <footer className={styles.footer} id="footer">
             <div className={styles.footerSection}>
-                <Button
+                <Button onClick={() => scrollToSection("header")}
                     sx={{
                         width: '90px',
                         height: '90px',

@@ -10,7 +10,7 @@ const OfferDocument = () => {
     const isMobileView = useMediaQuery('(max-width:768px)');
 
     return (
-        <div className={styles.wrapper}>
+        <div className={styles.wrapper} id="propose-document">
             <div className={styles.titles}>
                 <h1>Хотите <span>предложить</span></h1>
                 <h1>ваш документ?</h1>

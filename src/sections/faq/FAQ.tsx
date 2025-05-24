@@ -13,7 +13,7 @@ const FAQ = () => {
     };
 
     return (
-        <div className={styles.wrapper}>
+        <div className={styles.wrapper} id="faq">
             <div>
                 {faq.slice(0, Math.ceil(faq.length / 2)).map((item, index) => (
                     <div key={index} className={styles.faqItemWrapper}>
