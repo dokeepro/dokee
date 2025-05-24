@@ -5,7 +5,7 @@ interface DocumentFinalItemProps {
     documentName: string;
     documentFullName: string;
     tariff: string;
-    languagePair: { from: string; to: string } | null;
+    languagePair: string;
 }
 
 const DocumentFinalItem: FC<DocumentFinalItemProps> = ({documentName, documentFullName, tariff, languagePair}) => {
@@ -33,7 +33,7 @@ const DocumentFinalItem: FC<DocumentFinalItemProps> = ({documentName, documentFu
                 </div>
                 <div className={styles.document}>
                     <label>Языковая пара</label>
-                    <h4>{languagePair?.from} - {languagePair?.to}</h4>
+                    <h4>{languagePair}</h4>
                 </div>
                 <div className={styles.document}>
                     <label>Тариф</label>

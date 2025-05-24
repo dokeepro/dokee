@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import { Checkbox, Tooltip, Dialog } from "@mui/material";
 import styles from "./DocumentItem.module.scss";
 import Image from "next/image";
@@ -8,12 +8,17 @@ interface DocumentItemProps {
     title: string;
     img?: string;
     selectedVariants?: number;
+    selected?: boolean;
     onSelect: (title: string) => void;
 }
 
-const DocumentItem: FC<DocumentItemProps> = ({ title, onSelect, img, selectedVariants }) => {
-    const [isChecked, setIsChecked] = useState(false);
+const DocumentItem: FC<DocumentItemProps> = ({ title, onSelect, img, selectedVariants, selected }) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isChecked, setIsChecked] = useState(selected || false);
+
+    useEffect(() => {
+        setIsChecked(selected || false);
+    }, [selected]);
 
     const handleWrapperClick = () => {
         const newChecked = !isChecked;

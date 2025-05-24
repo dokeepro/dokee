@@ -1,29 +1,46 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
+interface DocumentSample {
+    name: string;
+    image: string;
+}
+
 interface Document {
     name: string;
-    type: string;
+    type?: string;
+    selectedSamples?: DocumentSample[];
+    fioLatin?: string;
+    sealText?: string;
+    stampText?: string;
+    uploadedFiles?: File[];
 }
 
 interface DocumentContextProps {
     selectedDocuments: Document[];
-    languagePair: { from: string; to: string } | null;
+    languagePair: string | null;
     tariff: string | null;
+    uploadedFiles: File[];
     addDocument: (document: Document) => void;
-    setLanguagePair: (pair: { from: string; to: string }) => void;
+    setUploadedFiles: (files: File[]) => void;
+    setLanguagePair: (pair: string) => void;
     setTariff: (tariff: string) => void;
     removeDocument: (name: string) => void;
 }
-
 const DocumentContext = createContext<DocumentContextProps | undefined>(undefined);
 
 export const DocumentProvider = ({ children }: { children: ReactNode }) => {
     const [selectedDocuments, setSelectedDocuments] = useState<Document[]>([]);
-    const [languagePair, setLanguagePair] = useState<{ from: string; to: string } | null>(null);
+    const [languagePair, setLanguagePair] = useState<string | null>(null);
     const [tariff, setTariff] = useState<string | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
     const addDocument = (document: Document) => {
-        setSelectedDocuments((prev) => [...prev, document]);
+        setSelectedDocuments((prev) => {
+            const exists = prev.find((doc) => doc.name === document.name);
+            return exists
+                ? prev.map((doc) => doc.name === document.name ? { ...doc, ...document } : doc)
+                : [...prev, document];
+        });
     };
 
     return (
@@ -32,6 +49,8 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
                 selectedDocuments,
                 languagePair,
                 tariff,
+                uploadedFiles,
+                setUploadedFiles,
                 addDocument,
                 setLanguagePair,
                 setTariff,
@@ -43,6 +62,7 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
         </DocumentContext.Provider>
     );
 };
+
 
 export const useDocumentContext = () => {
     const context = useContext(DocumentContext);

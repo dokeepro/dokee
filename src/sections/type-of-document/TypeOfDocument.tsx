@@ -1,8 +1,8 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, { useState} from 'react';
 import styles from "./TypeOfDocument.module.scss";
-import {Accordion, AccordionDetails, AccordionSummary, Button, useMediaQuery} from "@mui/material";
+import {Accordion, AccordionDetails, AccordionSummary, Button, Tooltip, useMediaQuery} from "@mui/material";
 import uaFlag from "@/assets/icons/ua-icon.png";
 import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
@@ -11,6 +11,7 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import documentTypes from "@/constants/documentTypes";
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
+import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
 import timeIconPurple from "@/assets/icons/box-time-purple.svg"
 import timeIconWhite from "@/assets/icons/box-time-white.svg"
@@ -25,8 +26,12 @@ import {HiMiniArrowsRightLeft} from "react-icons/hi2";
 import TariffItem from '@/components/tariff-item/TariffItem';
 import {useDocumentContext} from "@/context/DocumentContext";
 import {IoIosArrowDown} from "react-icons/io";
-import md5 from 'blueimp-md5';
+import sealExample from "@/assets/images/seal-example.svg"
+import stampExample from "@/assets/images/example-of-stamp.svg";
+import warningExample from "@/assets/icons/icon-blue.svg"
 import DocumentFinalItem from '@/components/document-final-item/DocumentFinalItem';
+import {useDocumentSamples} from "@/hooks/useDocumentSamples";
+import {usePopup} from "@/context/PopupContext";
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -74,28 +79,33 @@ const TypeOfDocument = () => {
     const [activePage, setActivePage] = useState(1);
     const [activeCountry, setActiveCountry] = useState<'KZ' | 'UA'>('KZ');
     const isMobileView = useMediaQuery('(max-width:768px)');
-    const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff} = useDocumentContext();
+    const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff, uploadedFiles, setUploadedFiles } = useDocumentContext();
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
-    const [selectedSamples, setSelectedSamples] = useState<{ name: string; image: string }[] | null>(null);
-    console.log(addDocument)
+    const {openPopup, closePopup} = usePopup();
+    const [loading, setLoading] = useState(false);
+    const [localLanguagePair, setLocalLanguagePair] = useState<string | null>(null);
 
-    const handleDocumentSelect = (title: string) => {
-        const selectedDocument = documentTypes[activeCountry].find((type) => type.name === title);
-
-        if (selectedDocument?.samples) {
-            setSelectedSamples(
-                selectedDocument.samples.map((sample) => ({
-                    name: sample.sample.name,
-                    image: typeof sample.sample.image === 'string' ? sample.sample.image : sample.sample.image.src,
-                }))
-            );
-        } else {
-            setSelectedSamples(null);
-            console.log(`Selected document: ${title}`);
-        }
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files);
+        setUploadedFiles([...uploadedFiles, ...files]);
     };
 
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        setUploadedFiles([...uploadedFiles, ...files]);
+    };
+
+    const handleOpenPopup = (content: React.ReactNode) => {
+        openPopup(content);
+    };
+    const {
+        samples: selectedSamples,
+        openSamples: handleDocumentSelect,
+        toggleSampleSelection: handleSampleSelect,
+        resetSamples: handleBackToList,
+    } = useDocumentSamples(activeCountry);
 
     const totalValue = selectedDocuments.reduce((total) => {
         switch (tariff) {
@@ -111,118 +121,65 @@ const TypeOfDocument = () => {
     }, 0);
 
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
-        if (from && to) {
-            setLanguagePair({from, to});
+        if (from && to && from !== to) {
+            const formatted = `${capitalize(from)} - ${capitalize(to)}`;
+            setLanguagePair(formatted);
+            setLocalLanguagePair(formatted);
         }
     };
 
-    const handlePay = () => {
-        const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
-        const merchantSecretKey = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET;
-        const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN;
+    const capitalize = (str: string) =>
+        str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
-        const isDevelopment = process.env.NODE_ENV === 'development';
-        const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    const handleClosePopup = () => {
+        closePopup();
+        setActivePage(activePage + 1);
+    }
 
-        if (isDevelopment || currentHost === 'localhost') {
-            alert('WayForPay payments cannot be processed on localhost. Please deploy to a production environment with a valid domain name.');
-            console.error('WayForPay payments are not available in development mode');
-            return;
-        }
+    const handleSendData = async () => {
+        setLoading(true);
 
-        if (!merchantAccount || !merchantSecretKey || !merchantDomainName) {
-            alert('Payment configuration is missing. Please check your environment variables.');
-            console.error('WayForPay configuration is missing');
-            return;
-        }
+        try {
+            const formData = new FormData();
 
-        if (currentHost !== merchantDomainName) {
-            alert(`Payment can only be processed from the registered domain: ${merchantDomainName}`);
-            console.error(`Current domain (${currentHost}) does not match registered domain (${merchantDomainName})`);
-            return;
-        }
+            formData.append('email', 'yaroslav7v@gmail.com');
+            formData.append('languagePair', localLanguagePair || "");
+            formData.append('tariff', tariff || '');
 
-        const orderReference = `ORDER-${Date.now()}`;
-        const orderDate = Math.floor(Date.now() / 1000);
-        const amount = Number(totalValue.toFixed(2));
+            const docs = selectedDocuments.map((doc) => ({
+                name: doc.name,
+                fioLatin: doc.fioLatin || '',
+                sealText: doc.sealText || '',
+                stampText: doc.stampText || '',
+                selectedSamples: doc.selectedSamples || [],
+            }));
 
-        const productName = ['Оплата послуги'];
-        const productCount = ['1'];
-        const productPrice = [amount.toFixed(2)];
+            formData.append('documents', JSON.stringify(docs));
 
-        const currency = 'UAH';
-        const signatureFields = [
-            merchantAccount,
-            merchantDomainName,
-            orderReference,
-            orderDate.toString(),
-            amount.toFixed(2),
-            currency,
-            productName[0],
-            productCount[0],
-            productPrice[0]
-        ];
+            uploadedFiles.forEach((file) => {
+                formData.append('files', file);
+            });
 
-        const signatureString = signatureFields.join(';') + ';' + merchantSecretKey;
-        const merchantSignature = md5(signatureString);
+            const response = await fetch('http://localhost:8080/payment/send-data-to-email', {
+                method: 'POST',
+                body: formData
+            });
 
-        const paymentData: WayforpayPaymentData = {
-            merchantAccount,
-            merchantDomainName,
-            orderReference,
-            orderDate,
-            amount,
-            currency,
-            productName,
-            productCount,
-            productPrice,
-            clientFirstName: 'Yaroslav',
-            clientLastName: 'Tsarenko',
-            clientEmail: 'yaroslav7v@gmail.com',
-            clientPhone: '0972796855',
-            language: 'UA',
-            returnUrl: `https://${merchantDomainName}/thank-you`,
-            serviceUrl: `https://${merchantDomainName}/payment-callback`,
-            merchantSignature,
-            auth: 'SimpleSignature',
-            transactionType: 'SALE',
-            paymentSystems: 'card;privat24',
-            defaultPaymentSystem: 'card',
-            holdTimeout: 86400,
-            orderTimeout: 86400,
-            orderLifetime: 86400
-        };
-
-        const launchWidget = () => {
-            try {
-                if (typeof window !== 'undefined' && window.Wayforpay) {
-                    const wayforpay = new window.Wayforpay();
-                    wayforpay.run(paymentData);
-                } else {
-                    console.error('WayForPay widget is not loaded');
-                    alert('Payment system is not available. Please try again later.');
-                }
-            } catch (error) {
-                console.error('Error launching WayForPay widget:', error);
-                alert('Failed to initialize payment system. Please try again later.');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Ошибка запроса');
             }
-        };
 
-        if (typeof window !== 'undefined' && !window.Wayforpay) {
-            const script = document.createElement('script');
-            script.src = 'https://secure.wayforpay.com/server/pay-widget.js';
-            script.async = true;
-            script.onload = launchWidget;
-            script.onerror = () => {
-                console.error('Failed to load WayForPay script');
-                alert('Failed to load payment system. Please check your internet connection and try again.');
-            };
-            document.body.appendChild(script);
-        } else {
-            launchWidget();
+            const result = await response.json();
+            console.log('✅ Email sent successfully:', result);
+            alert('Данные успешно отправлены на почту');
+        } catch (error) {
+            console.error('❌ Ошибка при отправке данных:', error);
+            alert('Произошла ошибка при отправке данных');
+        } finally {
+            setLoading(false);
         }
     };
-
 
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
@@ -250,6 +207,61 @@ const TypeOfDocument = () => {
         );
     };
 
+    const renderPopupContent = (title: string) => {
+        switch (title) {
+            case 'Печать':
+                return (
+                    <div className={styles.popupContent}>
+                        <div className={styles.column}>
+                            <h3>Пример печати</h3>
+                            <Image src={sealExample} alt="image" width={281} height={211}/>
+                        </div>
+                        <div className={styles.column}>
+                            <h3>Пример расшифровки</h3>
+                            <p>Республика Казахстан Лицензия № 0000000 выдана 00 июня 0000 года Комитетом по
+                                организации правовой помощи и оказанию юридических услуг населению МЮ РК Частный
+                                нотариус</p>
+                        </div>
+                    </div>
+                );
+            case 'Штамп':
+                return (
+                    <div className={styles.popupContent}>
+                        <div className={styles.column}>
+                            <h3>Пример штампа</h3>
+                            <Image src={stampExample} alt="image" width={281} height={211}/>
+                        </div>
+                        <div className={styles.column}>
+                            <h3>Пример расшифровки</h3>
+                            <p>Экибастузское городское отделение регистрации кадастра Павлодарский областной филиал
+                                Коммерческого акционерного общества Государственной корпорации «Правительство для
+                                граждан» ИЗМЕНЕНИЯ И ДОПОЛНЕНИЯ БСН 000940000220 №
+                                346, 472-195-16-АК Первоначальная дата регистрации &quot09&quot октября 2020 г.</p>
+                        </div>
+                    </div>
+                );
+            case 'Предупреждение':
+                return (
+                    <div className={styles.popupContentWarning}>
+                        <Image src={warningExample} alt="image" width={136} height={136}/>
+                        <div className={styles.texts}>
+                            <h3>Обращаем внимание</h3>
+                            <p>При условии не заполнения данной информации, Вы согласны с тем, что ФИО будут переведены
+                                по
+                                правилам транслитерации, а печати и штампы отображены в виде текста на языке
+                                перевода: </p>
+                        </div>
+                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
+                                        onClick={handleClosePopup}>
+                            Продолжить
+                        </ButtonOutlined>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    }
+
     const renderContent = () => {
         switch (activePage) {
             case 1:
@@ -261,19 +273,25 @@ const TypeOfDocument = () => {
                                     key={index}
                                     title={sample.name}
                                     img={sample.image}
-                                    onSelect={() => console.log(`Selected sample: ${sample.name}`)}
-                                />
+                                    onSelect={() => handleSampleSelect(sample)}/>
                             ))}
                         </div>
                     ) : (
                         <div className={styles.documentsContent}>
-                            {documentTypes[activeCountry].map((type, index) => (
-                                <DocumentItem
-                                    key={index}
-                                    title={type.name}
-                                    onSelect={() => handleDocumentSelect(type.name)}
-                                />
-                            ))}
+                            {documentTypes[activeCountry].map((type, index) => {
+                                const docInContext = selectedDocuments.find((doc) => doc.name === type.name);
+                                const selectedVariants = docInContext?.selectedSamples?.length || 0;
+                                const isSelected = selectedVariants > 0;
+
+                                return (
+                                    <DocumentItem
+                                        key={index}
+                                        title={type.name}
+                                        selectedVariants={isSelected ? selectedVariants : undefined}
+                                        onSelect={() => handleDocumentSelect(type.name)}
+                                        selected={isSelected}/>
+                                );
+                            })}
                         </div>
                     )}
                 </>;
@@ -351,17 +369,44 @@ const TypeOfDocument = () => {
                     </div>
                 );
             case 3:
-                return <div className={styles.dropFile}>
-                    <Image src={dropFile} alt={"file"} width={120} height={120}/>
-                    <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
-                    <h4>Обращаем Ваше внимание, что в случае предоставления некачественных изображений оригинала
-                        документа, Вы соглашаетесь с тем, что будет переведена лишь та часть, которая будет
-                        отчетливо видна. Расшифровку печатей и штампов Вы сможете предоставить на следующем шаге.</h4>
+                return (
+                    <div
+                        className={styles.dropFile}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={handleDrop}
+                    >
+                        <Image src={dropFile} alt="file" width={120} height={120}/>
+                        <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
+                        <h4>
+                            Обращаем Ваше внимание, что в случае предоставления некачественных изображений...
+                        </h4>
 
-                    {isMobileView ? <p><span>Загрузите</span> файлы в это окно</p> :
-                        <p>Перетяните или <span>загрузите</span> файлы в это окно</p>
-                    }
-                </div>;
+                        <label style={{cursor: 'pointer', color: '#565add', textDecoration: 'underline'}}>
+                            {isMobileView ? (
+                                <p><span>Загрузите</span> файлы в это окно</p>
+                            ) : (
+                                <p>Перетяните или <span>загрузите</span> файлы в это окно</p>
+                            )}
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleFileInput}
+                                style={{display: 'none'}}
+                            />
+                        </label>
+
+                        {uploadedFiles.length > 0 && (
+                            <ul className={styles.uploadedList}>
+                                {uploadedFiles.map((file, index) => (
+                                    <li key={index}>
+                                        {index + 1}. {file.name}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                );
             case 4:
                 return <div className={styles.accordionWrapper}>
                     {selectedDocuments.map((doc, index) => (
@@ -378,29 +423,46 @@ const TypeOfDocument = () => {
                                         ФИО латиницей
                                     </p>
                                     <Input
-                                        id="fio-input"
+                                        value={doc.fioLatin || ''}
+                                        onChange={(e) => addDocument({name: doc.name, fioLatin: e.target.value})}
                                         fullWidth
                                         placeholder="Фамилия Имья Отчество"
-                                        sx={{mb: 2}}/>
+                                        sx={{mb: 2}}
+                                    />
                                 </div>
                                 <div className={styles.inputWrapper}>
                                     <p>
                                         Печать
+                                        <Tooltip title="Что означает?">
+                                            <BsFillInfoSquareFill
+                                                className={styles.icon}
+                                                onClick={() => handleOpenPopup(renderPopupContent('Печать'))}
+                                            />
+                                        </Tooltip>
                                     </p>
                                     <Input
-                                        id="seal-input"
+                                        value={doc.sealText || ''}
+                                        onChange={(e) => addDocument({ name: doc.name, sealText: e.target.value })}
                                         fullWidth
                                         placeholder="Рассшифровка печати"
-                                        sx={{mb: 2}}/>
+                                        sx={{ mb: 2 }}
+                                    />
                                 </div>
                                 <div className={styles.inputWrapper}>
-                                    <p>
+                                    <p onClick={() => handleOpenPopup(renderPopupContent('Штамп'))}>
                                         Штамп
+                                        <Tooltip title="Что означает?">
+                                            <BsFillInfoSquareFill
+                                                className={styles.icon}
+                                            />
+                                        </Tooltip>
                                     </p>
                                     <Input
-                                        id="stamp-input"
+                                        value={doc.stampText || ''}
+                                        onChange={(e) => addDocument({ name: doc.name, stampText: e.target.value })}
                                         fullWidth
-                                        placeholder="Рассшифровка штампа"/>
+                                        placeholder="Рассшифровка штампа"
+                                    />
                                 </div>
                             </AccordionDetails>
                         </Accordion>
@@ -415,7 +477,7 @@ const TypeOfDocument = () => {
                                 documentName={doc.name}
                                 documentFullName={`${doc.name}`}
                                 tariff={tariff || ''}
-                                languagePair={{from: fromLanguage || '', to: toLanguage || ''}}
+                                languagePair={localLanguagePair || 'fdfdf'}
                             />
                         ))}
                     </div>
@@ -434,13 +496,15 @@ const TypeOfDocument = () => {
                     <div className={styles.documentNavigation}>
                         {selectedSamples ?
                             <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                            onClick={() => setSelectedSamples(false || null)}>
+                                            onClick={handleBackToList}>
                                 Назад
                             </ButtonOutlined>
                             :
                             null
                         }
-                        <ButtonOutlined onClick={() => setActivePage(activePage + 1)} disabled={isNextDisabled}>
+                        <ButtonOutlined onClick={
+                            selectedSamples ? handleBackToList : () => setActivePage(activePage + 1)}
+                                        disabled={isNextDisabled}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
@@ -481,7 +545,7 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => setActivePage(activePage + 1)}
+                            onClick={() => handleOpenPopup(renderPopupContent('Предупреждение'))}
                             disabled={isNextDisabled}>
                             Продолжить
                         </ButtonOutlined>
@@ -495,7 +559,8 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => handlePay()}
+                            loading={loading}
+                            onClick={() => handleSendData()}
                         >
                             Перейти к оплате
                         </ButtonOutlined>

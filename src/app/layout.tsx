@@ -3,6 +3,7 @@ import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
 import LenisScriptLoader from "@/components/smooth-scroll/LenisScriptLoader";
+import Popup, {PopupProvider} from "@/context/PopupContext";
 
 export async function generateMetadata() {
     const title = "Dokee - Быстрый перевод документов";
@@ -46,7 +47,10 @@ export default function RootLayout({
         <Header/>
         <LenisScriptLoader/>
         <PageWrapper>
-            {children}
+            <PopupProvider>
+                <Popup/>
+                {children}
+            </PopupProvider>
         </PageWrapper>
         <Footer/>
         </body>
