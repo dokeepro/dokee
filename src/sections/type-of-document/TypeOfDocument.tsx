@@ -170,7 +170,7 @@ const TypeOfDocument = () => {
                 formData.append('files', file);
             });
 
-            const response = await fetch('http://localhost:8080/payment/send-data-to-email', {
+            const response = await fetch('https://dokee-be.onrender.com/payment/send-data-to-email', {
                 method: 'POST',
                 body: formData
             });
