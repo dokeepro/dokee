@@ -45,14 +45,14 @@ const Footer = () => {
                 </Button>
                 <div className={styles.footerLinksWrapper}>
                     <div className={styles.footerLinks}>
-                        <Link href="#">Калькулятор</Link>
-                        <Link href="#">Предложить документ</Link>
-                        <Link href="#">Контакты</Link>
-                        <Link href="#">Частые вопросы</Link>
+                        <button onClick={() => scrollToSection("calculator")}>Калькулятор</button>
+                        <button onClick={() => scrollToSection("propose-document")}>Предложить документ</button>
+                        <button onClick={() => scrollToSection("footer")}>Контакты</button>
+                        <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                     </div>
                     <div className={styles.footerLinks}>
-                        <Link href="#">+ 380 0509517841</Link>
-                        <Link href="#">dokee@gmail.com</Link>
+                        <a href="tel:+3800509517841">+ 380 0509517841</a>
+                        <a href="mailto:dokee@gmail.com">dokee@gmail.com</a>
                     </div>
                 </div>
                 <div className={styles.footerSocials}>
@@ -64,7 +64,7 @@ const Footer = () => {
 
                     <Tooltip title="Facebook">
                         <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
-                        <FaFacebookF />
+                            <FaFacebookF/>
                         </IconButton>
                     </Tooltip>
 
