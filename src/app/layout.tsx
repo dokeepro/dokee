@@ -2,7 +2,6 @@ import "./globals.css";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
-import LenisScriptLoader from "@/components/smooth-scroll/LenisScriptLoader";
 import Popup, {PopupProvider} from "@/context/PopupContext";
 
 export async function generateMetadata() {
@@ -45,7 +44,6 @@ export default function RootLayout({
         <html lang="en">
         <body>
         <Header/>
-        <LenisScriptLoader/>
         <PageWrapper>
             <PopupProvider>
                 <Popup/>

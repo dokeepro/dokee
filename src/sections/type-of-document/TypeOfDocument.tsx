@@ -128,24 +128,40 @@ const TypeOfDocument = () => {
         }
     };
 
+    const scrollToSection = (id: string) => {
+        if (id === "header") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            const section = document.getElementById(id);
+            if (section) {
+                const offset = id === "footer" ? 0 : window.innerHeight * 0.2;
+                const top = id === "footer"
+                    ? document.body.scrollHeight - window.innerHeight
+                    : section.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
+            } else {
+                console.error(`Element with id "${id}" not found.`);
+            }
+        }
+    };
+
+
     const handleNextStep = () => {
         setActivePage(activePage + 1);
-        document.getElementById("documents")?.scrollIntoView({ behavior: "smooth" });
+        scrollToSection("documents");
     };
 
     const handlePreviousStep = () => {
         setActivePage(activePage - 1);
-        document.getElementById("documents")?.scrollIntoView({ behavior: "smooth" });
+        scrollToSection("documents");
     };
 
     const capitalize = (str: string) =>
         str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-
     const handleClosePopup = () => {
         closePopup();
         setActivePage(activePage + 1);
     }
-
     const handleSendData = async () => {
         setLoading(true);
 
@@ -190,17 +206,14 @@ const TypeOfDocument = () => {
             setLoading(false);
         }
     };
-
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
     };
-
     const handleToLanguageChange = (value: string) => {
         setToLanguage(value);
         handleLanguagePairChange(fromLanguage, value);
     };
-
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
     };
@@ -216,7 +229,6 @@ const TypeOfDocument = () => {
         </span>
         );
     };
-
     const renderPopupContent = (title: string) => {
         switch (title) {
             case 'Печать':
@@ -271,7 +283,6 @@ const TypeOfDocument = () => {
                 return null;
         }
     }
-
     const renderContent = () => {
         switch (activePage) {
             case 1:
@@ -316,10 +327,6 @@ const TypeOfDocument = () => {
                                     onChange={(_, value) => handleFromLanguageChange(value || "")}
                                     sx={{width: "100%"}}>
                                     <Option value="русский">Русский</Option>
-                                    <Option value="английский">Английский</Option>
-                                    <Option value="казахский">Казахский</Option>
-                                    <Option value="украинский">Украинский</Option>
-                                    <Option value="польский">Польский</Option>
                                 </Select>
                                 <HiMiniArrowsRightLeft size={50}/>
                                 <Select
@@ -496,7 +503,6 @@ const TypeOfDocument = () => {
                 return <p>Invalid page.</p>;
         }
     };
-
     const renderButtons = () => {
         const isNextDisabled = activePage === 2 && selectedDocuments.length === 0;
 
@@ -551,7 +557,7 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => setActivePage(activePage - 1)}>
+                                        onClick={() => handleNextStep()}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
