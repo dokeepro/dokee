@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Accordion, AccordionSummary, AccordionDetails, Typography, Button } from '@mui/material';
+import { Accordion, AccordionSummary, AccordionDetails, Typography, Button, List, ListItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
@@ -11,6 +11,30 @@ interface FaqItemProps {
 }
 
 const FaqItem: FC<FaqItemProps> = ({ question, answer, isOpen, onToggle }) => {
+    const hasIfList = answer.includes('если:') && answer.match(/—/);
+    const hasTariffList = /(Fast|Express|Normal)\s*–/.test(answer);
+
+    let beforeList = '';
+    let listItems: string[] = [];
+    let afterList = '';
+
+    if (hasIfList) {
+        const [before, after] = answer.split('если:');
+        beforeList = before + 'если:';
+        const lines = after.split('\n');
+        listItems = lines.filter(line => line.trim().startsWith('—'));
+        afterList = lines.filter(line => !line.trim().startsWith('—') && line.trim() !== '').join(' ');
+    } else if (hasTariffList) {
+        const match = answer.match(/^(.*?)(Fast\s*–.*)$/);
+        if (match) {
+            beforeList = match[1];
+            listItems = match[2]
+                .split(/,\s*/)
+                .map(item => item.trim())
+                .filter(Boolean);
+        }
+    }
+
     return (
         <Accordion
             expanded={isOpen}
@@ -46,7 +70,21 @@ const FaqItem: FC<FaqItemProps> = ({ question, answer, isOpen, onToggle }) => {
                 </Button>
             </AccordionSummary>
             <AccordionDetails>
-                <Typography sx={{ fontFamily: 'Involve, sans-serif' }}>{answer}</Typography>
+                {(hasIfList || hasTariffList) ? (
+                    <Typography sx={{ fontFamily: 'Involve, sans-serif' }}>
+                        {beforeList}
+                        <List sx={{ pl: 2 }}>
+                            {listItems.map((item, idx) => (
+                                <ListItem key={idx} sx={{ display: 'list-item', pl: 0 }}>
+                                    {item}
+                                </ListItem>
+                            ))}
+                        </List>
+                        {afterList && <span>{afterList}</span>}
+                    </Typography>
+                ) : (
+                    <Typography sx={{ fontFamily: 'Involve, sans-serif', whiteSpace: 'pre-line' }}>{answer}</Typography>
+                )}
             </AccordionDetails>
         </Accordion>
     );
