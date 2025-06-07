@@ -9,6 +9,10 @@ export const useDocumentSamples = (activeCountry: 'KZ' | 'UA') => {
     const [selectedDocumentName, setSelectedDocumentName] = useState<string | null>(null);
     const { addDocument, selectedDocuments } = useDocumentContext();
 
+    const removeSamplesForDocument = (documentName: string) => {
+        addDocument({ name: documentName, selectedSamples: [] });
+    };
+
     const openSamples = (documentName: string) => {
         const doc = documentTypes[activeCountry].find(d => d.name === documentName);
         if (doc?.samples) {
@@ -47,6 +51,7 @@ export const useDocumentSamples = (activeCountry: 'KZ' | 'UA') => {
         samples,
         selectedDocumentName,
         openSamples,
+        removeSamplesForDocument,
         toggleSampleSelection,
         resetSamples,
     };

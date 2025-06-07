@@ -76,10 +76,9 @@ declare global {
 
 const TypeOfDocument = () => {
 
-    const [activePage, setActivePage] = useState(1);
     const [activeCountry, setActiveCountry] = useState<'KZ' | 'UA'>('KZ');
     const isMobileView = useMediaQuery('(max-width:768px)');
-    const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff, uploadedFiles, setUploadedFiles } = useDocumentContext();
+    const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff, uploadedFiles, setUploadedFiles, activePage, setActivePage } = useDocumentContext();
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
@@ -102,10 +101,24 @@ const TypeOfDocument = () => {
     };
     const {
         samples: selectedSamples,
-        openSamples: handleDocumentSelect,
+        openSamples,
         toggleSampleSelection: handleSampleSelect,
         resetSamples: handleBackToList,
+        removeSamplesForDocument,
     } = useDocumentSamples(activeCountry);
+
+    const handleDocumentSelect = (documentName: string) => {
+        const doc = selectedDocuments.find((doc) => doc.name === documentName);
+        const selectedVariants = doc?.selectedSamples?.length || 0;
+
+        if (selectedVariants > 0) {
+            removeSamplesForDocument(documentName);
+        } else {
+            openSamples(documentName);
+        }
+    };
+
+
 
     const totalValue = selectedDocuments.reduce((total) => {
         switch (tariff) {
@@ -210,6 +223,17 @@ const TypeOfDocument = () => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
     };
+
+    const now = new Date();
+    const todayDate = now.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+    const astanaTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    astanaTime.setMinutes(0, 0, 0);
+    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+
     const handleToLanguageChange = (value: string) => {
         setToLanguage(value);
         handleLanguagePairChange(fromLanguage, value);
@@ -347,7 +371,7 @@ const TypeOfDocument = () => {
                                 title="Normal"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    {iconSrc: timeIcon, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)'},
+                                    {iconSrc: timeIcon, text: `Гарантия доставки до ${tomorrowDate} 9:00 (Астаны)`},
                                     {iconSrc: garry, text: 'Обычная скорость перевода'},
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
@@ -358,9 +382,9 @@ const TypeOfDocument = () => {
                             />
                             <TariffItem
                                 title="Express"
-                                description="Перевод документов завтра на утро"
+                                description="Перевод документов в тот же день"
                                 benefits={[
-                                    {iconSrc: timeIconPurple, text: 'Гарантия доставки до 31 апреля 9:00 (Астаны)'},
+                                    {iconSrc: timeIconPurple, text: `Гарантия доставки до ${todayDate} 21:00 (Астаны)`},
                                     {iconSrc: fast, text: 'Ускоряемся для быстрого перевода'},
                                     {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
@@ -371,9 +395,9 @@ const TypeOfDocument = () => {
                             />
                             <TariffItem
                                 title="Fast"
-                                description="Перевод документов завтра на утро"
+                                description="Перевод документов за 2-3 часа"
                                 benefits={[
-                                    {iconSrc: timeIconWhite, text: 'Гарантия доставки до  "Дата" 11:00 (Астаны)'},
+                                    {iconSrc: timeIconWhite, text: `Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны)`},
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
@@ -557,7 +581,7 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => handleNextStep()}>
+                                        onClick={() => handlePreviousStep()}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
