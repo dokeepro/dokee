@@ -1,8 +1,8 @@
 import React, {FC, useEffect, useState} from 'react';
-import { Checkbox, Tooltip, Dialog } from "@mui/material";
+import {Checkbox, Tooltip, Dialog, IconButton} from "@mui/material";
 import styles from "./DocumentItem.module.scss";
 import Image from "next/image";
-import { IoSearchOutline } from "react-icons/io5";
+import {IoSearchOutline} from "react-icons/io5";
 
 interface DocumentItemProps {
     title: string;
@@ -12,7 +12,7 @@ interface DocumentItemProps {
     onSelect: (title: string) => void;
 }
 
-const DocumentItem: FC<DocumentItemProps> = ({ title, onSelect, img, selectedVariants, selected }) => {
+const DocumentItem: FC<DocumentItemProps> = ({title, onSelect, img, selectedVariants, selected}) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isChecked, setIsChecked] = useState(selected || false);
 
@@ -50,14 +50,18 @@ const DocumentItem: FC<DocumentItemProps> = ({ title, onSelect, img, selectedVar
     return (
         <div
             className={`${styles.wrapper} ${isChecked ? styles.active : ''} ${isEGov ? styles.eGov : ''}`}
-            onClick={handleWrapperClick}
-        >
-            <div className={styles.imgWrapper}>
-                {img && <Image src={img} className={styles.image} alt={title} width={330} height={150} />}
-                {img && <Tooltip title="Посмотреть документ" placement="top">
-                    <IoSearchOutline className={styles.icon} onClick={handleDialogOpen} />
-                </Tooltip>}
-            </div>
+            onClick={handleWrapperClick}>
+            {img &&
+                <div className={styles.imgWrapper}>
+                    {img && <Image src={img} className={styles.image} alt={title} width={330} height={150}/>}
+                    {img && <Tooltip title="Посмотреть документ" placement="top">
+                        <div className={styles.icon}>
+                            <IconButton>
+                                <IoSearchOutline  onClick={handleDialogOpen}/>
+                            </IconButton>
+                        </div>
+                    </Tooltip>}
+                </div>}
             <div className={styles.titlesWrapper}>
                 <div className={styles.titles}>
                     <h3>{title}</h3>
@@ -66,13 +70,11 @@ const DocumentItem: FC<DocumentItemProps> = ({ title, onSelect, img, selectedVar
                 <Checkbox
                     checked={isChecked}
                     onClick={handleCheckboxClick}
-                    onChange={handleCheckboxChange}
-                />
+                    onChange={handleCheckboxChange}/>
             </div>
-
             <Dialog open={isDialogOpen} onClose={handleDialogClose} maxWidth="md">
-                <div style={{textAlign: 'center' }}>
-                    {img && <Image className={styles.dialogImage} src={img} alt={title} width={600} height={400} />}
+                <div style={{textAlign: 'center'}}>
+                    {img && <Image className={styles.dialogImage} src={img} alt={title} width={600} height={400}/>}
                 </div>
             </Dialog>
         </div>

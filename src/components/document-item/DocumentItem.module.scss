@@ -8,7 +8,7 @@
   color: var(--black);
   border: 1px solid #d6e0ec;
   border-radius: 15px;
-  padding: 16px 24px;
+  padding: 15px 20px;
   cursor: pointer;
   flex-direction: column;
   background-color: white;
@@ -21,8 +21,6 @@
   @media screen and (max-width: 768px) {
     padding: 12px;
   }
-
-
 }
 
 .imgWrapper {
@@ -81,6 +79,7 @@
   display: flex;
   width: 100%;
   align-content: center;
+  height: fit-content;
   justify-content: space-between;
   justify-items: center;
   align-items: center;
@@ -99,7 +98,7 @@
     font-family: Involve, sans-serif;
 
     @media screen and (max-width: 768px) {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     @media screen and (max-width: 390px) {

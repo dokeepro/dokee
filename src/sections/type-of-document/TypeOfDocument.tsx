@@ -118,19 +118,29 @@ const TypeOfDocument = () => {
         }
     };
 
-
-
-    const totalValue = selectedDocuments.reduce((total) => {
+    const getUnitPrice = (tariff: string) => {
         switch (tariff) {
             case 'Normal':
-                return total + 499;
+                return 499;
             case 'Express':
-                return total + 699;
+                return 699;
             case 'Fast':
-                return total + 899;
+                return 899;
             default:
-                return total;
+                return 0;
         }
+    };
+
+    const totalValueByTariff = (tariff: string) => {
+        return selectedDocuments.reduce((total, doc) => {
+            const count = doc.selectedSamples?.length || 1;
+            return total + count * getUnitPrice(tariff);
+        }, 0);
+    };
+
+    const totalValue = selectedDocuments.reduce((total, doc) => {
+        const count = doc.selectedSamples?.length || 1;
+        return total + count * getUnitPrice(tariff || '');
     }, 0);
 
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
@@ -140,7 +150,6 @@ const TypeOfDocument = () => {
             setLocalLanguagePair(formatted);
         }
     };
-
     const scrollToSection = (id: string) => {
         if (id === "header") {
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -157,18 +166,14 @@ const TypeOfDocument = () => {
             }
         }
     };
-
-
     const handleNextStep = () => {
         setActivePage(activePage + 1);
         scrollToSection("documents");
     };
-
     const handlePreviousStep = () => {
         setActivePage(activePage - 1);
         scrollToSection("documents");
     };
-
     const capitalize = (str: string) =>
         str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     const handleClosePopup = () => {
@@ -229,11 +234,9 @@ const TypeOfDocument = () => {
     const astanaTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     astanaTime.setMinutes(0, 0, 0);
     const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
-
     const handleToLanguageChange = (value: string) => {
         setToLanguage(value);
         handleLanguagePairChange(fromLanguage, value);
@@ -241,18 +244,7 @@ const TypeOfDocument = () => {
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
     };
-    const renderDocumentType = (name: string) => {
-        const match = name.match(/\((.*?)\)/);
-        const documentName = name.replace(/\s*\(.*?\)/, '');
-        const documentType = match ? `(${match[1]})` : null;
 
-        return (
-            <span>
-            <span style={{color: '#565add'}}>{documentName}</span>
-                {documentType && <> - <span>{documentType}</span></>}
-        </span>
-        );
-    };
     const renderPopupContent = (title: string) => {
         switch (title) {
             case 'Печать':
@@ -282,7 +274,7 @@ const TypeOfDocument = () => {
                             <p>Экибастузское городское отделение регистрации кадастра Павлодарский областной филиал
                                 Коммерческого акционерного общества Государственной корпорации «Правительство для
                                 граждан» ИЗМЕНЕНИЯ И ДОПОЛНЕНИЯ БСН 000940000220 №
-                                346, 472-195-16-АК Первоначальная дата регистрации &quot09&quot октября 2020 г.</p>
+                                346, 472-195-16-АК Первоначальная дата регистрации &quot;09&quot; октября 2020 г.</p>
                         </div>
                     </div>
                 );
@@ -293,9 +285,9 @@ const TypeOfDocument = () => {
                         <div className={styles.texts}>
                             <h3>Обращаем внимание</h3>
                             <p>При условии не заполнения данной информации, Вы согласны с тем, что ФИО будут переведены
-                                по
-                                правилам транслитерации, а печати и штампы отображены в виде текста на языке
-                                перевода: </p>
+                                по правилам транслитерации, а печати и штампы отображены в виде текста
+                                на языке перевода:
+                                (Печать нечитабельна) или (Штамп нечитабельный)</p>
                         </div>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
                                         onClick={handleClosePopup}>
@@ -327,7 +319,6 @@ const TypeOfDocument = () => {
                                 const docInContext = selectedDocuments.find((doc) => doc.name === type.name);
                                 const selectedVariants = docInContext?.selectedSamples?.length || 0;
                                 const isSelected = selectedVariants > 0;
-
                                 return (
                                     <DocumentItem
                                         key={index}
@@ -375,7 +366,7 @@ const TypeOfDocument = () => {
                                     {iconSrc: garry, text: 'Обычная скорость перевода'},
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
-                                price={499}
+                                price={totalValueByTariff("Normal")}
                                 borderRadius={['30px', '0', '0', '30px']}
                                 onSelect={() => handleTariffSelect('Normal')}
                                 isSelected={tariff === 'Normal'}
@@ -388,7 +379,7 @@ const TypeOfDocument = () => {
                                     {iconSrc: fast, text: 'Ускоряемся для быстрого перевода'},
                                     {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
-                                price={699}
+                                price={totalValueByTariff("Express")}
                                 borderRadius={['0', '0', '0', '0']}
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
@@ -401,7 +392,7 @@ const TypeOfDocument = () => {
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
-                                price={899}
+                                price={totalValueByTariff("Fast")}
                                 borderRadius={['0', '30px', '30px', '0']}
                                 onSelect={() => handleTariffSelect('Fast')}
                                 isSelected={tariff === 'Fast'}
@@ -414,14 +405,14 @@ const TypeOfDocument = () => {
                     <div
                         className={styles.dropFile}
                         onDragOver={(e) => e.preventDefault()}
-                        onDrop={handleDrop}
-                    >
+                        onDrop={handleDrop}>
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
-                            Обращаем Ваше внимание, что в случае предоставления некачественных изображений...
+                            Обращаем Ваше внимание, что в случае предоставления некачественных изображений оригинала
+                            документа, Вы соглашаетесь с тем, что будет переведена лишь та часть, которая будет
+                            отчетливо видна. Расшифровку печатей и штампов Вы сможете предоставить на следующем шаге.
                         </h4>
-
                         <label style={{cursor: 'pointer', color: '#565add', textDecoration: 'underline'}}>
                             {isMobileView ? (
                                 <p><span>Загрузите</span> файлы в это окно</p>
@@ -450,77 +441,95 @@ const TypeOfDocument = () => {
                 );
             case 4:
                 return <div className={styles.accordionWrapper}>
-                    {selectedDocuments.map((doc, index) => (
-                        <Accordion key={index}
-                                   sx={{boxShadow: "none", borderBottom: "1px solid #cccccc", padding: "10px 0"}}>
-                            <AccordionSummary expandIcon={<IoIosArrowDown/>}>
-                                <h2 className={styles.accordionTitle}>
-                                    Данные для {renderDocumentType(doc.name)}
-                                </h2>
-                            </AccordionSummary>
-                            <AccordionDetails className={styles.accordionDetails}>
-                                <div className={styles.inputWrapper}>
-                                    <p>
-                                        ФИО латиницей
-                                    </p>
-                                    <Input
-                                        value={doc.fioLatin || ''}
-                                        onChange={(e) => addDocument({name: doc.name, fioLatin: e.target.value})}
-                                        fullWidth
-                                        placeholder="Фамилия Имья Отчество"
-                                        sx={{mb: 2}}
-                                    />
-                                </div>
-                                <div className={styles.inputWrapper}>
-                                    <p>
-                                        Печать
-                                        <Tooltip title="Что означает?">
-                                            <BsFillInfoSquareFill
-                                                className={styles.icon}
-                                                onClick={() => handleOpenPopup(renderPopupContent('Печать'))}
-                                            />
-                                        </Tooltip>
-                                    </p>
-                                    <Input
-                                        value={doc.sealText || ''}
-                                        onChange={(e) => addDocument({ name: doc.name, sealText: e.target.value })}
-                                        fullWidth
-                                        placeholder="Рассшифровка печати"
-                                        sx={{ mb: 2 }}
-                                    />
-                                </div>
-                                <div className={styles.inputWrapper}>
-                                    <p onClick={() => handleOpenPopup(renderPopupContent('Штамп'))}>
-                                        Штамп
-                                        <Tooltip title="Что означает?">
-                                            <BsFillInfoSquareFill
-                                                className={styles.icon}
-                                            />
-                                        </Tooltip>
-                                    </p>
-                                    <Input
-                                        value={doc.stampText || ''}
-                                        onChange={(e) => addDocument({ name: doc.name, stampText: e.target.value })}
-                                        fullWidth
-                                        placeholder="Рассшифровка штампа"
-                                    />
-                                </div>
-                            </AccordionDetails>
-                        </Accordion>
+                    {selectedDocuments.map((doc) => (
+                        (doc.selectedSamples?.length ? doc.selectedSamples : [null]).map((sample) => (
+                            <Accordion
+                                key={`${doc.name}-${sample?.name || 'default'}`}
+                                sx={{
+                                    boxShadow: 'none',
+                                    borderBottom: '1px solid #cccccc',
+                                    padding: '10px 0',
+                                }}>
+                                <AccordionSummary expandIcon={<IoIosArrowDown/>}>
+                                    <h2 className={styles.accordionTitle}>
+                                        Данные для{' '}
+                                        <span style={{color: '#565add'}}>{doc.name.replace(/\s*\(.*?\)/, '')}</span>
+                                        {sample?.name && <> – <span>{sample.name}</span></>}
+                                    </h2>
+                                </AccordionSummary>
+                                <AccordionDetails className={styles.accordionDetails}>
+                                    <div className={styles.inputWrapper}>
+                                        <p>ФИО латиницей</p>
+                                        <Input
+                                            value={doc.fioLatin || ''}
+                                            onChange={(e) =>
+                                                addDocument({name: doc.name, fioLatin: e.target.value})
+                                            }
+                                            fullWidth
+                                            placeholder="Фамилия Имя Отчество"
+                                            sx={{mb: 2}}
+                                        />
+                                    </div>
+                                    <div className={styles.inputWrapper}>
+                                        <p>
+                                            Печать
+                                            <Tooltip title="Что означает?">
+                                                <BsFillInfoSquareFill
+                                                    className={styles.icon}
+                                                    onClick={() => handleOpenPopup(renderPopupContent('Печать'))}
+                                                />
+                                            </Tooltip>
+                                        </p>
+                                        <Input
+                                            value={doc.sealText || ''}
+                                            onChange={(e) =>
+                                                addDocument({name: doc.name, sealText: e.target.value})
+                                            }
+                                            fullWidth
+                                            placeholder="Рассшифровка печати"
+                                            sx={{mb: 2}}
+                                        />
+                                    </div>
+                                    <div className={styles.inputWrapper}>
+                                        <p onClick={() => handleOpenPopup(renderPopupContent('Штамп'))}>
+                                            Штамп
+                                            <Tooltip title="Что означает?">
+                                                <BsFillInfoSquareFill className={styles.icon}/>
+                                            </Tooltip>
+                                        </p>
+                                        <Input
+                                            value={doc.stampText || ''}
+                                            onChange={(e) =>
+                                                addDocument({name: doc.name, stampText: e.target.value})
+                                            }
+                                            fullWidth
+                                            placeholder="Рассшифровка штампа"
+                                        />
+                                    </div>
+                                </AccordionDetails>
+                            </Accordion>
+                        ))
                     ))}
                 </div>;
             case 5:
                 return (
                     <div className={styles.finalDocuments}>
-                        {selectedDocuments.map((doc, index) => (
-                            <DocumentFinalItem
-                                key={index}
-                                documentName={doc.name}
-                                documentFullName={`${doc.name}`}
-                                tariff={tariff || ''}
-                                languagePair={localLanguagePair || ''}
-                            />
-                        ))}
+                        {selectedDocuments.flatMap((doc) =>
+                            (doc.selectedSamples?.length ? doc.selectedSamples : [null]).map((sample) => {
+                                const baseName = doc.name.replace(/\s*\(.*?\)/, '');
+                                const fullName = sample?.name ? `${baseName} (${sample.name})` : doc.name;
+
+                                return (
+                                    <DocumentFinalItem
+                                        key={`${doc.name}-${sample?.name || 'default'}`}
+                                        documentName={baseName}
+                                        documentFullName={fullName}
+                                        tariff={tariff || ''}
+                                        languagePair={localLanguagePair || ''}
+                                    />
+                                );
+                            })
+                        )}
                     </div>
                 );
             default:
@@ -537,7 +546,7 @@ const TypeOfDocument = () => {
                         {selectedSamples ?
                             <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
                                             onClick={handleBackToList}>
-                                Назад
+                                Выбрать ещё
                             </ButtonOutlined>
                             :
                             null
@@ -557,8 +566,7 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => handleNextStep()}
-                        >
+                            onClick={() => handleNextStep()}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
@@ -571,8 +579,7 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => handleNextStep()}
-                        >
+                            onClick={() => handleNextStep()}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
@@ -594,6 +601,9 @@ const TypeOfDocument = () => {
             case 5:
                 return (
                     <div className={styles.documentNavigation}>
+                        <p>
+                            Вы соглашаетесь получать новостные сообщения, их будет мало и редко!
+                        </p>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
                                         onClick={() => setActivePage(activePage - 1)}>
                             Назад
@@ -609,7 +619,6 @@ const TypeOfDocument = () => {
                 return null;
         }
     };
-
     const renderTitle = () => {
         switch (activePage) {
             case 1:
@@ -628,11 +637,12 @@ const TypeOfDocument = () => {
             case 3:
                 return <h2>Загрузите <span>файл</span></h2>;
             case 4:
-                return <h2>Введите <span>данные из документов</span></h2>;
+                return <div className={styles.infoP}>
+                    <h2>Введите <span>данные из документов</span></h2>
+                    <p>Мы сможем гарантировать точный и полный перевод, при условии предоставления ФИО латиницей, а также расшифровки печатей и штампов на русском языке</p>
+                </div>
             case 5:
-                return <h2>Общая стоимость: <span>{totalValue} ₸</span>
-                </h2>
-                    ;
+                return <h2>Общая стоимость: <span>{totalValue} ₸</span></h2>;
             default:
                 return null;
         }

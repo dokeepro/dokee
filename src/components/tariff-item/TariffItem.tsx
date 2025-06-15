@@ -18,7 +18,7 @@ interface TariffItemProps {
     isSelected: boolean;
 }
 
-const TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price, borderRadius = ['30px'], onSelect, isSelected }) => {
+const   TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price, borderRadius = ['30px'], onSelect, isSelected }) => {
     const getBackgroundColor = () => {
         switch (title) {
             case 'Normal':
@@ -55,6 +55,40 @@ const TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price, 
                 return '#ffffff';
             default:
                 return '#fff';
+        }
+    };
+
+    const getButtonBackground = () => {
+        switch (title) {
+            case 'Normal':
+                return '#ffffff';
+            case 'Express':
+                return '#eff0ff';
+            case 'Fast':
+                return '#565add';
+            default:
+                return '#ffffff';
+        }
+    };
+
+    const getButtonBorder = () => {
+        switch (title) {
+            case 'Normal':
+            case 'Express':
+                return isSelected ? '1px solid #565add' : '1px solid #d6e0ec';
+            case 'Fast':
+                return '1px solid #565add';
+            default:
+                return '1px solid #d6e0ec';
+        }
+    };
+
+    const getButtonTextColor = () => {
+        switch (title) {
+            case 'Fast':
+                return '#fff';
+            default:
+                return '#000';
         }
     };
 
@@ -97,20 +131,19 @@ const TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price, 
                 <Button
                     onClick={onSelect}
                     sx={{
-                        backgroundColor: '#ffffff',
-                        color: '#000000',
-                        border: isSelected ? '1px solid #565add' : '1px solid #d6e0ec',
+                        backgroundColor: getButtonBackground(),
+                        color: getButtonTextColor(),
+                        border: getButtonBorder(),
                         textTransform: 'none',
                         padding: '24px 16px',
                         width: '100%',
                         borderRadius: '15px',
                         '&:hover': {
-                            backgroundColor: '#f9f9f9',
+                            backgroundColor: title === 'Fast' ? '#4447b0' : '#f9f9f9',
                             borderColor: '#c0c0c0',
                         },
-                    }}
-                >
-                    {isSelected ? 'Выбрано' : 'Выбрать'}
+                    }}>
+                    {isSelected ? 'Выбрано' : 'Выбрать пакет'}
                 </Button>
             </div>
         </div>

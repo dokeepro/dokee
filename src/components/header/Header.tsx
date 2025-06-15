@@ -80,12 +80,10 @@ const Header = () => {
                         <button onClick={() => scrollToSection("footer")}>Контакты</button>
                         <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                     </div>
-
                     <ButtonOutlined
                         white={true}
                         sx={{width: "fit-content"}}
-                        onClick={() => window.open("https://wa.me/+380972796855", "_blank")}
-                    >
+                        onClick={() => window.open("https://wa.me/+380972796855", "_blank")}>
                         <Image src={whatsIcon} alt={"icon"} width={24} height={24}/>
                         Whatsapp
                     </ButtonOutlined>

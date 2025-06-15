@@ -61,11 +61,29 @@
     font-style: normal;
 }
 
+.videoIntro {
+    position: absolute;
+    top: 50%;
+    right: -20%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+    width: 183px;
+    height: auto;
+    display: flex;
+    z-index: 999;
+
+    &:hover {
+        transform: translateY(-50%) scale(1.1);
+    }
+}
+
 body {
     font-family: 'CraftworkGrotesk', 'Involve', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background: url("../../public/grid.svg");
+    position: relative;
 }
 
 * {

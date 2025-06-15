@@ -46,7 +46,6 @@
   flex-direction: column;
   gap: 14px;
 
-
   button {
     background: none;
     outline: none;
@@ -59,12 +58,18 @@
     color: var(--dark-purple);
     transition: 0.2s ease-in-out;
 
-    @media screen and (max-width: 376px) {
-      font-size: 15px;
+    @media screen and (max-width: 476px) {
+      font-size: 13px;
     }
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  @media screen and (max-width: 476px) {
+    a{
+      font-size: 13px;
     }
   }
 }

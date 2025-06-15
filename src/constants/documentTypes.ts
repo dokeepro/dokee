@@ -138,6 +138,25 @@ const documentTypes = {
             ]
         },
         {
+            name: "Свидетельство о заключении брака", samples: [
+                {sample: {name: "Новый образец", image: marriageCertificate}},
+                {sample: {name: "Старый образец", image: marriageCertificate1}},
+                {sample: {name: "Образец СССР", image: marriageCertificate2}},
+            ]
+        },
+        {
+            name: "Свидетельство о расторжении брака", samples: [
+                {sample: {name: "Новый образец", image: divorceCertificate1}},
+                {sample: {name: "Старый образец", image: divorceCertificate2}},
+            ]
+        },
+        {
+            name: "Справка о ЗП", samples: [
+                {sample: {name: "Образец 1", image: paymentCertificate1}},
+                {sample: {name: "Образец 2", image: paymentCertificate2}},
+            ]
+        },
+        {
             name: "Диплом", samples: [
                 {sample: {name: "Диплом (по специальности)", image: diplom5}},
                 {sample: {name: "Бакалавр (академ. степень)", image: diplom1}},
@@ -176,25 +195,6 @@ const documentTypes = {
             name: "Приложение к аттестату", samples: [
                 {sample: {name: "К аттестату об общем среднем образовании", image: atestatPril1}},
                 {sample: {name: "К аттестату об основном среднем образовании", image: atestatPril2}},
-            ]
-        },
-        {
-            name: "Свидетельство о заключении брака", samples: [
-                {sample: {name: "Новый образец", image: marriageCertificate}},
-                {sample: {name: "Старый образец", image: marriageCertificate1}},
-                {sample: {name: "Образец СССР", image: marriageCertificate2}},
-            ]
-        },
-        {
-            name: "Свидетельство о расторжении брака", samples: [
-                {sample: {name: "Новый образец", image: divorceCertificate1}},
-                {sample: {name: "Старый образец", image: divorceCertificate2}},
-            ]
-        },
-        {
-            name: "Справка о ЗП", samples: [
-                {sample: {name: "Образец 1", image: paymentCertificate1}},
-                {sample: {name: "Образец 2", image: paymentCertificate2}},
             ]
         },
         {

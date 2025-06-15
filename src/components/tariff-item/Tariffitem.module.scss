@@ -49,6 +49,10 @@
   &:first-child {
     border: 1px solid #a5ffb9 !important;
   }
+
+  @media screen and (max-width: 1440px) {
+    font-size: 13px;
+  }
 }
 
 .tariffItemInner {

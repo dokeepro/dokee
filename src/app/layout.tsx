@@ -3,6 +3,7 @@ import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
 import Popup, {PopupProvider} from "@/context/PopupContext";
+import React from "react";
 
 export async function generateMetadata() {
     const title = "Dokee - Быстрый перевод документов";

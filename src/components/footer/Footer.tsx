@@ -51,8 +51,8 @@ const Footer = () => {
                         <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                     </div>
                     <div className={styles.footerLinks}>
-                        <a href="tel:+3800509517841">+ 380 0509517841</a>
-                        <a href="mailto:dokee@gmail.com">dokee@gmail.com</a>
+                        <a href="tel:+380930560388">+ 380 0509517841</a>
+                        <a href="mailto:dokee.pro@gmail.com">dokee@gmail.com</a>
                     </div>
                 </div>
                 <div className={styles.footerSocials}>
