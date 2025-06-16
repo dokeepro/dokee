@@ -13,6 +13,13 @@
   padding: 0 0 3% 0;
 }
 
+.uploadedList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: start;
+}
+
 .titles {
   display: flex;
   text-align: center;
@@ -108,7 +115,7 @@
       gap: 5px;
       font-size: 16px;
 
-      a {
+      span {
         text-decoration: underline;
       }
     }

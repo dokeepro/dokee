@@ -29,6 +29,8 @@ interface DocumentContextProps {
     setLanguagePair: (pair: string) => void;
     setTariff: (tariff: string) => void;
     removeDocument: (name: string) => void;
+    country: 'KZ' | 'UA';
+    setCountry: (country: 'KZ' | 'UA') => void;
 }
 
 const DocumentContext = createContext<DocumentContextProps | undefined>(undefined);
@@ -39,6 +41,7 @@ export const DocumentProvider = ({children}: { children: ReactNode }) => {
     const [tariff, setTariff] = useState<string | null>(null);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [activePage, setActivePage] = useState<number>(1);
+    const [country, setCountry] = useState<'KZ' | 'UA'>('KZ'); // ← Додано
 
     const addDocument = (document: Document) => {
         setSelectedDocuments((prev) => {
@@ -64,12 +67,15 @@ export const DocumentProvider = ({children}: { children: ReactNode }) => {
                 setTariff,
                 removeDocument: (name: string) =>
                     setSelectedDocuments((prev) => prev.filter((doc) => doc.name !== name)),
+                country,
+                setCountry,
             }}
         >
             {children}
         </DocumentContext.Provider>
     );
 };
+
 
 export const useDocumentContext = () => {
     const context = useContext(DocumentContext);

@@ -16,9 +16,13 @@ interface TariffItemProps {
     borderRadius?: string[];
     onSelect: () => void;
     isSelected: boolean;
+    selectedTariff?: string;
 }
 
-const   TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price, borderRadius = ['30px'], onSelect, isSelected }) => {
+const TariffItem: FC<TariffItemProps> = ({
+                                             title, description, benefits, price, borderRadius = ['30px'],
+                                             onSelect, isSelected, selectedTariff
+                                         }) => {
     const getBackgroundColor = () => {
         switch (title) {
             case 'Normal':
@@ -105,12 +109,16 @@ const   TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price
         }
     };
 
+    const opacity = selectedTariff && !isSelected ? 0.5 : 1;
+
     return (
         <div
             className={styles.tariffItem}
             style={{
                 background: getBackgroundColor(),
                 borderRadius: borderRadius.join(' '),
+                opacity,
+                transition: 'opacity 0.3s'
             }}>
             <div className={styles.tariffItemInner}>
                 <div className={styles.tariffTitle} >

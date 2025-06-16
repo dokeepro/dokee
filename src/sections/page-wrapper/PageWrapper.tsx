@@ -3,7 +3,7 @@
 import React, { FC, useState } from 'react';
 import styles from "./PageWrapper.module.scss";
 import Image from "next/image";
-import videoIntro from "@/assets/images/videoIntroDivided.svg";
+import videoIntro from "@/assets/images/video-intro.svg";
 import Dialog from '@mui/material/Dialog';
 
 interface PageWrapperProps {
@@ -24,8 +24,7 @@ const PageWrapper:FC<PageWrapperProps> = ({children}) => {
                 height="183"
                 width="138"
                 onClick={() => setOpen(true)}
-                style={{ cursor: 'pointer' }}
-            />
+                style={{ cursor: 'pointer' }}/>
             <Dialog
                 open={open}
                 onClose={() => setOpen(false)}

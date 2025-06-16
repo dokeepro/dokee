@@ -125,6 +125,13 @@
   }
 }
 
+.mobileOnly {
+  display: none;
+  @media (max-width: 768px) {
+    display: block;
+  }
+}
+
 .selectors {
   display: flex;
   width: 100%;

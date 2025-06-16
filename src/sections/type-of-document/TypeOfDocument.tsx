@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState} from 'react';
+import React, {useRef, useState} from 'react';
 import styles from "./TypeOfDocument.module.scss";
 import {Accordion, AccordionDetails, AccordionSummary, Button, Tooltip, useMediaQuery} from "@mui/material";
 import uaFlag from "@/assets/icons/ua-icon.png";
@@ -32,7 +32,7 @@ import warningExample from "@/assets/icons/icon-blue.svg"
 import DocumentFinalItem from '@/components/document-final-item/DocumentFinalItem';
 import {useDocumentSamples} from "@/hooks/useDocumentSamples";
 import {usePopup} from "@/context/PopupContext";
-import { TiTimes } from "react-icons/ti";
+import {TiTimes} from "react-icons/ti";
 import IconButton from '@mui/material/IconButton';
 
 type WayforpayPaymentData = {
@@ -77,10 +77,19 @@ declare global {
 }
 
 const TypeOfDocument = () => {
-
-    const [activeCountry, setActiveCountry] = useState<'KZ' | 'UA'>('KZ');
+    const { country: activeCountry, setCountry: setActiveCountry } = useDocumentContext();
     const isMobileView = useMediaQuery('(max-width:768px)');
-    const {addDocument, selectedDocuments, setLanguagePair, setTariff, tariff, uploadedFiles, setUploadedFiles, activePage, setActivePage } = useDocumentContext();
+    const {
+        addDocument,
+        selectedDocuments,
+        setLanguagePair,
+        setTariff,
+        tariff,
+        uploadedFiles,
+        setUploadedFiles,
+        activePage,
+        setActivePage
+    } = useDocumentContext();
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
@@ -94,6 +103,25 @@ const TypeOfDocument = () => {
             () => doc.fioLatin?.trim() && doc.sealText?.trim() && doc.stampText?.trim()
         )
     );
+
+    const tariffsRef = useRef<HTMLDivElement>(null);
+    const [tariffStep, setTariffStep] = useState(1);
+
+    const handleTariffsScroll = () => {
+        const el = tariffsRef.current;
+        if (!el) return;
+        const scrollLeft = el.scrollLeft;
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        const percent = maxScroll === 0 ? 0 : scrollLeft / maxScroll;
+
+        if (percent >= 0.99) {
+            setTariffStep(3);
+        } else if (percent >= 0.5) {
+            setTariffStep(2);
+        } else {
+            setTariffStep(1);
+        }
+    };
 
     const handleRemoveFile = (index: number) => {
         setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
@@ -181,7 +209,7 @@ const TypeOfDocument = () => {
     };
     const scrollToSection = (id: string) => {
         if (id === "header") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.scrollTo({top: 0, behavior: "smooth"});
         } else {
             const section = document.getElementById(id);
             if (section) {
@@ -189,7 +217,7 @@ const TypeOfDocument = () => {
                 const top = id === "footer"
                     ? document.body.scrollHeight - window.innerHeight
                     : section.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top, behavior: "smooth" });
+                window.scrollTo({top, behavior: "smooth"});
             } else {
                 console.error(`Element with id "${id}" not found.`);
             }
@@ -260,13 +288,13 @@ const TypeOfDocument = () => {
     };
 
     const now = new Date();
-    const todayDate = now.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+    const todayDate = now.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
     const astanaTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
     astanaTime.setMinutes(0, 0, 0);
-    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+    const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
     const handleToLanguageChange = (value: string) => {
         setToLanguage(value);
         handleLanguagePairChange(fromLanguage, value);
@@ -387,7 +415,11 @@ const TypeOfDocument = () => {
                             </div>
                             <p style={{color: "red"}}>{fromLanguage === toLanguage ? "Языковая пара не может быть одинаковой" : ""}</p>
                         </div>
-                        <div className={styles.tariffs}>
+                        <div
+                            className={styles.tariffs}
+                            ref={tariffsRef}
+                            onScroll={handleTariffsScroll}
+                            style={{overflowX: 'auto', display: 'flex'}}>
                             <TariffItem
                                 title="Normal"
                                 description="Перевод документов завтра на утро"
@@ -400,6 +432,7 @@ const TypeOfDocument = () => {
                                 borderRadius={['30px', '0', '0', '30px']}
                                 onSelect={() => handleTariffSelect('Normal')}
                                 isSelected={tariff === 'Normal'}
+                                selectedTariff={tariff || ""}
                             />
                             <TariffItem
                                 title="Express"
@@ -413,12 +446,16 @@ const TypeOfDocument = () => {
                                 borderRadius={['0', '0', '0', '0']}
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
+                                selectedTariff={tariff || ""}
                             />
                             <TariffItem
                                 title="Fast"
                                 description="Перевод документов за 2-3 часа"
                                 benefits={[
-                                    {iconSrc: timeIconWhite, text: `Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны)`},
+                                    {
+                                        iconSrc: timeIconWhite,
+                                        text: `Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны)`
+                                    },
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
@@ -426,7 +463,12 @@ const TypeOfDocument = () => {
                                 borderRadius={['0', '30px', '30px', '0']}
                                 onSelect={() => handleTariffSelect('Fast')}
                                 isSelected={tariff === 'Fast'}
+                                selectedTariff={tariff || ""}
                             />
+                        </div>
+                        <div className={styles.mobileOnly} style={{margin: "5px auto", fontSize: "20px"}}>
+                            <span style={{color: '#000', fontWeight: 600}}>{tariffStep}/</span>
+                            <span style={{color: '#bdbdbd', fontWeight: 600}}>3</span>
                         </div>
                     </div>
                 );
@@ -456,11 +498,10 @@ const TypeOfDocument = () => {
                                 style={{display: 'none'}}
                             />
                         </label>
-
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
-                                    <li key={index} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <li key={index} style={{display: 'flex', alignItems: 'center', gap: 8}}>
                                         {index + 1}. {file.name}
                                         <IconButton
                                             size="small"
@@ -468,12 +509,12 @@ const TypeOfDocument = () => {
                                                 marginLeft: 1,
                                                 color: '#fff',
                                                 backgroundColor: '#f44336',
-                                                '&:hover': { backgroundColor: '#d32f2f' },
+                                                '&:hover': {backgroundColor: '#d32f2f'},
                                                 width: 24,
                                                 height: 24,
                                             }}
                                             onClick={() => handleRemoveFile(index)}>
-                                            <TiTimes size={16} />
+                                            <TiTimes size={16}/>
                                         </IconButton>
                                     </li>
                                 ))}
@@ -596,7 +637,7 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         {selectedSamples && (
-                            <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handleBackToList}>
+                            <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handleBackToList}>
                                 Выбрать ещё
                             </ButtonOutlined>
                         )}
@@ -611,7 +652,7 @@ const TypeOfDocument = () => {
             case 3:
                 return (
                     <div className={styles.documentNavigation}>
-                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handlePreviousStep}>
+                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined sx={nextButtonStyle} onClick={handleNextStep} disabled={isNextDisabled()}>
@@ -622,7 +663,7 @@ const TypeOfDocument = () => {
             case 4:
                 return (
                     <div className={styles.documentNavigation}>
-                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handlePreviousStep}>
+                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
@@ -639,7 +680,8 @@ const TypeOfDocument = () => {
                         <p>
                             Вы соглашаетесь получать новостные сообщения, их будет мало и редко!
                         </p>
-                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={() => setActivePage(activePage - 1)}>
+                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
+                                        onClick={() => setActivePage(activePage - 1)}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined onClick={handleSendData}>
@@ -671,7 +713,8 @@ const TypeOfDocument = () => {
             case 4:
                 return <div className={styles.infoP}>
                     <h2>Введите <span>данные из документов</span></h2>
-                    <p>Мы сможем гарантировать точный и полный перевод, при условии предоставления ФИО латиницей, а также расшифровки печатей и штампов на русском языке</p>
+                    <p>Мы сможем гарантировать точный и полный перевод, при условии предоставления ФИО латиницей, а
+                        также расшифровки печатей и штампов на русском языке</p>
                 </div>
             case 5:
                 return <h2>Общая стоимость: <span>{totalValue} ₸</span></h2>;
@@ -681,44 +724,46 @@ const TypeOfDocument = () => {
     }
 
     return (
-        <div className={styles.wrapper} id="documents">
+        <div className={styles.wrapper} id="calculator">
             <div className={styles.toggles}>
-                <Button
-                    onClick={() => setActiveCountry('KZ')}
-                    sx={{
-                        borderRadius: "10px 0 0 0",
-                        backgroundColor: activeCountry === 'KZ' ? '#565add' : '#eff0ff',
-                        color: activeCountry === 'KZ' ? '#fff' : '#000',
-                        textTransform: "none",
-                        gap: "7px",
-                        fontSize: "16px",
-                        padding: "14px 27px",
-                        '&:hover': {
-                            backgroundColor: '#565add',
-                            color: '#fff',
-                        },
-                    }}>
-                    <Image src={kzFlag} alt="ua" width={16} height={16}/>
-                    Казахстан
-                </Button>
-                <Button
-                    onClick={() => setActiveCountry('UA')}
-                    sx={{
-                        borderRadius: "0 10px 0 0",
-                        backgroundColor: activeCountry === 'UA' ? '#565add' : '#eff0ff',
-                        color: activeCountry === 'UA' ? '#fff' : '#000',
-                        textTransform: "none",
-                        gap: "7px",
-                        padding: "14px 27px",
-                        fontSize: "16px",
-                        '&:hover': {
-                            backgroundColor: '#565add',
-                            color: '#fff',
-                        },
-                    }}>
-                    <Image src={uaFlag} alt="kz" width={16} height={16}/>
-                    Украина
-                </Button>
+                    <Button
+                        onClick={() => setActiveCountry('KZ')}
+                        disabled={activePage >= 2}
+                        sx={{
+                            borderRadius: "10px 0 0 0",
+                            backgroundColor: activeCountry === 'KZ' ? '#565add' : '#eff0ff',
+                            color: activeCountry === 'KZ' ? '#fff' : '#000',
+                            textTransform: "none",
+                            gap: "7px",
+                            fontSize: "16px",
+                            padding: "14px 27px",
+                            '&:hover': {
+                                backgroundColor: '#565add',
+                                color: '#fff',
+                            },
+                        }}>
+                        <Image src={kzFlag} alt="kz" width={16} height={16}/>
+                        Казахстан
+                    </Button>
+                    <Button
+                        onClick={() => setActiveCountry('UA')}
+                        disabled={activePage >= 2}
+                        sx={{
+                            borderRadius: "0 10px 0 0",
+                            backgroundColor: activeCountry === 'UA' ? '#565add' : '#eff0ff',
+                            color: activeCountry === 'UA' ? '#fff' : '#000',
+                            textTransform: "none",
+                            gap: "7px",
+                            padding: "14px 27px",
+                            fontSize: "16px",
+                            '&:hover': {
+                                backgroundColor: '#565add',
+                                color: '#fff',
+                            },
+                        }}>
+                        <Image src={uaFlag} alt="ua" width={16} height={16}/>
+                        Украина
+                    </Button>
             </div>
             <div className={styles.documents}>
                 <div className={styles.documentsHeader}>

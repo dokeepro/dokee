@@ -7,14 +7,14 @@
 
 .videoIntro {
   display: flex;
-  position: absolute;
-  right: 0;
+  position: fixed;
+  right: -2%;
   width: 133px;
   height: auto;
-  top: 25%;
+  top: 55%;
   transform: translateY(-50%);
   cursor: pointer;
-  transition: 0.1s all ease-in-out;
+  transition: right 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
 
   @media screen and (max-width: 1500px) {
     width: 60px;
@@ -22,6 +22,7 @@
 
   &:hover {
     width: 190px;
+    right: 2%;
 
     @media screen and (max-width: 1500px) {
       width: 180px;
@@ -29,7 +30,11 @@
   }
 
   @media screen and (max-width: 724px) {
-    display: none;
+    display: flex;
+    z-index: 999;
+    right: 2%;
+    margin: 50% 0 0 0;
+    width: 85px
   }
 }
 

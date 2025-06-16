@@ -10,6 +10,7 @@ import logo from "@/assets/logos/dokee-logo.svg";
 import logoWhite from "@/assets/logos/logo-white.svg";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import { Drawer, useMediaQuery } from "@mui/material";
+import Link from 'next/link';
 
 const Header = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -39,7 +40,9 @@ const Header = () => {
 
     return (
         <header className={styles.header} id="header">
-            <Image src={logo} alt="logo" width={132} height={30} onClick={() => scrollToSection("header")}/>
+            <Link href="/">
+                <Image src={logo} alt="logo" width={132} height={30}/>
+            </Link>
             <div className={styles.nav}>
                 <div className={styles.navLinks}>
                     <button onClick={() => scrollToSection("calculator")}>Калькулятор</button>

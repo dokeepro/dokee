@@ -18,7 +18,11 @@ const Footer = () => {
         } else {
             const section = document.getElementById(id);
             if (section) {
-                section.scrollIntoView({ behavior: "smooth" });
+                const offset = id === "footer" ? 0 : window.innerHeight * 0.2;
+                const top = id === "footer"
+                    ? document.body.scrollHeight - window.innerHeight
+                    : section.getBoundingClientRect().top + window.scrollY - offset;
+                window.scrollTo({ top, behavior: "smooth" });
             } else {
                 console.error(`Element with id "${id}" not found.`);
             }
@@ -29,18 +33,18 @@ const Footer = () => {
         <footer className={styles.footer} id="footer">
             <div className={styles.footerSection}>
                 <Button onClick={() => scrollToSection("header")}
-                    sx={{
-                        width: '90px',
-                        height: '90px',
-                        borderRadius: '20px',
-                        backgroundColor: '#565add',
-                        color: '#ffffff',
-                        minWidth: '90px',
-                        fontSize: '2rem',
-                        '&:hover': {
-                            backgroundColor: '#464acb',
-                        },
-                    }}>
+                        sx={{
+                            width: '90px',
+                            height: '90px',
+                            borderRadius: '20px',
+                            backgroundColor: '#565add',
+                            color: '#ffffff',
+                            minWidth: '90px',
+                            fontSize: '2rem',
+                            '&:hover': {
+                                backgroundColor: '#464acb',
+                            },
+                        }}>
                     <MdOutlineKeyboardArrowUp/>
                 </Button>
                 <div className={styles.footerLinksWrapper}>
@@ -51,26 +55,45 @@ const Footer = () => {
                         <button onClick={() => scrollToSection("faq")}>Частые вопросы</button>
                     </div>
                     <div className={styles.footerLinks}>
-                        <a href="tel:+380930560388">+ 380 0509517841</a>
-                        <a href="mailto:dokee.pro@gmail.com">dokee@gmail.com</a>
+                        <a href="tel:+380930560388">+380 93 056 03 88</a>
+                        <a href="mailto:dokee.pro@gmail.com">dokee.pro@gmail.com</a>
                     </div>
                 </div>
                 <div className={styles.footerSocials}>
                     <Tooltip title="Instagram">
-                        <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
+                        <IconButton
+                            component={Link}
+                            sx={{color: "#a7a9eb"}}
+                            href="https://instagram.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            color="primary"
+                        >
                             <FaInstagram/>
                         </IconButton>
                     </Tooltip>
-
                     <Tooltip title="Facebook">
-                        <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
+                        <IconButton
+                            component={Link}
+                            sx={{color: "#a7a9eb"}}
+                            href="https://facebook.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            color="primary"
+                        >
                             <FaFacebookF/>
                         </IconButton>
                     </Tooltip>
-
                     <Tooltip title="Twitter">
-                        <IconButton component={Link} sx={{color: "#a7a9eb"}} href="#" color="primary">
-                            <BsTwitterX />
+                        <IconButton
+                            component={Link}
+                            sx={{color: "#a7a9eb"}}
+                            href="https://twitter.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            color="primary"
+                        >
+                            <BsTwitterX/>
                         </IconButton>
                     </Tooltip>
                 </div>
