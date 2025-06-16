@@ -30,6 +30,7 @@ const Header = () => {
                     ? document.body.scrollHeight - window.innerHeight
                     : section.getBoundingClientRect().top + window.scrollY - offset;
                 window.scrollTo({ top, behavior: "smooth" });
+                setIsDrawerOpen(false)
             } else {
                 console.error(`Element with id "${id}" not found.`);
             }

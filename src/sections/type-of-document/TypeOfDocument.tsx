@@ -32,6 +32,8 @@ import warningExample from "@/assets/icons/icon-blue.svg"
 import DocumentFinalItem from '@/components/document-final-item/DocumentFinalItem';
 import {useDocumentSamples} from "@/hooks/useDocumentSamples";
 import {usePopup} from "@/context/PopupContext";
+import { TiTimes } from "react-icons/ti";
+import IconButton from '@mui/material/IconButton';
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -84,6 +86,33 @@ const TypeOfDocument = () => {
     const {openPopup, closePopup} = usePopup();
     const [loading, setLoading] = useState(false);
     const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
+    const isPage1Valid = selectedDocuments.length > 0;
+    const isPage2Valid = !!tariff && fromLanguage !== toLanguage;
+    const isPage3Valid = uploadedFiles.length > 0;
+    const isPage4Valid = selectedDocuments.every((doc) =>
+        doc.selectedSamples?.every(
+            () => doc.fioLatin?.trim() && doc.sealText?.trim() && doc.stampText?.trim()
+        )
+    );
+
+    const handleRemoveFile = (index: number) => {
+        setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+    }
+
+    const isNextDisabled = () => {
+        switch (activePage) {
+            case 1:
+                return !isPage1Valid;
+            case 2:
+                return !isPage2Valid;
+            case 3:
+                return !isPage3Valid;
+            case 4:
+                return !isPage4Valid;
+            default:
+                return false;
+        }
+    };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -224,6 +253,7 @@ const TypeOfDocument = () => {
             setLoading(false);
         }
     };
+
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
@@ -430,14 +460,26 @@ const TypeOfDocument = () => {
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
-                                    <li key={index}>
+                                    <li key={index} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         {index + 1}. {file.name}
+                                        <IconButton
+                                            size="small"
+                                            sx={{
+                                                marginLeft: 1,
+                                                color: '#fff',
+                                                backgroundColor: '#f44336',
+                                                '&:hover': { backgroundColor: '#d32f2f' },
+                                                width: 24,
+                                                height: 24,
+                                            }}
+                                            onClick={() => handleRemoveFile(index)}>
+                                            <TiTimes size={16} />
+                                        </IconButton>
                                     </li>
                                 ))}
                             </ul>
                         )}
                     </div>
-
                 );
             case 4:
                 return <div className={styles.accordionWrapper}>
@@ -536,50 +578,43 @@ const TypeOfDocument = () => {
                 return <p>Invalid page.</p>;
         }
     };
-    const renderButtons = () => {
-        const isNextDisabled = activePage === 2 && selectedDocuments.length === 0;
 
+    const nextButtonStyle = {
+        backgroundColor: isNextDisabled() ? '#f0f0f0' : '#565add',
+        color: isNextDisabled() ? '#aaa' : '#fff',
+        border: '2px solid',
+        borderColor: isNextDisabled() ? '#ddd' : '#b1b4f1',
+        cursor: isNextDisabled() ? 'not-allowed' : 'pointer',
+        '&:hover': {
+            backgroundColor: isNextDisabled() ? '#f0f0f0' : '#4040c4',
+        },
+    };
+
+    const renderButtons = () => {
         switch (activePage) {
             case 1:
                 return (
                     <div className={styles.documentNavigation}>
-                        {selectedSamples ?
-                            <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                            onClick={handleBackToList}>
+                        {selectedSamples && (
+                            <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handleBackToList}>
                                 Выбрать ещё
                             </ButtonOutlined>
-                            :
-                            null
-                        }
-                        <ButtonOutlined onClick={
-                            selectedSamples ? handleBackToList : () => handleNextStep()}
-                                        disabled={isNextDisabled}>
+                        )}
+                        <ButtonOutlined
+                            onClick={selectedSamples ? handleBackToList : handleNextStep}
+                            disabled={isNextDisabled()} sx={nextButtonStyle}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
                 );
             case 2:
-                return (
-                    <div className={styles.documentNavigation}>
-                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={handlePreviousStep}>
-                            Назад
-                        </ButtonOutlined>
-                        <ButtonOutlined
-                            onClick={() => handleNextStep()}>
-                            Продолжить
-                        </ButtonOutlined>
-                    </div>
-                );
             case 3:
                 return (
                     <div className={styles.documentNavigation}>
-                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => handlePreviousStep()}>
+                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
-                        <ButtonOutlined
-                            onClick={() => handleNextStep()}>
+                        <ButtonOutlined sx={nextButtonStyle} onClick={handleNextStep} disabled={isNextDisabled()}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
@@ -587,13 +622,13 @@ const TypeOfDocument = () => {
             case 4:
                 return (
                     <div className={styles.documentNavigation}>
-                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => handlePreviousStep()}>
+                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
                             onClick={() => handleOpenPopup(renderPopupContent('Предупреждение'))}
-                            disabled={isNextDisabled}>
+                            disabled={isNextDisabled()} sx={nextButtonStyle}
+                        >
                             Продолжить
                         </ButtonOutlined>
                     </div>
@@ -604,13 +639,10 @@ const TypeOfDocument = () => {
                         <p>
                             Вы соглашаетесь получать новостные сообщения, их будет мало и редко!
                         </p>
-                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => setActivePage(activePage - 1)}>
+                        <ButtonOutlined outlined sx={{ borderColor: "1px solid #d6e0ec" }} onClick={() => setActivePage(activePage - 1)}>
                             Назад
                         </ButtonOutlined>
-                        <ButtonOutlined
-                            onClick={() => handleSendData()}
-                        >
+                        <ButtonOutlined onClick={handleSendData}>
                             {loading ? 'Обработка...' : 'Перейти к оплате'}
                         </ButtonOutlined>
                     </div>

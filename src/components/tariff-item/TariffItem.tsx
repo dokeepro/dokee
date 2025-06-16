@@ -143,7 +143,7 @@ const   TariffItem: FC<TariffItemProps> = ({ title, description, benefits, price
                             borderColor: '#c0c0c0',
                         },
                     }}>
-                    {isSelected ? 'Выбрано' : 'Выбрать пакет'}
+                    {isSelected ? 'Пакет выбран' : 'Выбрать пакет'}
                 </Button>
             </div>
         </div>
