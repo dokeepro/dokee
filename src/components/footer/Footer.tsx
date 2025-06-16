@@ -67,8 +67,7 @@ const Footer = () => {
                             href="https://instagram.com/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            color="primary"
-                        >
+                            color="primary">
                             <FaInstagram/>
                         </IconButton>
                     </Tooltip>
@@ -79,8 +78,7 @@ const Footer = () => {
                             href="https://facebook.com/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            color="primary"
-                        >
+                            color="primary">
                             <FaFacebookF/>
                         </IconButton>
                     </Tooltip>
@@ -91,8 +89,7 @@ const Footer = () => {
                             href="https://twitter.com/"
                             target="_blank"
                             rel="noopener noreferrer"
-                            color="primary"
-                        >
+                            color="primary">
                             <BsTwitterX/>
                         </IconButton>
                     </Tooltip>

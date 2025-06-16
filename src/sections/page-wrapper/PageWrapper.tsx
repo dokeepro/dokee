@@ -36,15 +36,16 @@ const PageWrapper:FC<PageWrapperProps> = ({children}) => {
                         boxShadow: "none"
                     }
                 }}>
-                <iframe
-                    width="560"
-                    height="315"
-                    src={`https://www.youtube.com/embed/${YT_VIDEO_ID}`}
-                    title="YouTube video"
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                    style={{ border: 0, margin: 24 }}/>
+                <div className={styles.videoDialogContainer} style={{ padding: 0 }}>
+                    <iframe
+                        src={`https://www.youtube.com/embed/${YT_VIDEO_ID}`}
+                        title="YouTube video"
+                        frameBorder="0"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        className={styles.videoDialogFrame}
+                    />
+                </div>
             </Dialog>
             <main className={styles.main}>
                 {children}

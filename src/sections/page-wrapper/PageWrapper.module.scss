@@ -5,6 +5,22 @@
   position: relative;
 }
 
+.videoDialogContainer {
+  position: relative;
+  width: 90vw;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+.videoDialogFrame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 .videoIntro {
   display: flex;
   position: fixed;
@@ -17,7 +33,8 @@
   transition: right 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
 
   @media screen and (max-width: 1500px) {
-    width: 60px;
+    width: 90px;
+    z-index: 99;
   }
 
   &:hover {
