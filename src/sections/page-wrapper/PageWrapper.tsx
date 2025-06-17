@@ -24,19 +24,21 @@ const PageWrapper:FC<PageWrapperProps> = ({children}) => {
                 height="183"
                 width="138"
                 onClick={() => setOpen(true)}
-                style={{ cursor: 'pointer' }}/>
+                style={{cursor: 'pointer'}}
+            />
             <Dialog
                 open={open}
                 onClose={() => setOpen(false)}
-                maxWidth="md"
+                maxWidth={false}
                 PaperProps={{
                     sx: {
                         p: 0,
                         background: "transparent",
-                        boxShadow: "none"
-                    }
-                }}>
-                <div className={styles.videoDialogContainer} style={{ padding: 0 }}>
+                        boxShadow: "none",
+                    },
+                }}
+            >
+                <div className={styles.videoDialogContainer}>
                     <iframe
                         src={`https://www.youtube.com/embed/${YT_VIDEO_ID}`}
                         title="YouTube video"
@@ -47,10 +49,9 @@ const PageWrapper:FC<PageWrapperProps> = ({children}) => {
                     />
                 </div>
             </Dialog>
-            <main className={styles.main}>
-                {children}
-            </main>
+            <main className={styles.main}>{children}</main>
         </div>
+
     );
 };
 
