@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import styles from "./PageWrapper.module.scss";
 import Image from "next/image";
 import videoIntro from "@/assets/images/video-intro.svg";
@@ -10,22 +10,35 @@ interface PageWrapperProps {
     children: React.ReactNode;
 }
 
-const PageWrapper:FC<PageWrapperProps> = ({children}) => {
-
+const PageWrapper: FC<PageWrapperProps> = ({ children }) => {
     const [open, setOpen] = useState(false);
+    const [visible, setVisible] = useState(false);
     const YT_VIDEO_ID = "RzVvThhjAKw";
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = scrollTop / docHeight;
+
+            setVisible(scrollPercent >= 0.05 && scrollPercent <= 0.4);
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div className={styles.outer}>
             <Image
                 src={videoIntro}
-                className={styles.videoIntro}
                 alt="Video"
-                height="183"
-                width="138"
+                height={183}
+                width={138}
                 onClick={() => setOpen(true)}
-                style={{cursor: 'pointer'}}
+                className={`${styles.videoIntro} ${visible ? styles.visible : ""}`}
             />
+
             <Dialog
                 open={open}
                 onClose={() => setOpen(false)}
@@ -49,9 +62,9 @@ const PageWrapper:FC<PageWrapperProps> = ({children}) => {
                     />
                 </div>
             </Dialog>
+
             <main className={styles.main}>{children}</main>
         </div>
-
     );
 };
 

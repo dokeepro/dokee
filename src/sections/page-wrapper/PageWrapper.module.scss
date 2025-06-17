@@ -5,6 +5,7 @@
   position: relative;
 }
 
+
 .videoDialogContainer {
   position: relative;
   width: 80vw;
@@ -30,7 +31,12 @@
   top: 55%;
   transform: translateY(-50%);
   cursor: pointer;
-  transition: right 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: all 0.3s ease-in-out;
+  opacity: 0;
+
+  &.visible {
+    opacity: 1;
+  }
 
   @media screen and (max-width: 1500px) {
     width: 90px;

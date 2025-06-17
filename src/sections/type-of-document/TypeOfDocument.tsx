@@ -724,46 +724,46 @@ const TypeOfDocument = () => {
     }
 
     return (
-        <div className={styles.wrapper} id="calculator">
+        <div className={styles.wrapper} id="calculator" >
             <div className={styles.toggles}>
-                    <Button
-                        onClick={() => setActiveCountry('KZ')}
-                        disabled={activePage >= 2}
-                        sx={{
-                            borderRadius: "10px 0 0 0",
-                            backgroundColor: activeCountry === 'KZ' ? '#565add' : '#eff0ff',
-                            color: activeCountry === 'KZ' ? '#fff' : '#000',
-                            textTransform: "none",
-                            gap: "7px",
-                            fontSize: "16px",
-                            padding: "14px 27px",
-                            '&:hover': {
-                                backgroundColor: '#565add',
-                                color: '#fff',
-                            },
-                        }}>
-                        <Image src={kzFlag} alt="kz" width={16} height={16}/>
-                        Казахстан
-                    </Button>
-                    <Button
-                        onClick={() => setActiveCountry('UA')}
-                        disabled={activePage >= 2}
-                        sx={{
-                            borderRadius: "0 10px 0 0",
-                            backgroundColor: activeCountry === 'UA' ? '#565add' : '#eff0ff',
-                            color: activeCountry === 'UA' ? '#fff' : '#000',
-                            textTransform: "none",
-                            gap: "7px",
-                            padding: "14px 27px",
-                            fontSize: "16px",
-                            '&:hover': {
-                                backgroundColor: '#565add',
-                                color: '#fff',
-                            },
-                        }}>
-                        <Image src={uaFlag} alt="ua" width={16} height={16}/>
-                        Украина
-                    </Button>
+                <Button
+                    onClick={() => setActiveCountry('KZ')}
+                    disabled={activePage >= 2}
+                    sx={{
+                        borderRadius: "10px 0 0 0",
+                        backgroundColor: activeCountry === 'KZ' ? '#565add' : '#eff0ff',
+                        color: activeCountry === 'KZ' ? '#fff' : '#000',
+                        textTransform: "none",
+                        gap: "7px",
+                        fontSize: "16px",
+                        padding: "14px 27px",
+                        '&:hover': {
+                            backgroundColor: '#565add',
+                            color: '#fff',
+                        },
+                    }}>
+                    <Image src={kzFlag} alt="kz" width={16} height={16}/>
+                    Казахстан
+                </Button>
+                <Button
+                    onClick={() => setActiveCountry('UA')}
+                    disabled={activePage >= 2}
+                    sx={{
+                        borderRadius: "0 10px 0 0",
+                        backgroundColor: activeCountry === 'UA' ? '#565add' : '#eff0ff',
+                        color: activeCountry === 'UA' ? '#fff' : '#000',
+                        textTransform: "none",
+                        gap: "7px",
+                        padding: "14px 27px",
+                        fontSize: "16px",
+                        '&:hover': {
+                            backgroundColor: '#565add',
+                            color: '#fff',
+                        },
+                    }}>
+                    <Image src={uaFlag} alt="ua" width={16} height={16}/>
+                    Украина
+                </Button>
             </div>
             <div className={styles.documents}>
                 <div className={styles.documentsHeader}>

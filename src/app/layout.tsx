@@ -45,12 +45,12 @@ export default function RootLayout({
         <html lang="en">
         <body>
         <Header/>
-        <PageWrapper>
-            <PopupProvider>
-                <Popup/>
-                {children}
-            </PopupProvider>
-        </PageWrapper>
+            <PageWrapper>
+                <PopupProvider>
+                    <Popup/>
+                    {children}
+                </PopupProvider>
+            </PageWrapper>
         <Footer/>
         </body>
         </html>
