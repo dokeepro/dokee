@@ -4,6 +4,8 @@ import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
 import Popup, {PopupProvider} from "@/context/PopupContext";
 import React from "react";
+import {AlertProvider} from "@/context/AlertContext";
+import {GeneralProvider} from "@/context/GeneralContext";
 
 export async function generateMetadata() {
     const title = "Dokee - Быстрый перевод документов";
@@ -47,8 +49,12 @@ export default function RootLayout({
         <Header/>
             <PageWrapper>
                 <PopupProvider>
-                    <Popup/>
-                    {children}
+                    <AlertProvider>
+                        <GeneralProvider>
+                            <Popup/>
+                            {children}
+                        </GeneralProvider>
+                    </AlertProvider>
                 </PopupProvider>
             </PageWrapper>
         <Footer/>

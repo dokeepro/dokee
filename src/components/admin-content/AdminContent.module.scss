@@ -1,0 +1,206 @@
+.wrapper {
+  display: flex;
+  width: 100%;
+  height: fit-content;
+  background: white;
+  flex-direction: column;
+  position: relative;
+  align-items: center;
+  gap: 50px;
+  padding: 60px 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.absoluteButton{
+  display: flex;
+  position: fixed;
+  bottom: 5%;
+  right: 2%;
+}
+
+.langTariff {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tariffInputs{
+  display: flex;
+  gap: 5px;
+  width: 100%;
+}
+
+.sampleImageWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: center;
+  gap: 20px;
+  align-items: center;
+  padding: 20px;
+}
+
+.inputs {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
+
+.dialogContent {
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  gap: 20px;
+}
+
+.tariffsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mainHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+
+  h2 {
+    display: flex;
+    font-size: 32px;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--black);
+
+    span {
+      color: var(--blue);
+    }
+
+    @media screen and (max-width: 768px) {
+      font-size: 20px;
+    }
+  }
+}
+
+.switchWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  align-content: flex-start;
+  justify-content: flex-start;
+  justify-items: flex-start;
+  align-items: flex-start;
+
+  hr {
+    width: 100%;
+  }
+}
+
+.selectorWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 5px;
+
+  hr {
+    margin: 0 0 15px 0;
+  }
+}
+
+.samplePreviewCard {
+  text-align: center;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(86, 90, 221, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+  padding: 16px;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-6px) scale(1.04);
+    box-shadow: 0 8px 24px rgba(86, 90, 221, 0.18);
+    background: #f5f6ff;
+  }
+}
+
+.sampleEditContent{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  gap: 10px;
+}
+
+.flex{
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 0 0;
+}
+
+.selectors {
+  display: flex;
+  gap: 20px;
+}
+
+.documentsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 16px;
+}
+.documentCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 20px;
+  min-width: 320px;
+  max-width: 400px;
+  flex: 1 1 320px;
+}
+.order {
+  color: #888;
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+.tariffsBlock {
+  margin: 12px 0;
+}
+.samplesBlock {
+  margin-top: 12px;
+}
+.samplesList {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sampleCard {
+  text-align: center;
+  background: #f7f7f7;
+  border-radius: 8px;
+  padding: 8px;
+  width: 100px;
+  box-shadow: 0 2px 8px rgba(86, 90, 221, 0.08);
+  transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(86, 90, 221, 0.18);
+    background: #f0f3ff;
+  }
+}
+.sampleImage {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}

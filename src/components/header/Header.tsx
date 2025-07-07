@@ -11,10 +11,17 @@ import logoWhite from "@/assets/logos/logo-white.svg";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import { Drawer, useMediaQuery } from "@mui/material";
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 const Header = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const isMobileView = useMediaQuery('(max-width:1028px)');
+
+    const pathname = usePathname();
+
+    if (pathname === '/admin') {
+        return null;
+    }
 
     const toggleDrawer = (open: boolean) => () => {
         setIsDrawerOpen(open);

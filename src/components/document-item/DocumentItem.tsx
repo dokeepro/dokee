@@ -13,6 +13,7 @@ interface DocumentItemProps {
     selected?: boolean;
     onSelect: (title: string) => void;
     onDeselect?: (title: string) => void;
+    mode?: "sample" | "document";
 }
 
 const DocumentItem: FC<DocumentItemProps> = ({
@@ -21,7 +22,8 @@ const DocumentItem: FC<DocumentItemProps> = ({
                                                  onDeselect,
                                                  img,
                                                  selectedVariants,
-                                                 selected
+                                                 selected,
+                                                 mode = "document",
                                              }) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isChecked, setIsChecked] = useState(selected || false);
@@ -30,15 +32,21 @@ const DocumentItem: FC<DocumentItemProps> = ({
         setIsChecked(selected || false);
     }, [selected]);
 
+    // 👉 Click on layout selects ONLY IF not selected yet
     const handleWrapperClick = () => {
-        onSelect(title);
+        if (mode === "sample" && !isChecked) {
+            onSelect(title);
+        } else if (mode === "document") {
+            onSelect(title);
+        }
     };
 
     const handleCheckboxClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
+        e.stopPropagation(); // don't toggle via wrapper
     };
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.stopPropagation();
         const newChecked = e.target.checked;
         setIsChecked(newChecked);
 
@@ -47,58 +55,62 @@ const DocumentItem: FC<DocumentItemProps> = ({
         } else {
             onDeselect?.(title);
         }
-
-        e.stopPropagation();
     };
 
     const handleDialogOpen = (e: React.MouseEvent) => {
-        e.stopPropagation();
+        e.stopPropagation(); // prevent wrapper click
         setIsDialogOpen(true);
     };
 
-    const handleDialogClose = () => {
+    const handleDialogClose = (
+        event: React.SyntheticEvent,
+        reason: "backdropClick" | "escapeKeyDown"
+    ) => {
         setIsDialogOpen(false);
+        console.log(event);
+        console.log(reason);
     };
 
     const isEGov = title === "E-GOV" || title === "Дія";
 
     return (
-        <div
-            className={`${styles.wrapper} ${isChecked ? styles.active : ""} ${
-                isEGov ? styles.eGov : ""
-            }`}
-            onClick={handleWrapperClick}>
-            {img && (
-                <div className={styles.imgWrapper}>
-                    <Image
-                        src={img}
-                        className={styles.image}
-                        alt={title}
-                        width={330}
-                        height={150}
-                    />
-                    <Tooltip title="Посмотреть документ" placement="top">
+        <>
+            <div
+                className={`${styles.wrapper} ${isChecked ? styles.active : ""} ${isEGov ? styles.eGov : ""}`}
+                onClick={handleWrapperClick}
+            >
+                {img && (
+                    <div className={styles.imgWrapper}>
+                        <Image src={img} className={styles.image} alt={title} width={330} height={150} />
                         <div className={styles.icon}>
-                            <IconButton>
-                                <IoSearchOutline onClick={handleDialogOpen} />
-                            </IconButton>
+                            <Tooltip title="Посмотреть документ" placement="top">
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDialogOpen(e);
+                                    }}
+                                >
+                                    <IoSearchOutline />
+                                </IconButton>
+                            </Tooltip>
                         </div>
-                    </Tooltip>
+                    </div>
+                )}
+                <div className={styles.titlesWrapper}>
+                    <div className={styles.titles}>
+                        <h3>{title}</h3>
+                        {selectedVariants ? (
+                            <p>Выбрано вариантов ({selectedVariants})</p>
+                        ) : null}
+                    </div>
+                    <Checkbox
+                        checked={isChecked}
+                        onClick={handleCheckboxClick}
+                        onChange={handleCheckboxChange}
+                    />
                 </div>
-            )}
-            <div className={styles.titlesWrapper}>
-                <div className={styles.titles}>
-                    <h3>{title}</h3>
-                    {selectedVariants ? (
-                        <p>Выбрано вариантов ({selectedVariants})</p>
-                    ) : null}
-                </div>
-                <Checkbox
-                    checked={isChecked}
-                    onClick={handleCheckboxClick}
-                    onChange={handleCheckboxChange}
-                />
             </div>
+
             <Dialog open={isDialogOpen} onClose={handleDialogClose} maxWidth="md">
                 <div style={{ textAlign: "center" }}>
                     {img && (
@@ -112,7 +124,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
                     )}
                 </div>
             </Dialog>
-        </div>
+        </>
     );
 };
 

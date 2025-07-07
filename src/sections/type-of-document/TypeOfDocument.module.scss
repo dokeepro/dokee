@@ -3,6 +3,12 @@
   flex-direction: column;
   position: relative;
 
+
+  @media screen and (max-width: 1440px) {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
   .videoIntro {
     position: absolute;
     top: 50%;
@@ -153,6 +159,34 @@
     line-height: 140%;
     font-weight: 500;
     font-size: 16px;
+  }
+}
+
+.buttonsFlex{
+  display: flex;
+  gap: 20px;
+}
+
+.buttonsFlexText{
+  display: flex;
+  gap: 20px;
+  align-content: flex-end;
+  justify-content: flex-end;
+  justify-items: center;
+  align-items: center;
+
+  p{
+    display: flex;
+    max-width: 326px;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 768px) {
+    align-content: center;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+    flex-direction: column;
   }
 }
 

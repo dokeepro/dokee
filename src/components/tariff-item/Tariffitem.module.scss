@@ -9,6 +9,56 @@
     min-width: 326px;
     border-radius: 24px !important;
   }
+
+  @media screen and (max-width: 456px) {
+    max-width: 290px;
+    min-width: 290px;
+  }
+}
+
+.warning{
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.warningContent{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: fit-content;
+  background: #ff4b4b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  gap: 17px;
+}
+
+.warningText{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  h4{
+    font-size: 14px;
+    font-weight: 600;
+    font-family: Involve, sans-serif;
+    color: #fff;
+  }
+
+  p{
+    font-size: 13px;
+    font-weight: 400;
+    font-family: Involve, sans-serif;
+    color: #fff;
+  }
+}
+
+.warningContentInner{
+  display: flex;
+  gap: 10px;
+  align-content: center;
+    justify-content: center;
+    align-items: center;
 }
 
 .tariffTitle {
@@ -63,6 +113,10 @@
 
   @media screen and (max-width: 768px) {
     padding: 24px 16px;
+  }
+
+  @media screen and (max-width: 456px) {
+    padding: 24px 13px;
   }
 
   h3 {

@@ -6,22 +6,10 @@ interface DocumentFinalItemProps {
     documentFullName: string;
     tariff: string;
     languagePair: string;
+    documentPrice: number;
 }
 
-const DocumentFinalItem: FC<DocumentFinalItemProps> = ({documentName, documentFullName, tariff, languagePair}) => {
-
-    const getPrice = () => {
-        switch (tariff) {
-            case 'Normal':
-                return 499;
-            case 'Express':
-                return 699;
-            case 'Fast':
-                return 899;
-            default:
-                return 0;
-        }
-    }
+const DocumentFinalItem: FC<DocumentFinalItemProps> = ({documentName, documentFullName, tariff, languagePair, documentPrice}) => {
 
     return (
         <div className={styles.wrapper}>
@@ -40,7 +28,7 @@ const DocumentFinalItem: FC<DocumentFinalItemProps> = ({documentName, documentFu
                     <h4>{tariff}</h4>
                 </div>
             </div>
-            <p>Стоимость: <span>{getPrice()}₸</span></p>
+            <p>Стоимость: <span>{documentPrice}₸</span></p>
         </div>
     );
 };

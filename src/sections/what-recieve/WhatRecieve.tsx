@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from "./WhatRecieve.module.scss"
-import fast from "@/assets/images/fast-translate.svg";
-import quality from "@/assets/images/good-quality.svg";
-import cheapest from "@/assets/images/cheapest.svg";
+import fast from "@/assets/icons/image-1.svg";
+import quality from "@/assets/icons/image-2.svg";
+import cheapest from "@/assets/icons/image-3.svg";
 import BenefitItem from "@/components/benefit-item/BenefitItem";
 
 const WhatRecieve = () => {

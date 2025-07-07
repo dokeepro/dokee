@@ -1,0 +1,28 @@
+.wrapper{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+
+  h2{
+    display: flex;
+    font-size: 25px;
+    gap: 10px;
+    font-weight: 600;
+    color: var(--black);
+
+
+    @media screen and (max-width: 768px) {
+      font-size: 16px;
+    }
+  }
+
+  p{
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  hr{
+    width: 100%;
+  }
+}

@@ -5,7 +5,6 @@
   position: relative;
 }
 
-
 .videoDialogContainer {
   position: relative;
   width: 80vw;
@@ -64,23 +63,8 @@
 .main {
   display: flex;
   flex-direction: column;
-  gap: 100px;
+  gap: 0;
   max-width: 1440px;
   width: 100%;
   margin: 0 auto;
-
-  @media screen and (max-width: 1440px) {
-    width: 90%;
-    gap: 10px;
-  }
-
-  @media screen and (max-width: 1028px) {
-    width: 97%;
-    gap: 40px;
-  }
-
-  @media screen and (max-width: 390px) {
-    width: 95%;
-    gap: 40px;
-  }
 }

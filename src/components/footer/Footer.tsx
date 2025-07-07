@@ -9,8 +9,14 @@ import {FaInstagram} from "react-icons/fa";
 import {FaFacebookF} from "react-icons/fa";
 import {BsTwitterX} from "react-icons/bs";
 import Image from "next/image";
+import {usePathname} from "next/navigation";
 
 const Footer = () => {
+    const pathname = usePathname();
+
+    if (pathname === '/admin') {
+        return null;
+    }
 
     const scrollToSection = (id: string) => {
         if (id === "header") {

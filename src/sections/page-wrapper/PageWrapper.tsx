@@ -5,6 +5,7 @@ import styles from "./PageWrapper.module.scss";
 import Image from "next/image";
 import videoIntro from "@/assets/images/video-intro.svg";
 import Dialog from '@mui/material/Dialog';
+import { usePathname } from 'next/navigation';
 
 interface PageWrapperProps {
     children: React.ReactNode;
@@ -14,6 +15,7 @@ const PageWrapper: FC<PageWrapperProps> = ({ children }) => {
     const [open, setOpen] = useState(false);
     const [visible, setVisible] = useState(false);
     const YT_VIDEO_ID = "RzVvThhjAKw";
+    const pathname = usePathname();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -30,15 +32,16 @@ const PageWrapper: FC<PageWrapperProps> = ({ children }) => {
 
     return (
         <div className={styles.outer}>
-            <Image
-                src={videoIntro}
-                alt="Video"
-                height={183}
-                width={138}
-                onClick={() => setOpen(true)}
-                className={`${styles.videoIntro} ${visible ? styles.visible : ""}`}
-            />
-
+            {pathname !== '/admin' && (
+                <Image
+                    src={videoIntro}
+                    alt="Video"
+                    height={183}
+                    width={138}
+                    onClick={() => setOpen(true)}
+                    className={`${styles.videoIntro} ${visible ? styles.visible : ""}`}
+                />
+            )}
             <Dialog
                 open={open}
                 onClose={() => setOpen(false)}
@@ -49,8 +52,7 @@ const PageWrapper: FC<PageWrapperProps> = ({ children }) => {
                         background: "transparent",
                         boxShadow: "none",
                     },
-                }}
-            >
+                }}>
                 <div className={styles.videoDialogContainer}>
                     <iframe
                         src={`https://www.youtube.com/embed/${YT_VIDEO_ID}`}
@@ -62,7 +64,6 @@ const PageWrapper: FC<PageWrapperProps> = ({ children }) => {
                     />
                 </div>
             </Dialog>
-
             <main className={styles.main}>{children}</main>
         </div>
     );

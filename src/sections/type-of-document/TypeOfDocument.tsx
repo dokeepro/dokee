@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styles from "./TypeOfDocument.module.scss";
 import {Accordion, AccordionDetails, AccordionSummary, Button, Tooltip, useMediaQuery} from "@mui/material";
 import uaFlag from "@/assets/icons/ua-icon.png";
@@ -8,7 +8,7 @@ import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import DocumentItem from "@/components/document-item/DocumentItem";
-import documentTypes from "@/constants/documentTypes";
+import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
 import {BsFillInfoSquareFill} from "react-icons/bs";
@@ -22,6 +22,7 @@ import dropFile from "@/assets/icons/file-download.svg"
 import lightning from "@/assets/icons/lighting-white.svg"
 import garry from "@/assets/icons/garry-icon.svg"
 import discount from "@/assets/icons/discount-icon.svg"
+import { newRequest } from '@/utils/newRequest';
 import {HiMiniArrowsRightLeft} from "react-icons/hi2";
 import TariffItem from '@/components/tariff-item/TariffItem';
 import {useDocumentContext} from "@/context/DocumentContext";
@@ -30,10 +31,11 @@ import sealExample from "@/assets/images/seal-example.svg"
 import stampExample from "@/assets/images/example-of-stamp.svg";
 import warningExample from "@/assets/icons/icon-blue.svg"
 import DocumentFinalItem from '@/components/document-final-item/DocumentFinalItem';
-import {useDocumentSamples} from "@/hooks/useDocumentSamples";
 import {usePopup} from "@/context/PopupContext";
 import {TiTimes} from "react-icons/ti";
 import IconButton from '@mui/material/IconButton';
+import {useGeneral} from "@/context/GeneralContext";
+import {useAlert} from "@/context/AlertContext";
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -62,6 +64,8 @@ type WayforpayPaymentData = {
     orderLifetime: number;
 };
 
+
+
 interface WayforpayInstance {
     run: (data: WayforpayPaymentData) => void;
 }
@@ -76,26 +80,78 @@ declare global {
     }
 }
 
+interface LanguageTariff {
+    language: string;
+    normal: number;
+    express: number;
+    fast: number;
+    _id?: string;
+}
+
+interface Sample {
+    title: string;
+    languageTariffs?: LanguageTariff[]; // Make optional
+    imageUrl?: string;
+    image?: string;
+}
+
+interface Document {
+    name: string;
+    documentCountry?: string;
+    languageTariffs?: LanguageTariff[]; // Make optional
+    samples: Sample[];
+    fioLatin?: string;
+    sealText?: string;
+    stampText?: string;
+}
+
+const toLangMap: Record<string, string> = {
+    русский: 'ru',
+    английский: 'en',
+    украинский: 'uk',
+    немецкий: 'de',
+    польский: 'pl',
+    французский: 'fr',
+    итальянский: 'it',
+    испанский: 'es',
+    литовский: 'lt',
+    португальский: 'pt',
+    чешский: 'cz',
+};
+
 const TypeOfDocument = () => {
-    const { country: activeCountry, setCountry: setActiveCountry } = useDocumentContext();
+    const {country: activeCountry, setCountry: setActiveCountry} = useDocumentContext();
     const isMobileView = useMediaQuery('(max-width:768px)');
     const {
-        addDocument,
         selectedDocuments,
         setLanguagePair,
         setTariff,
         tariff,
-        uploadedFiles,
-        setUploadedFiles,
         activePage,
         setActivePage
     } = useDocumentContext();
+
+    const { showAlert } = useAlert();
+
+
+    const {
+        selectedSamples,
+        toggleSample,
+        removeSamplesForDocument,
+        isSampleSelected,
+        uploadedFiles,
+        addUploadedFiles,
+        setSampleField,
+        removeUploadedFile,
+        clearAll
+    } = useSampleStore();
+
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
     const [loading, setLoading] = useState(false);
     const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
-    const isPage1Valid = selectedDocuments.length > 0;
+    const isPage1Valid = selectedSamples.length > 0;
     const isPage2Valid = !!tariff && fromLanguage !== toLanguage;
     const isPage3Valid = uploadedFiles.length > 0;
     const isPage4Valid = selectedDocuments.every((doc) =>
@@ -103,9 +159,37 @@ const TypeOfDocument = () => {
             () => doc.fioLatin?.trim() && doc.sealText?.trim() && doc.stampText?.trim()
         )
     );
-
+    const {documents, general} = useGeneral();
     const tariffsRef = useRef<HTMLDivElement>(null);
     const [tariffStep, setTariffStep] = useState(1);
+
+    const handleSampleSelect = (sample: Sample) => {
+        if (!currentDoc) return;
+        const id = `${currentDoc.name}-${sample.title}`;
+        toggleSample({
+            id,
+            docName: currentDoc.name,
+            sampleTitle: sample.title,
+            languageTariffs: sample.languageTariffs ?? [],
+            image: sample.imageUrl || sample.image,
+        });
+    };
+
+    const handleSampleDeselect = (sample: Sample) => {
+        if (!currentDoc) return;
+        const id = `${currentDoc.name}-${sample.title}`;
+        toggleSample({
+            id,
+            docName: currentDoc.name,
+            sampleTitle: sample.title,
+            languageTariffs: sample.languageTariffs ?? [],
+            image: sample.imageUrl || sample.image,
+        });
+    };
+
+
+
+    const [currentDoc, setCurrentDoc] = useState<Document | null>(null);
 
     const handleTariffsScroll = () => {
         const el = tariffsRef.current;
@@ -123,9 +207,21 @@ const TypeOfDocument = () => {
         }
     };
 
+
     const handleRemoveFile = (index: number) => {
-        setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
-    }
+        removeUploadedFile(index);
+    };
+
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        addUploadedFiles(files);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files);
+        addUploadedFiles(files);
+    };
 
     const isNextDisabled = () => {
         switch (activePage) {
@@ -142,63 +238,77 @@ const TypeOfDocument = () => {
         }
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const files = Array.from(e.dataTransfer.files);
-        setUploadedFiles([...uploadedFiles, ...files]);
-    };
-
-    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        setUploadedFiles([...uploadedFiles, ...files]);
-    };
-
     const handleOpenPopup = (content: React.ReactNode) => {
         openPopup(content);
     };
-    const {
-        samples: selectedSamples,
-        openSamples,
-        toggleSampleSelection: handleSampleSelect,
-        resetSamples: handleBackToList,
-        removeSamplesForDocument,
-    } = useDocumentSamples(activeCountry);
 
-    const handleDocumentSelect = (documentName: string) => {
-        const doc = selectedDocuments.find((doc) => doc.name === documentName);
-        const selectedVariants = doc?.selectedSamples?.length || 0;
-
-        if (selectedVariants > 0) {
-            removeSamplesForDocument(documentName);
+    const handleDocumentSelect = (docName: string, triggeredFromCheckbox = false) => {
+        if (triggeredFromCheckbox) {
+            removeSamplesForDocument(docName);
         } else {
-            openSamples(documentName);
+            const doc = documents.find(d => d.name === docName && d.documentCountry === activeCountry.toLowerCase());
+            setCurrentDoc(doc || null);
         }
     };
 
-    const getUnitPrice = (tariff: string) => {
-        switch (tariff) {
-            case 'Normal':
-                return 499;
-            case 'Express':
-                return 699;
-            case 'Fast':
-                return 899;
-            default:
-                return 0;
-        }
-    };
+    type TariffType = 'normal' | 'express' | 'fast';
 
-    const totalValueByTariff = (tariff: string) => {
-        return selectedDocuments.reduce((total, doc) => {
-            const count = doc.selectedSamples?.length || 1;
-            return total + count * getUnitPrice(tariff);
+    const getTotalValueByTariff = (
+        tariff: TariffType,
+        toLang: string | null
+    ): number => {
+        const { selectedSamples, country, fromLanguage, toLanguage } = useSampleStore.getState();
+
+        const normalize = (lang: string) =>
+            lang.trim().toLowerCase().replace(/[_\s-]+/g, '');
+
+        let effectiveToLang = '';
+        const from = normalize(fromLanguage || '');
+        const to = normalize(toLanguage || '');
+
+        if (country === 'UA' && from === 'украинский' && to === 'русский') {
+            effectiveToLang = 'ru';
+        } else {
+            effectiveToLang = toLang ? normalize(toLang) : '';
+        }
+
+        if (!effectiveToLang) return 0;
+
+        return selectedSamples.reduce((total, sample) => {
+            const matchingTariff = sample.languageTariffs.find((t) => {
+                if (!t.language) return false;
+                const langs = t.language
+                    .toLowerCase()
+                    .split(/[_-]/)
+                    .map((l: string) => l.trim());
+                return langs.includes(effectiveToLang);
+            });
+
+            const price = matchingTariff?.[tariff] ?? 0;
+            return total + price;
         }, 0);
     };
 
-    const totalValue = selectedDocuments.reduce((total, doc) => {
-        const count = doc.selectedSamples?.length || 1;
-        return total + count * getUnitPrice(tariff || '');
-    }, 0);
+    const normalizedToLang = toLangMap[toLanguage?.toLowerCase() || ''] || '';
+
+    const totalPriceNormal = getTotalValueByTariff("normal", normalizedToLang);
+    const totalPriceExpress = getTotalValueByTariff("express", normalizedToLang);
+    const totalPriceFast = getTotalValueByTariff("fast", normalizedToLang);
+
+    const totalValueByTariff = (tariff: string | null): number => {
+        if (!tariff) return 0;
+
+        switch (tariff) {
+            case 'Normal':
+                return totalPriceNormal;
+            case 'Express':
+                return totalPriceExpress;
+            case 'Fast':
+                return totalPriceFast;
+            default:
+                return 0;
+        }
+    }
 
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
         if (from && to && from !== to) {
@@ -207,76 +317,51 @@ const TypeOfDocument = () => {
             setLocalLanguagePair(formatted);
         }
     };
-    const scrollToSection = (id: string) => {
-        if (id === "header") {
-            window.scrollTo({top: 0, behavior: "smooth"});
-        } else {
-            const section = document.getElementById(id);
-            if (section) {
-                const offset = id === "footer" ? 0 : window.innerHeight * 0.2;
-                const top = id === "footer"
-                    ? document.body.scrollHeight - window.innerHeight
-                    : section.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({top, behavior: "smooth"});
-            } else {
-                console.error(`Element with id "${id}" not found.`);
-            }
-        }
+
+    const scrollToSection = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
+
     const handleNextStep = () => {
         setActivePage(activePage + 1);
-        scrollToSection("documents");
+        scrollToSection();
     };
+
     const handlePreviousStep = () => {
         setActivePage(activePage - 1);
-        scrollToSection("documents");
+        scrollToSection();
     };
+
     const capitalize = (str: string) =>
         str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
     const handleClosePopup = () => {
         closePopup();
         setActivePage(activePage + 1);
     }
+
+    const selectedDate = useSampleStore(state => state.selectedDate);
+
     const handleSendData = async () => {
         setLoading(true);
-
         try {
             const formData = new FormData();
-
-            formData.append('email', 'dokee.pro@gmail.com');
+            formData.append('email', 'yaroslav7v@gmail.com');
             formData.append('languagePair', localLanguagePair || "");
             formData.append('tariff', tariff || '');
-
-            const docs = selectedDocuments.map((doc) => ({
-                name: doc.name,
-                fioLatin: doc.fioLatin || '',
-                sealText: doc.sealText || '',
-                stampText: doc.stampText || '',
-                selectedSamples: doc.selectedSamples || [],
-            }));
-
-            formData.append('documents', JSON.stringify(docs));
-
+            formData.append('samples', JSON.stringify(selectedSamples));
+            formData.append('totalValue', totalValueByTariff(tariff).toString());
+            if (selectedDate) {
+                formData.append('selectedDate', selectedDate.format('YYYY-MM-DD'));
+            }
             uploadedFiles.forEach((file) => {
                 formData.append('files', file);
             });
-
-            const response = await fetch('https://dokee-be.onrender.com/payment/send-data-to-email', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Ошибка запроса');
-            }
-
-            const result = await response.json();
-            console.log('✅ Email sent successfully:', result);
-            alert('Данные успешно отправлены на почту');
-        } catch (error) {
-            console.error('❌ Ошибка при отправке данных:', error);
-            alert('Произошла ошибка при отправке данных');
+            await newRequest.post('/documents/send-data', formData);
+            showAlert('Данные успешно отправлены на почту', 'success');
+        } catch (err) {
+            showAlert('Произошла ошибка при отправке данных', 'error');
+            console.log(err)
         } finally {
             setLoading(false);
         }
@@ -286,6 +371,29 @@ const TypeOfDocument = () => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
     };
+
+    const getGuaranteeText = () => {
+        if (tariff === 'Normal') {
+            return `  (Гарантия доставки до ${tomorrowDate} 9:00 (Астаны))`;
+        }
+        if (tariff === 'Express') {
+            return `  (Гарантия доставки до ${todayDate} 21:00 (Астаны))`;
+        }
+        if (tariff === 'Fast') {
+            return `  (Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны))`;
+        }
+        return '';
+    };
+
+    useEffect(() => {
+        if (activeCountry === 'UA') {
+            setFromLanguage('украинский');
+            setToLanguage('русский');
+            handleLanguagePairChange('украинский', 'русский');
+            useSampleStore.getState().setFromLanguage('украинский');
+            useSampleStore.getState().setToLanguage('русский');
+        }
+    }, [activeCountry]);
 
     const now = new Date();
     const todayDate = now.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
@@ -361,31 +469,59 @@ const TypeOfDocument = () => {
         switch (activePage) {
             case 1:
                 return <>
-                    {selectedSamples ? (
+                    {currentDoc ? (
                         <div className={styles.documentsContent}>
-                            {selectedSamples.map((sample, index) => (
+                            {currentDoc.samples.map((sample: Sample, index: number) => (
                                 <DocumentItem
                                     key={index}
-                                    title={sample.name}
-                                    img={sample.image}
-                                    onSelect={() => handleSampleSelect(sample)}/>
+                                    title={sample.title}
+                                    img={sample.imageUrl || sample.image}
+                                    selected={isSampleSelected(`${currentDoc.name}-${sample.title}`)}
+                                    onSelect={() => handleSampleSelect(sample)}
+                                    onDeselect={() => handleSampleDeselect(sample)}
+                                    mode="sample"
+                                />
                             ))}
                         </div>
                     ) : (
                         <div className={styles.documentsContent}>
-                            {documentTypes[activeCountry].map((type, index) => {
-                                const docInContext = selectedDocuments.find((doc) => doc.name === type.name);
-                                const selectedVariants = docInContext?.selectedSamples?.length || 0;
-                                const isSelected = selectedVariants > 0;
-                                return (
-                                    <DocumentItem
-                                        key={index}
-                                        title={type.name}
-                                        selectedVariants={isSelected ? selectedVariants : undefined}
-                                        onSelect={() => handleDocumentSelect(type.name)}
-                                        selected={isSelected}/>
-                                );
-                            })}
+                            {documents
+                                .filter(doc => doc.documentCountry === activeCountry.toLowerCase())
+                                .map((doc, index) => {
+                                    const selectedVariants = selectedSamples.filter(s => s.docName === doc.name).length;
+                                    const isSelected = selectedVariants > 0;
+
+                                    return (
+                                        <DocumentItem
+                                            key={doc._id || index}
+                                            title={doc.name}
+                                            selectedVariants={isSelected ? selectedVariants : undefined}
+                                            selected={isSelected}
+                                            onSelect={() => handleDocumentSelect(doc.name, false)}
+                                            onDeselect={() => handleDocumentSelect(doc.name, true)}
+                                        />
+                                    );
+                                })}
+                        </div>
+                    )}
+                    {selectedSamples.length > 0 && (
+                        <div className={styles.selectedSummary}>
+                            <h4>Выбранные образцы:</h4>
+                            <ul>
+                                {selectedSamples.map((sample) => (
+                                    <li key={sample.id}>
+                                        <strong>{sample.docName}</strong> — {sample.sampleTitle}
+                                        <ul style={{ marginTop: '4px', marginLeft: '12px', fontSize: '14px', color: '#555' }}>
+                                            {sample.languageTariffs.map((tariff, i) => (
+                                                <li key={i}>
+                                                    <strong>{tariff.language.toUpperCase()}</strong>:
+                                                    🕓 Normal — {tariff.normal}₸, 🚀 Express — {tariff.express}₸, ⚡ Fast — {tariff.fast}₸
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
                     )}
                 </>;
@@ -398,19 +534,34 @@ const TypeOfDocument = () => {
                                 <Select
                                     value={fromLanguage}
                                     onChange={(_, value) => handleFromLanguageChange(value || "")}
-                                    sx={{width: "100%"}}>
+                                    sx={{width: "100%"}}
+                                    disabled={activeCountry === 'UA'}
+                                >
                                     <Option value="русский">Русский</Option>
+                                    <Option value="украинский">Украинский</Option>
                                 </Select>
                                 <HiMiniArrowsRightLeft size={50}/>
                                 <Select
                                     value={toLanguage}
                                     onChange={(_, value) => handleToLanguageChange(value || "")}
-                                    sx={{width: "100%"}}>
-                                    <Option value="русский">Русский</Option>
-                                    <Option value="английский">Английский</Option>
-                                    <Option value="казахский">Казахский</Option>
-                                    <Option value="украинский">Украинский</Option>
-                                    <Option value="польский">Польский</Option>
+                                    sx={{width: "100%"}}
+                                    disabled={activeCountry === 'UA'}
+                                >
+                                    <Option value="русский" disabled={fromLanguage === "русский"}>Русский</Option>
+                                    <Option value="английский"
+                                            disabled={fromLanguage === "английский"}>Английский</Option>
+                                    <Option value="украинский"
+                                            disabled={fromLanguage === "украинский"}>Украинский</Option>
+                                    <Option value="польский" disabled={fromLanguage === "польский"}>Польский</Option>
+                                    <Option value="португальский"
+                                            disabled={fromLanguage === "португальский"}>Португальский</Option>
+                                    <Option value="французский"
+                                            disabled={fromLanguage === "французский"}>Французский</Option>
+                                    <Option value="литовский" disabled={fromLanguage === "литовский"}>Литовский</Option>
+                                    <Option value="немецкий" disabled={fromLanguage === "немецкий"}>Немецкий</Option>
+                                    <Option value="итальянский"
+                                            disabled={fromLanguage === "итальянский"}>Итальянский</Option>
+                                    <Option value="испанский" disabled={fromLanguage === "испанский"}>Испанский</Option>
                                 </Select>
                             </div>
                             <p style={{color: "red"}}>{fromLanguage === toLanguage ? "Языковая пара не может быть одинаковой" : ""}</p>
@@ -428,7 +579,8 @@ const TypeOfDocument = () => {
                                     {iconSrc: garry, text: 'Обычная скорость перевода'},
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
-                                price={totalValueByTariff("Normal")}
+                                price={totalPriceNormal}
+                                availableSlots={general?.normalSlots ?? 0}
                                 borderRadius={['30px', '0', '0', '30px']}
                                 onSelect={() => handleTariffSelect('Normal')}
                                 isSelected={tariff === 'Normal'}
@@ -442,7 +594,8 @@ const TypeOfDocument = () => {
                                     {iconSrc: fast, text: 'Ускоряемся для быстрого перевода'},
                                     {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
-                                price={totalValueByTariff("Express")}
+                                price={totalPriceExpress}
+                                availableSlots={general?.expressSlots ?? 0}
                                 borderRadius={['0', '0', '0', '0']}
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
@@ -451,6 +604,7 @@ const TypeOfDocument = () => {
                             <TariffItem
                                 title="Fast"
                                 description="Перевод документов за 2-3 часа"
+                                availableSlots={general?.fastSlots ?? 0}
                                 benefits={[
                                     {
                                         iconSrc: timeIconWhite,
@@ -459,7 +613,7 @@ const TypeOfDocument = () => {
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
                                 ]}
-                                price={totalValueByTariff("Fast")}
+                                price={totalPriceFast}
                                 borderRadius={['0', '30px', '30px', '0']}
                                 onSelect={() => handleTariffSelect('Fast')}
                                 isSelected={tariff === 'Fast'}
@@ -477,7 +631,8 @@ const TypeOfDocument = () => {
                     <div
                         className={styles.dropFile}
                         onDragOver={(e) => e.preventDefault()}
-                        onDrop={handleDrop}>
+                        onDrop={handleDrop}
+                    >
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
@@ -485,11 +640,21 @@ const TypeOfDocument = () => {
                             документа, Вы соглашаетесь с тем, что будет переведена лишь та часть, которая будет
                             отчетливо видна. Расшифровку печатей и штампов Вы сможете предоставить на следующем шаге.
                         </h4>
-                        <label style={{cursor: 'pointer', color: '#565add', textDecoration: 'underline'}}>
+                        <label
+                            style={{
+                                cursor: 'pointer',
+                                color: '#565add',
+                                textDecoration: 'underline',
+                            }}
+                        >
                             {isMobileView ? (
-                                <p><span>Загрузите</span> файлы в это окно</p>
+                                <p>
+                                    <span>Загрузите</span> файлы в это окно
+                                </p>
                             ) : (
-                                <p>Перетяните или <span>загрузите</span> файлы в это окно</p>
+                                <p>
+                                    Перетяните или <span>загрузите</span> файлы в это окно
+                                </p>
                             )}
                             <input
                                 type="file"
@@ -498,10 +663,14 @@ const TypeOfDocument = () => {
                                 style={{display: 'none'}}
                             />
                         </label>
+
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
-                                    <li key={index} style={{display: 'flex', alignItems: 'center', gap: 8}}>
+                                    <li
+                                        key={index}
+                                        style={{display: 'flex', alignItems: 'center', gap: 8}}
+                                    >
                                         {index + 1}. {file.name}
                                         <IconButton
                                             size="small"
@@ -513,7 +682,8 @@ const TypeOfDocument = () => {
                                                 width: 24,
                                                 height: 24,
                                             }}
-                                            onClick={() => handleRemoveFile(index)}>
+                                            onClick={() => handleRemoveFile(index)}
+                                        >
                                             <TiTimes size={16}/>
                                         </IconButton>
                                     </li>
@@ -523,11 +693,12 @@ const TypeOfDocument = () => {
                     </div>
                 );
             case 4:
-                return <div className={styles.accordionWrapper}>
-                    {selectedDocuments.map((doc) => (
-                        (doc.selectedSamples?.length ? doc.selectedSamples : [null]).map((sample) => (
+                return (
+                    <div className={styles.accordionWrapper}>
+                        {selectedSamples.map((sample, idx) => (
                             <Accordion
-                                key={`${doc.name}-${sample?.name || 'default'}`}
+                                key={`${sample.docName}-${sample.sampleTitle}-${idx}`}
+                                expanded={idx === 0 ? true : undefined}
                                 sx={{
                                     boxShadow: 'none',
                                     borderBottom: '1px solid #cccccc',
@@ -536,18 +707,17 @@ const TypeOfDocument = () => {
                                 <AccordionSummary expandIcon={<IoIosArrowDown/>}>
                                     <h2 className={styles.accordionTitle}>
                                         Данные для{' '}
-                                        <span style={{color: '#565add'}}>{doc.name.replace(/\s*\(.*?\)/, '')}</span>
-                                        {sample?.name && <> – <span>{sample.name}</span></>}
+                                        <span
+                                            style={{color: '#565add'}}>{sample.docName.replace(/\s*\(.*?\)/, '')}</span>
+                                        {sample.sampleTitle && <> — <span>{sample.sampleTitle}</span></>}
                                     </h2>
                                 </AccordionSummary>
                                 <AccordionDetails className={styles.accordionDetails}>
                                     <div className={styles.inputWrapper}>
                                         <p>ФИО латиницей</p>
                                         <Input
-                                            value={doc.fioLatin || ''}
-                                            onChange={(e) =>
-                                                addDocument({name: doc.name, fioLatin: e.target.value})
-                                            }
+                                            value={sample.fioLatin || ''}
+                                            onChange={e => setSampleField(sample.id, 'fioLatin', e.target.value)}
                                             fullWidth
                                             placeholder="Фамилия Имя Отчество"
                                             sx={{mb: 2}}
@@ -564,10 +734,8 @@ const TypeOfDocument = () => {
                                             </Tooltip>
                                         </p>
                                         <Input
-                                            value={doc.sealText || ''}
-                                            onChange={(e) =>
-                                                addDocument({name: doc.name, sealText: e.target.value})
-                                            }
+                                            value={sample.sealText || ''}
+                                            onChange={e => setSampleField(sample.id, 'sealText', e.target.value)}
                                             fullWidth
                                             placeholder="Рассшифровка печати"
                                             sx={{mb: 2}}
@@ -581,43 +749,60 @@ const TypeOfDocument = () => {
                                             </Tooltip>
                                         </p>
                                         <Input
-                                            value={doc.stampText || ''}
-                                            onChange={(e) =>
-                                                addDocument({name: doc.name, stampText: e.target.value})
-                                            }
+                                            value={sample.stampText || ''}
+                                            onChange={e => setSampleField(sample.id, 'stampText', e.target.value)}
                                             fullWidth
                                             placeholder="Рассшифровка штампа"
                                         />
                                     </div>
                                 </AccordionDetails>
                             </Accordion>
-                        ))
-                    ))}
-                </div>;
+                        ))}
+                    </div>
+                );
             case 5:
                 return (
                     <div className={styles.finalDocuments}>
-                        {selectedDocuments.flatMap((doc) =>
-                            (doc.selectedSamples?.length ? doc.selectedSamples : [null]).map((sample) => {
-                                const baseName = doc.name.replace(/\s*\(.*?\)/, '');
-                                const fullName = sample?.name ? `${baseName} (${sample.name})` : doc.name;
+                        {selectedSamples.map((sample) => {
+                            const baseName = sample.docName.replace(/\s*\(.*?\)/, '');
+                            const fullName = `${baseName}${sample.sampleTitle ? ` (${sample.sampleTitle})` : ''}`;
 
-                                return (
-                                    <DocumentFinalItem
-                                        key={`${doc.name}-${sample?.name || 'default'}`}
-                                        documentName={baseName}
-                                        documentFullName={fullName}
-                                        tariff={tariff || ''}
-                                        languagePair={localLanguagePair || ''}
-                                    />
-                                );
-                            })
-                        )}
+                            const getSamplePrice = (sample: SelectedSample) => {
+                                const toLangRaw = toLanguage?.toLowerCase() || '';
+                                const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
+                                const tariffKey = (tariff?.toLowerCase() || 'normal') as 'normal' | 'express' | 'fast';
+                                const langTariff = sample.languageTariffs.find(t => {
+                                    if (!t.language) return false;
+                                    const lang = t.language.toLowerCase();
+
+                                    if (lang.includes('_') || lang.includes('-')) {
+                                        return lang.split(/[_\s-]+/).includes(normalizedToLang);
+                                    }
+
+                                    return lang === normalizedToLang;
+                                });
+                                return langTariff ? langTariff[tariffKey] || 0 : 0;
+                            };
+                            return (
+                                <DocumentFinalItem
+                                    key={sample.id}
+                                    documentName={baseName}
+                                    documentFullName={fullName}
+                                    tariff={tariff ? `${tariff} ${getGuaranteeText()}` : ''}
+                                    languagePair={localLanguagePair || ''}
+                                    documentPrice={getSamplePrice(sample)}
+                                />
+                            );
+                        })}
                     </div>
                 );
             default:
                 return <p>Invalid page.</p>;
         }
+    };
+
+    const handleBackToList = () => {
+        setCurrentDoc(null);
     };
 
     const nextButtonStyle = {
@@ -631,24 +816,42 @@ const TypeOfDocument = () => {
         },
     };
 
+    const areAllSampleFieldsFilled = selectedSamples.every(
+        sample =>
+            sample.fioLatin?.trim() &&
+            sample.sealText?.trim() &&
+            sample.stampText?.trim()
+    );
+
     const renderButtons = () => {
         switch (activePage) {
             case 1:
                 return (
                     <div className={styles.documentNavigation}>
-                        {selectedSamples && (
+                        {currentDoc && (
                             <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handleBackToList}>
                                 Выбрать ещё
                             </ButtonOutlined>
                         )}
                         <ButtonOutlined
-                            onClick={selectedSamples ? handleBackToList : handleNextStep}
-                            disabled={isNextDisabled()} sx={nextButtonStyle}>
+                            onClick={handleNextStep}
+                            disabled={selectedSamples.length === 0}
+                            sx={nextButtonStyle}>
                             Продолжить
                         </ButtonOutlined>
                     </div>
                 );
             case 2:
+                return (
+                    <div className={styles.documentNavigation}>
+                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
+                            Назад
+                        </ButtonOutlined>
+                        <ButtonOutlined sx={nextButtonStyle} onClick={handleNextStep} disabled={isNextDisabled()}>
+                            Продолжить
+                        </ButtonOutlined>
+                    </div>
+                );
             case 3:
                 return (
                     <div className={styles.documentNavigation}>
@@ -667,8 +870,15 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            onClick={() => handleOpenPopup(renderPopupContent('Предупреждение'))}
-                            disabled={isNextDisabled()} sx={nextButtonStyle}
+                            onClick={() => {
+                                if (areAllSampleFieldsFilled) {
+                                    handleNextStep();
+                                } else {
+                                    handleOpenPopup(renderPopupContent('Предупреждение'));
+                                }
+                            }}
+                            disabled={isNextDisabled()}
+                            sx={nextButtonStyle}
                         >
                             Продолжить
                         </ButtonOutlined>
@@ -676,17 +886,19 @@ const TypeOfDocument = () => {
                 );
             case 5:
                 return (
-                    <div className={styles.documentNavigation}>
+                    <div className={styles.buttonsFlexText}>
                         <p>
                             Вы соглашаетесь получать новостные сообщения, их будет мало и редко!
                         </p>
-                        <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
-                                        onClick={() => setActivePage(activePage - 1)}>
-                            Назад
-                        </ButtonOutlined>
-                        <ButtonOutlined onClick={handleSendData}>
-                            {loading ? 'Обработка...' : 'Перейти к оплате'}
-                        </ButtonOutlined>
+                        <div className={styles.buttonsFlex}>
+                            <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}}
+                                            onClick={handlePreviousStep}>
+                                Назад
+                            </ButtonOutlined>
+                            <ButtonOutlined onClick={handleSendData}>
+                                {loading ? 'Обработка...' : 'Перейти к оплате'}
+                            </ButtonOutlined>
+                        </div>
                     </div>
                 );
             default:
@@ -697,7 +909,7 @@ const TypeOfDocument = () => {
         switch (activePage) {
             case 1:
                 return <>
-                    {selectedSamples ?
+                    {currentDoc ?
                         <div>
                             <h2>Выберите <span>образец</span> документа</h2>
                             <p>Обращаем внимание, что в случае выбора образца, Вам необходимо будет загрузить документ,
@@ -717,17 +929,22 @@ const TypeOfDocument = () => {
                         также расшифровки печатей и штампов на русском языке</p>
                 </div>
             case 5:
-                return <h2>Общая стоимость: <span>{totalValue} ₸</span></h2>;
+                return <h2>Общая стоимость: <span>{totalValueByTariff(tariff)} ₸</span></h2>;
             default:
                 return null;
         }
     }
 
+    const handleCountrySwitch = (country: 'KZ' | 'UA') => {
+        clearAll();
+        setActiveCountry(country);
+        useSampleStore.getState().setCountry(country);
+    };
     return (
-        <div className={styles.wrapper} id="calculator" >
+        <div className={styles.wrapper} id="calculator">
             <div className={styles.toggles}>
                 <Button
-                    onClick={() => setActiveCountry('KZ')}
+                    onClick={() => handleCountrySwitch('KZ')}
                     disabled={activePage >= 2}
                     sx={{
                         borderRadius: "10px 0 0 0",
@@ -746,7 +963,7 @@ const TypeOfDocument = () => {
                     Казахстан
                 </Button>
                 <Button
-                    onClick={() => setActiveCountry('UA')}
+                    onClick={() => handleCountrySwitch('UA')}
                     disabled={activePage >= 2}
                     sx={{
                         borderRadius: "0 10px 0 0",
