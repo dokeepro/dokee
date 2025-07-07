@@ -504,7 +504,7 @@ const TypeOfDocument = () => {
                                 })}
                         </div>
                     )}
-                    {selectedSamples.length > 0 && (
+                    {/*{selectedSamples.length > 0 && (
                         <div className={styles.selectedSummary}>
                             <h4>Выбранные образцы:</h4>
                             <ul>
@@ -523,7 +523,7 @@ const TypeOfDocument = () => {
                                 ))}
                             </ul>
                         </div>
-                    )}
+                    )}*/}
                 </>;
             case 2:
                 return (

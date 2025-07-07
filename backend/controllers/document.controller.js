@@ -254,6 +254,5 @@ module.exports = {
     getAllDocuments,
     sendData,
     initTariffsForSamples,
-    initRussianTariffForUaSamples,
     updateSample
 };
