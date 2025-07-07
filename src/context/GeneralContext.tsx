@@ -12,7 +12,6 @@ interface GeneralSettings {
     fastSlots: number;
 }
 
-
 export interface Sample {
     title: string;
     imageUrl?: string;

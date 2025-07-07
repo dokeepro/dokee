@@ -47,16 +47,16 @@ export default function RootLayout({
         <html lang="en">
         <body>
         <Header/>
+        <GeneralProvider>
             <PageWrapper>
                 <PopupProvider>
                     <AlertProvider>
-                        <GeneralProvider>
-                            <Popup/>
-                            {children}
-                        </GeneralProvider>
+                        <Popup/>
+                        {children}
                     </AlertProvider>
                 </PopupProvider>
             </PageWrapper>
+        </GeneralProvider>
         <Footer/>
         </body>
         </html>
