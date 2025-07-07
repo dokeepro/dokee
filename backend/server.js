@@ -10,7 +10,7 @@ import generalRoutes from './routes/general.route.js';
 
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://dokee.pro'],
     credentials: true
 }));
 app.use(express.json());
