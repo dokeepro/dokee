@@ -346,7 +346,7 @@ const TypeOfDocument = () => {
         setLoading(true);
         try {
             const formData = new FormData();
-            formData.append('email', 'bobuskiy.olexandr@gmail.com');
+            formData.append('email', 'dokee.pro@gmail.com');
             formData.append('languagePair', localLanguagePair || "");
             formData.append('tariff', tariff || '');
             formData.append('samples', JSON.stringify(selectedSamples));
@@ -535,8 +535,7 @@ const TypeOfDocument = () => {
                                     value={fromLanguage}
                                     onChange={(_, value) => handleFromLanguageChange(value || "")}
                                     sx={{width: "100%"}}
-                                    disabled={activeCountry === 'UA'}
-                                >
+                                    disabled={activeCountry === 'UA'}>
                                     <Option value="русский">Русский</Option>
                                     <Option value="украинский">Украинский</Option>
                                 </Select>
@@ -803,6 +802,7 @@ const TypeOfDocument = () => {
 
     const handleBackToList = () => {
         setCurrentDoc(null);
+        scrollToSection()
     };
 
     const nextButtonStyle = {
@@ -954,6 +954,16 @@ const TypeOfDocument = () => {
                         gap: "7px",
                         fontSize: "16px",
                         padding: "14px 27px",
+                        // Override disabled styles for active button
+                        ...(activeCountry === 'KZ' && activePage >= 2
+                            ? {
+                                '&.Mui-disabled': {
+                                    backgroundColor: '#565add',
+                                    color: '#fff',
+                                    opacity: 1,
+                                }
+                            }
+                            : {}),
                         '&:hover': {
                             backgroundColor: '#565add',
                             color: '#fff',
@@ -973,6 +983,15 @@ const TypeOfDocument = () => {
                         gap: "7px",
                         padding: "14px 27px",
                         fontSize: "16px",
+                        ...(activeCountry === 'UA' && activePage >= 2
+                            ? {
+                                '&.Mui-disabled': {
+                                    backgroundColor: '#565add',
+                                    color: '#fff',
+                                    opacity: 1,
+                                }
+                            }
+                            : {}),
                         '&:hover': {
                             backgroundColor: '#565add',
                             color: '#fff',
