@@ -36,12 +36,11 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
 
     return (
         <>
-            {general?.sitePaused ? (
+            {general?.sitePaused && pathname !== '/admin' ? (
                 <div className={styles.pausedContainer}>
                     <div className={styles.pausedContainerInner}>
                         <h1>Приносим извинения за временные неудобства</h1>
-                        <p>В настоящее время сайт находится на техническом обслуживании и будет доступен в ближайшее
-                            время.</p>
+                        <p>В настоящее время сайт находится на техническом обслуживании и будет доступен в ближайшее время.</p>
                     </div>
                 </div>
             ) : (
@@ -80,7 +79,6 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
                     </Dialog>
                     <main className={styles.main}>{children}</main>
                 </div>
-
             )}
         </>
     );
