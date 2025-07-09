@@ -58,7 +58,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
     };
 
     const handleDialogOpen = (e: React.MouseEvent) => {
-        e.stopPropagation(); // prevent wrapper click
+        e.stopPropagation();
         setIsDialogOpen(true);
     };
 

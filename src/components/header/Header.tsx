@@ -10,7 +10,6 @@ import logo from "@/assets/logos/dokee-logo.svg";
 import logoWhite from "@/assets/logos/logo-white.svg";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import { Drawer, useMediaQuery } from "@mui/material";
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const Header = () => {
@@ -45,11 +44,14 @@ const Header = () => {
         }
     };
 
+    const handleReloadPage = () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setIsDrawerOpen(false);
+        window.location.reload();
+    }
     return (
         <header className={styles.header} id="header">
-            <Link href="/">
-                <Image src={logo} alt="logo" width={132} height={30}/>
-            </Link>
+                <Image src={logo} alt="logo" width={132} height={30} onClick={handleReloadPage}/>
             <div className={styles.nav}>
                 <div className={styles.navLinks}>
                     <button onClick={() => scrollToSection("calculator")}>Калькулятор</button>

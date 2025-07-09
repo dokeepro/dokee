@@ -212,9 +212,14 @@ const TypeOfDocument = () => {
         removeUploadedFile(index);
     };
 
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
         addUploadedFiles(files);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -319,7 +324,12 @@ const TypeOfDocument = () => {
     };
 
     const scrollToSection = () => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+            const section = document.getElementById("calculator");
+            if (section) {
+                section.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 5);
     };
 
     const handleNextStep = () => {
@@ -535,9 +545,12 @@ const TypeOfDocument = () => {
                                     value={fromLanguage}
                                     onChange={(_, value) => handleFromLanguageChange(value || "")}
                                     sx={{width: "100%"}}
-                                    disabled={activeCountry === 'UA'}>
+                                    disabled={activeCountry === 'UA'}
+                                >
                                     <Option value="русский">Русский</Option>
-                                    <Option value="украинский">Украинский</Option>
+                                    {activeCountry !== 'KZ' && (
+                                        <Option value="украинский">Украинский</Option>
+                                    )}
                                 </Select>
                                 <HiMiniArrowsRightLeft size={50}/>
                                 <Select
@@ -549,8 +562,10 @@ const TypeOfDocument = () => {
                                     <Option value="русский" disabled={fromLanguage === "русский"}>Русский</Option>
                                     <Option value="английский"
                                             disabled={fromLanguage === "английский"}>Английский</Option>
-                                    <Option value="украинский"
-                                            disabled={fromLanguage === "украинский"}>Украинский</Option>
+                                    {activeCountry !== 'KZ' && (
+                                        <Option value="украинский"
+                                                disabled={fromLanguage === "украинский"}>Украинский</Option>
+                                    )}
                                     <Option value="польский" disabled={fromLanguage === "польский"}>Польский</Option>
                                     <Option value="португальский"
                                             disabled={fromLanguage === "португальский"}>Португальский</Option>
@@ -574,7 +589,7 @@ const TypeOfDocument = () => {
                                 title="Normal"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    {iconSrc: timeIcon, text: `Гарантия доставки до ${tomorrowDate} 9:00 (Астаны)`},
+                                    {iconSrc: timeIcon, text: `Гарантия доставки до ${tomorrowDate} 16:00 (Астаны)`},
                                     {iconSrc: garry, text: 'Обычная скорость перевода'},
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
@@ -658,14 +673,14 @@ const TypeOfDocument = () => {
                             <input
                                 type="file"
                                 multiple
+                                ref={fileInputRef}
                                 onChange={handleFileInput}
                                 style={{display: 'none'}}
                             />
                         </label>
-
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
-                                {uploadedFiles.map((file, index) => (
+                            {uploadedFiles.map((file, index) => (
                                     <li
                                         key={index}
                                         style={{display: 'flex', alignItems: 'center', gap: 8}}
@@ -829,8 +844,12 @@ const TypeOfDocument = () => {
                 return (
                     <div className={styles.documentNavigation}>
                         {currentDoc && (
-                            <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handleBackToList}>
-                                Выбрать ещё
+                            <ButtonOutlined
+                                outlined
+                                sx={{ borderColor: "1px solid #d6e0ec" }}
+                                onClick={handleBackToList}
+                            >
+                                {selectedSamples.length === 0 ? "Назад" : "Выбрать ещё"}
                             </ButtonOutlined>
                         )}
                         <ButtonOutlined

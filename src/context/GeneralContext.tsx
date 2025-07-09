@@ -1,11 +1,16 @@
-"use client"
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { newRequest } from '@/utils/newRequest';
-import { Backdrop, CircularProgress } from '@mui/material';
-import { LanguageTariff } from '@/store/sampleStore';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    ReactNode,
+} from "react";
+import { newRequest } from "@/utils/newRequest";
+import { Backdrop, CircularProgress } from "@mui/material";
+import { LanguageTariff } from "@/store/sampleStore";
 
-interface GeneralSettings {
+export interface GeneralSettings {
     sitePaused: boolean;
     normalSlots: number;
     expressSlots: number;
@@ -50,10 +55,18 @@ const GeneralContext = createContext<GeneralContextProps>({
 
 export const useGeneral = () => useContext(GeneralContext);
 
-export const GeneralProvider = ({ children }: { children: ReactNode }) => {
-    const [general, setGeneral] = useState<GeneralSettings | null>(null);
+export const GeneralProvider = ({
+                                    children,
+                                    initialGeneral,
+                                    initialDocuments,
+                                }: {
+    children: ReactNode;
+    initialGeneral: GeneralSettings | null;
+    initialDocuments: Document[];
+}) => {
+    const [general, setGeneral] = useState<GeneralSettings | null>(initialGeneral);
+    const [documents, setDocuments] = useState<Document[]>(initialDocuments);
     const [loading, setLoading] = useState(false);
-    const [documents, setDocuments] = useState<Document[]>([]);
 
     const fetchGeneral = async () => {
         setLoading(true);
@@ -75,15 +88,19 @@ export const GeneralProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    useEffect(() => {
-        fetchGeneral();
-        fetchDocuments();
-    }, []);
-
     return (
-        <GeneralContext.Provider value={{ general, setGeneral, fetchGeneral, loading, documents, fetchDocuments }}>
+        <GeneralContext.Provider
+            value={{
+                general,
+                setGeneral,
+                fetchGeneral,
+                loading,
+                documents,
+                fetchDocuments,
+            }}
+        >
             {children}
-            <Backdrop open={loading} sx={{ color: '#fff', zIndex: 1301 }}>
+            <Backdrop open={loading} sx={{ color: "#fff", zIndex: 1301 }}>
                 <CircularProgress color="inherit" />
             </Backdrop>
         </GeneralContext.Provider>
