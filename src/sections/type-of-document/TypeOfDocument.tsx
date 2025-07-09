@@ -589,7 +589,7 @@ const TypeOfDocument = () => {
                                 title="Normal"
                                 description="Перевод документов завтра на утро"
                                 benefits={[
-                                    {iconSrc: timeIcon, text: `Гарантия доставки до ${tomorrowDate} 16:00 (Астаны)`},
+                                    {iconSrc: timeIcon, text: `Гарантия доставки до ${tomorrowDate} 9:00 (Астаны)`},
                                     {iconSrc: garry, text: 'Обычная скорость перевода'},
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
@@ -604,7 +604,7 @@ const TypeOfDocument = () => {
                                 title="Express"
                                 description="Перевод документов в тот же день"
                                 benefits={[
-                                    {iconSrc: timeIconPurple, text: `Гарантия доставки до ${todayDate} 21:00 (Астаны)`},
+                                    {iconSrc: timeIconPurple, text: `Гарантия доставки до ${todayDate} 16:00 (Астаны)`},
                                     {iconSrc: fast, text: 'Ускоряемся для быстрого перевода'},
                                     {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
