@@ -364,7 +364,7 @@ const AdminContent = () => {
                                 Загрузить изображение
                                 <input type="file" accept="image/*" hidden onChange={handleSampleImageChange} />
                             </ButtonOutlined>
-                            {samplePreview && <Image src={samplePreview} alt="preview" style={{ maxWidth: 120, marginTop: 8 }} />}
+                            {samplePreview && <Image src={samplePreview} className={styles.samplePreviewPhoto} alt="preview" width={100} height={100}  style={{ maxWidth: 120, marginTop: 8 }} />}
                         </div>
                         <DialogActions>
                             <ButtonOutlined white onClick={() => setSampleDialogOpen(false)}>Отмена</ButtonOutlined>

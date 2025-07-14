@@ -441,9 +441,13 @@ const TypeOfDocument = () => {
 
     const isExpressDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 14);
     const isFastDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 16);
-    const isNormalDisabled = activeCountry === 'KZ' && isOutsideInterval(0, 25);
+    const isNormalDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 21);
 
     console.log("KZ time:", getKazakhstanTime().toTimeString());
+    console.log("Express disabled:", isExpressDisabled);
+    console.log("Fast disabled:", isFastDisabled);
+    console.log("Normal disabled:", isNormalDisabled);
+
     const areAllTariffsDisabled = isNormalDisabled && isExpressDisabled && isFastDisabled;
     console.log("Is Express Disabled:", isExpressDisabled);
     console.log("Is Fast Disabled:", isFastDisabled);
