@@ -425,22 +425,26 @@ const TypeOfDocument = () => {
     const getKazakhstanTime = () => {
         const now = new Date();
         const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        return new Date(utc + 5 * 60 * 60000); // UTC+5 for Astana
+        return new Date(utc + 5 * 60 * 60000);
     };
 
-    const kzTime = getKazakhstanTime();
+    const isOutsideInterval = (startHour: number, endHour: number): boolean => {
+        const time = getKazakhstanTime();
+        const hour = time.getHours();
 
-    const isTimePast = (targetHour: number): boolean => {
-        const hour = kzTime.getHours();
-        const minute = kzTime.getMinutes();
-        return hour > targetHour || (hour === targetHour && minute > 0);
+        if (startHour < endHour) {
+            return hour < startHour || hour >= endHour;
+        } else {
+            return hour < startHour && hour >= endHour;
+        }
     };
 
-    const isExpressDisabled = activeCountry === 'KZ' && isTimePast(14);
-    const isFastDisabled = activeCountry === 'KZ' && isTimePast(16);
-    const isNormalDisabled = activeCountry === 'KZ' && isTimePast(21);
+    const isExpressDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 14);
+    const isFastDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 16);
+    const isNormalDisabled = activeCountry === 'KZ' && isOutsideInterval(0, 25);
+
+    console.log("KZ time:", getKazakhstanTime().toTimeString());
     const areAllTariffsDisabled = isNormalDisabled && isExpressDisabled && isFastDisabled;
-    console.log("Kazakhstan time:", kzTime.toTimeString());
     console.log("Is Express Disabled:", isExpressDisabled);
     console.log("Is Fast Disabled:", isFastDisabled);
     console.log("Is Normal Disabled:", isNormalDisabled);
