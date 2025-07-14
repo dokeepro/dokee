@@ -22,7 +22,7 @@ import dropFile from "@/assets/icons/file-download.svg"
 import lightning from "@/assets/icons/lighting-white.svg"
 import garry from "@/assets/icons/garry-icon.svg"
 import discount from "@/assets/icons/discount-icon.svg"
-import { newRequest } from '@/utils/newRequest';
+import {newRequest} from '@/utils/newRequest';
 import {HiMiniArrowsRightLeft} from "react-icons/hi2";
 import TariffItem from '@/components/tariff-item/TariffItem';
 import {useDocumentContext} from "@/context/DocumentContext";
@@ -63,7 +63,6 @@ type WayforpayPaymentData = {
     orderTimeout: number;
     orderLifetime: number;
 };
-
 
 
 interface WayforpayInstance {
@@ -131,7 +130,7 @@ const TypeOfDocument = () => {
         setActivePage
     } = useDocumentContext();
 
-    const { showAlert } = useAlert();
+    const {showAlert} = useAlert();
 
 
     const {
@@ -188,7 +187,6 @@ const TypeOfDocument = () => {
     };
 
 
-
     const [currentDoc, setCurrentDoc] = useState<Document | null>(null);
 
     const handleTariffsScroll = () => {
@@ -233,7 +231,7 @@ const TypeOfDocument = () => {
             case 1:
                 return !isPage1Valid;
             case 2:
-                return !isPage2Valid;
+                return !isPage2Valid || areAllTariffsDisabled;
             case 3:
                 return !isPage3Valid;
             case 4:
@@ -262,7 +260,7 @@ const TypeOfDocument = () => {
         tariff: TariffType,
         toLang: string | null
     ): number => {
-        const { selectedSamples, country, fromLanguage, toLanguage } = useSampleStore.getState();
+        const {selectedSamples, country, fromLanguage, toLanguage} = useSampleStore.getState();
 
         const normalize = (lang: string) =>
             lang.trim().toLowerCase().replace(/[_\s-]+/g, '');
@@ -327,7 +325,10 @@ const TypeOfDocument = () => {
         setTimeout(() => {
             const section = document.getElementById("calculator");
             if (section) {
-                section.scrollIntoView({ behavior: "smooth" });
+                section.scrollIntoView({behavior: "smooth"});
+                setTimeout(() => {
+                    window.scrollBy({top: -450, left: 0, behavior: "smooth"});
+                }, 5);
             }
         }, 5);
     };
@@ -405,9 +406,9 @@ const TypeOfDocument = () => {
         }
     }, [activeCountry]);
 
-    const now = new Date();
-    const todayDate = now.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
-    const astanaTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+    const kzNow = new Date();
+    const todayDate = kzNow.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
+    const astanaTime = new Date(kzNow.getTime() + 3 * 60 * 60 * 1000);
     astanaTime.setMinutes(0, 0, 0);
     const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
     const tomorrow = new Date();
@@ -420,6 +421,29 @@ const TypeOfDocument = () => {
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
     };
+
+    const getKazakhstanTime = () => {
+        const now = new Date();
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        return new Date(utc + 5 * 60 * 60000); // UTC+5 for Astana
+    };
+
+    const kzTime = getKazakhstanTime();
+
+    const isTimePast = (targetHour: number): boolean => {
+        const hour = kzTime.getHours();
+        const minute = kzTime.getMinutes();
+        return hour > targetHour || (hour === targetHour && minute > 0);
+    };
+
+    const isExpressDisabled = activeCountry === 'KZ' && isTimePast(14);
+    const isFastDisabled = activeCountry === 'KZ' && isTimePast(16);
+    const isNormalDisabled = activeCountry === 'KZ' && isTimePast(21);
+    const areAllTariffsDisabled = isNormalDisabled && isExpressDisabled && isFastDisabled;
+    console.log("Kazakhstan time:", kzTime.toTimeString());
+    console.log("Is Express Disabled:", isExpressDisabled);
+    console.log("Is Fast Disabled:", isFastDisabled);
+    console.log("Is Normal Disabled:", isNormalDisabled);
 
     const renderPopupContent = (title: string) => {
         switch (title) {
@@ -599,6 +623,7 @@ const TypeOfDocument = () => {
                                 onSelect={() => handleTariffSelect('Normal')}
                                 isSelected={tariff === 'Normal'}
                                 selectedTariff={tariff || ""}
+                                disabled={isNormalDisabled}
                             />
                             <TariffItem
                                 title="Express"
@@ -614,6 +639,7 @@ const TypeOfDocument = () => {
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
                                 selectedTariff={tariff || ""}
+                                disabled={isExpressDisabled}
                             />
                             <TariffItem
                                 title="Fast"
@@ -632,6 +658,7 @@ const TypeOfDocument = () => {
                                 onSelect={() => handleTariffSelect('Fast')}
                                 isSelected={tariff === 'Fast'}
                                 selectedTariff={tariff || ""}
+                                disabled={isFastDisabled}
                             />
                         </div>
                         <div className={styles.mobileOnly} style={{margin: "5px auto", fontSize: "20px"}}>
@@ -680,7 +707,7 @@ const TypeOfDocument = () => {
                         </label>
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
-                            {uploadedFiles.map((file, index) => (
+                                {uploadedFiles.map((file, index) => (
                                     <li
                                         key={index}
                                         style={{display: 'flex', alignItems: 'center', gap: 8}}
@@ -846,7 +873,7 @@ const TypeOfDocument = () => {
                         {currentDoc && (
                             <ButtonOutlined
                                 outlined
-                                sx={{ borderColor: "1px solid #d6e0ec" }}
+                                sx={{borderColor: "1px solid #d6e0ec"}}
                                 onClick={handleBackToList}
                             >
                                 {selectedSamples.length === 0 ? "Назад" : "Выбрать ещё"}
@@ -866,7 +893,12 @@ const TypeOfDocument = () => {
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
-                        <ButtonOutlined sx={nextButtonStyle} onClick={handleNextStep} disabled={isNextDisabled()}>
+
+                        <ButtonOutlined
+                            sx={nextButtonStyle}
+                            onClick={handleNextStep}
+                            disabled={isNextDisabled()}
+                        >
                             Продолжить
                         </ButtonOutlined>
                     </div>

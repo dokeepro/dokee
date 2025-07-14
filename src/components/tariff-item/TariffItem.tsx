@@ -24,12 +24,13 @@ interface TariffItemProps {
     borderRadius?: string[];
     onSelect: () => void;
     isSelected: boolean;
+    disabled: boolean;
     selectedTariff?: string;
 }
 
 const TariffItem: FC<TariffItemProps> = ({
                                              title, description, benefits, price, borderRadius = ['30px'],
-                                             onSelect, isSelected, selectedTariff, availableSlots
+                                             onSelect, isSelected, selectedTariff, availableSlots, disabled
                                          }) => {
     const getBackgroundColor = () => {
         switch (title) {
@@ -117,7 +118,6 @@ const TariffItem: FC<TariffItemProps> = ({
         }
     };
 
-    const opacity = selectedTariff && !isSelected ? 0.5 : 1;
     const isUnavailable = availableSlots <= 0;
     const selectedDate = useSampleStore(state => state.selectedDate);
     const setSelectedDate = useSampleStore(state => state.setSelectedDate);
@@ -137,15 +137,19 @@ const TariffItem: FC<TariffItemProps> = ({
         handleClose();
     };
 
+
     return (
         <div
             className={styles.tariffItem}
             style={{
                 background: getBackgroundColor(),
                 borderRadius: borderRadius.join(' '),
-                opacity,
-                transition: 'opacity 0.3s'
-            }}>
+                opacity: disabled ? 0.5 : selectedTariff && !isSelected ? 0.5 : 1,
+                pointerEvents: disabled ? 'none' : 'auto',
+                transition: 'opacity 0.3s ease-in-out',
+            }}
+            aria-disabled={disabled}
+        >
             <div className={styles.tariffItemInner}>
                 <div className={styles.tariffTitle}>
                     <h2 style={{color: getTextColor()}}>{title}</h2>
@@ -177,7 +181,7 @@ const TariffItem: FC<TariffItemProps> = ({
                             <div
                                 role="button"
                                 tabIndex={0}
-                                onClick={handleButtonClick}
+                                onClick={disabled ? undefined : handleButtonClick}
                                 className={styles.fakeButton}
                                 style={{
                                     padding: '16px',
@@ -194,14 +198,14 @@ const TariffItem: FC<TariffItemProps> = ({
                                     fontSize: '13px',
                                     maxHeight: '48px',
                                     fontFamily: "'CraftworkGrotesk', 'Involve', Arial, sans-serif",
-                                    cursor: 'pointer',
+                                    cursor: disabled ? 'not-allowed' : 'pointer',
                                     marginTop: '16px'
                                 }}>
                                 <Image src={calendar} alt="icon" width={24} height={24}/>
                                 {selectedDate ? `Выбрано: ${selectedDate.format('DD.MM.YYYY')}` : 'Выбрать ближайшее время'}
                             </div>
                             <Popover
-                                open={Boolean(anchorEl)}
+                                open={!disabled && Boolean(anchorEl)}
                                 anchorEl={anchorEl}
                                 onClose={handleClose}
                                 anchorOrigin={{
@@ -212,7 +216,7 @@ const TariffItem: FC<TariffItemProps> = ({
                                     vertical: 'top',
                                     horizontal: 'left',
                                 }}>
-                                <div style={{ padding: 16, background: '#fff' }}>
+                                <div style={{padding: 16, background: '#fff'}}>
                                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                                         <StaticDatePicker
                                             value={selectedDate}
@@ -230,23 +234,44 @@ const TariffItem: FC<TariffItemProps> = ({
                 <h3 style={{color: getTextColor()}}>{price} ₸</h3>
             </div>
             <div className={styles.tariffButton} style={{borderRadius: getBorderRadius()}}>
-                <Button
-                    onClick={onSelect}
-                    sx={{
-                        backgroundColor: getButtonBackground(),
-                        color: getButtonTextColor(),
-                        border: getButtonBorder(),
-                        textTransform: 'none',
-                        padding: '24px 16px',
-                        width: '100%',
-                        borderRadius: '15px',
-                        '&:hover': {
-                            backgroundColor: title === 'Fast' ? '#4447b0' : '#f9f9f9',
-                            borderColor: '#c0c0c0',
-                        },
-                    }}>
-                    {isSelected ? 'Пакет выбран' : 'Выбрать пакет'}
-                </Button>
+                {disabled ? (
+                    <Button
+                        disabled
+                        sx={{
+                            backgroundColor: '#f0f0f0 !important',
+                            color: '#aaa !important',
+                            border: '1px solid #ddd !important',
+                            textTransform: 'none',
+                            fontFamily: "'CraftworkGrotesk', 'Involve', Arial, sans-serif",
+                            padding: '24px 16px',
+                            width: '100%',
+                            borderRadius: '15px',
+                            fontWeight: 600,
+                            cursor: 'not-allowed',
+                        }}
+                    >
+                        Этот тариф недоступен
+                    </Button>
+                ) : (
+                    <Button
+                        onClick={onSelect}
+                        sx={{
+                            backgroundColor: getButtonBackground(),
+                            color: getButtonTextColor(),
+                            border: getButtonBorder(),
+                            textTransform: 'none',
+                            padding: '24px 16px',
+                            width: '100%',
+                            borderRadius: '15px',
+                            '&:hover': {
+                                backgroundColor: title === 'Fast' ? '#4447b0' : '#f9f9f9',
+                                borderColor: '#c0c0c0',
+                            },
+                        }}
+                    >
+                        {isSelected ? 'Пакет выбран' : 'Выбрать пакет'}
+                    </Button>
+                )}
             </div>
         </div>
     );
