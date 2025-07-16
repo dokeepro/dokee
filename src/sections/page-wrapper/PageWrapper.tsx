@@ -7,7 +7,7 @@ import videoIntro from "@/assets/images/video-intro.svg";
 import Dialog from '@mui/material/Dialog';
 import {usePathname} from 'next/navigation';
 import {useGeneral} from "@/context/GeneralContext";
-import {useDocumentContext} from "@/context/DocumentContext";
+import { useDocumentContext } from '@/context/DocumentContext';
 
 interface PageWrapperProps {
     children: React.ReactNode;
@@ -20,6 +20,7 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
     const pathname = usePathname();
     const {general} = useGeneral();
     const { activePage } = useDocumentContext();
+    console.log("ACTIVE PAGE", activePage);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -34,6 +35,7 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+
     return (
         <>
             {general?.sitePaused && pathname !== '/admin' ? (
@@ -45,7 +47,7 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
                 </div>
             ) : (
                 <div className={styles.outer}>
-                    {pathname !== '/admin' && ![2, 3, 4, 5].includes(activePage) && (
+                    {pathname !== '/admin' && !['2', '3', '4', '5'].includes(String(activePage)) && (
                         <Image
                             src={videoIntro}
                             alt="Video"

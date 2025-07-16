@@ -31,6 +31,7 @@ const languageOptions = [
     { label: 'Украинский', value: 'uk' },
     { label: 'Английский', value: 'en' },
     { label: 'Немецкий', value: 'de' },
+    { label: 'Русский', value: 'ru' },
     { label: 'Французский/Итальянский/Испанский', value: 'fr_it_es' },
     { label: 'Польский/Чешский', value: 'pl_cz' },
     { label: 'Литовский/Португальский', value: 'lt_pt' },
@@ -46,7 +47,12 @@ const AdminContent = () => {
     const [sampleDialogOpen, setSampleDialogOpen] = useState(false);
     const [sampleTitle, setSampleTitle] = useState('');
     const [sampleImage, setSampleImage] = useState<File | null>(null);
-    const [samplePreview, setSamplePreview] = useState<string | null>(null);
+    const [samplePreview, setSamplePreview] = useState<string | null>(null)
+    const [addLangDialogOpen, setAddLangDialogOpen] = useState(false);
+    const [newSampleImage, setNewSampleImage] = useState<File | null>(null);
+    const [newSamplePreview, setNewSamplePreview] = useState<string | null>(null);
+    const [languageOptionsState, setLanguageOptionsState] = useState(languageOptions);
+    const [selectedLang, setSelectedLang] = useState<string>('');
     const [tariffs, setTariffs] = useState<{ [key: string]: { normal: string, express: string, fast: string } }>(
         Object.fromEntries(languageOptions.map(opt => [opt.value, { normal: '', express: '', fast: '' }]))
     );
@@ -62,6 +68,150 @@ const AdminContent = () => {
         setEditingSample({ docId, sampleIdx, sample: { ...sample } });
         setEditSampleDialogOpen(true);
     };
+
+    const allLanguages = [
+        { label: 'Абхазский', value: 'ab' },
+        { label: 'Авестийский', value: 'ae' },
+        { label: 'Африкаанс', value: 'af' },
+        { label: 'Акан', value: 'ak' },
+        { label: 'Албанский', value: 'sq' },
+        { label: 'Амхарский', value: 'am' },
+        { label: 'Арабский', value: 'ar' },
+        { label: 'Армянский', value: 'hy' },
+        { label: 'Ассамский', value: 'as' },
+        { label: 'Аварский', value: 'av' },
+        { label: 'Аймара', value: 'ay' },
+        { label: 'Азербайджанский', value: 'az' },
+        { label: 'Башкирский', value: 'ba' },
+        { label: 'Белорусский', value: 'be' },
+        { label: 'Болгарский', value: 'bg' },
+        { label: 'Бихари', value: 'bh' },
+        { label: 'Бислама', value: 'bi' },
+        { label: 'Бамбара', value: 'bm' },
+        { label: 'Бенгальский', value: 'bn' },
+        { label: 'Тибетский', value: 'bo' },
+        { label: 'Бретонский', value: 'br' },
+        { label: 'Боснийский', value: 'bs' },
+        { label: 'Каталанский', value: 'ca' },
+        { label: 'Чеченский', value: 'ce' },
+        { label: 'Чаморро', value: 'ch' },
+        { label: 'Корсиканский', value: 'co' },
+        { label: 'Креольский (Гаити)', value: 'ht' },
+        { label: 'Чувашский', value: 'cv' },
+        { label: 'Уэльский (Валлийский)', value: 'cy' },
+        { label: 'Датский', value: 'da' },
+        { label: 'Немецкий', value: 'de' },
+        { label: 'Дивехи', value: 'dv' },
+        { label: 'Греческий', value: 'el' },
+        { label: 'Английский', value: 'en' },
+        { label: 'Эсперанто', value: 'eo' },
+        { label: 'Испанский', value: 'es' },
+        { label: 'Эстонский', value: 'et' },
+        { label: 'Баскский', value: 'eu' },
+        { label: 'Персидский', value: 'fa' },
+        { label: 'Финский', value: 'fi' },
+        { label: 'Фиджи', value: 'fj' },
+        { label: 'Фарерский', value: 'fo' },
+        { label: 'Фризский', value: 'fy' },
+        { label: 'Ирландский', value: 'ga' },
+        { label: 'Шотландский гэльский', value: 'gd' },
+        { label: 'Галицийский', value: 'gl' },
+        { label: 'Гуджарати', value: 'gu' },
+        { label: 'Манкс', value: 'gv' },
+        { label: 'Иврит', value: 'he' },
+        { label: 'Хинди', value: 'hi' },
+        { label: 'Хиримоту', value: 'ho' },
+        { label: 'Хорватский', value: 'hr' },
+        { label: 'Венгерский', value: 'hu' },
+        { label: 'Армянский', value: 'hy' },
+        { label: 'Индонезийский', value: 'id' },
+        { label: 'Исландский', value: 'is' },
+        { label: 'Японский', value: 'ja' },
+        { label: 'Яванский', value: 'jv' },
+        { label: 'Грузинский', value: 'ka' },
+        { label: 'Конго', value: 'kg' },
+        { label: 'Кикуйю', value: 'ki' },
+        { label: 'Казахский', value: 'kk' },
+        { label: 'Гренландский', value: 'kl' },
+        { label: 'Камбоджийский (кхмерский)', value: 'km' },
+        { label: 'Каннада', value: 'kn' },
+        { label: 'Корейский', value: 'ko' },
+        { label: 'Кашмири', value: 'ks' },
+        { label: 'Курдский', value: 'ku' },
+        { label: 'Коми', value: 'kv' },
+        { label: 'Корнский', value: 'kw' },
+        { label: 'Киргизский', value: 'ky' },
+        { label: 'Латинский', value: 'la' },
+        { label: 'Люксембургский', value: 'lb' },
+        { label: 'Ганда', value: 'lg' },
+        { label: 'Лимбургский', value: 'li' },
+        { label: 'Лингала', value: 'ln' },
+        { label: 'Лаосский', value: 'lo' },
+        { label: 'Латышский', value: 'lv' },
+        { label: 'Малагасийский', value: 'mg' },
+        { label: 'Маори', value: 'mi' },
+        { label: 'Македонский', value: 'mk' },
+        { label: 'Малаялам', value: 'ml' },
+        { label: 'Монгольский', value: 'mn' },
+        { label: 'Маратхи', value: 'mr' },
+        { label: 'Малайский', value: 'ms' },
+        { label: 'Мальтийский', value: 'mt' },
+        { label: 'Бурятский', value: 'bua' },
+        { label: 'Бирманский', value: 'my' },
+        { label: 'Нидерландский', value: 'nl' },
+        { label: 'Норвежский', value: 'no' },
+        { label: 'Непальский', value: 'ne' },
+        { label: 'Чувашский', value: 'cv' },
+        { label: 'Ория', value: 'or' },
+        { label: 'Пенджаби', value: 'pa' },
+        { label: 'Пашто', value: 'ps' },
+        { label: 'Кечуа', value: 'qu' },
+        { label: 'Ретороманский', value: 'rm' },
+        { label: 'Румынский', value: 'ro' },
+        { label: 'Русский', value: 'ru' },
+        { label: 'Киньяруанда', value: 'rw' },
+        { label: 'Санскрит', value: 'sa' },
+        { label: 'Сардский', value: 'sc' },
+        { label: 'Синдхи', value: 'sd' },
+        { label: 'Санго', value: 'sg' },
+        { label: 'Сербский', value: 'sr' },
+        { label: 'Сингальский', value: 'si' },
+        { label: 'Словацкий', value: 'sk' },
+        { label: 'Словенский', value: 'sl' },
+        { label: 'Самоанский', value: 'sm' },
+        { label: 'Шона', value: 'sn' },
+        { label: 'Сомалийский', value: 'so' },
+        { label: 'Албанский (южный)', value: 'sq' },
+        { label: 'Сербохорватский', value: 'sh' },
+        { label: 'Сесото', value: 'st' },
+        { label: 'Сунданский', value: 'su' },
+        { label: 'Шведский', value: 'sv' },
+        { label: 'Суахили', value: 'sw' },
+        { label: 'Тамильский', value: 'ta' },
+        { label: 'Телугу', value: 'te' },
+        { label: 'Таджикский', value: 'tg' },
+        { label: 'Тайский', value: 'th' },
+        { label: 'Тигринья', value: 'ti' },
+        { label: 'Туркменский', value: 'tk' },
+        { label: 'Тагальский', value: 'tl' },
+        { label: 'Тсвана', value: 'tn' },
+        { label: 'Тонганский', value: 'to' },
+        { label: 'Турецкий', value: 'tr' },
+        { label: 'Цонга', value: 'ts' },
+        { label: 'Татарский', value: 'tt' },
+        { label: 'Твий', value: 'tw' },
+        { label: 'Тахитянский', value: 'ty' },
+        { label: 'Украинский', value: 'uk' },
+        { label: 'Урду', value: 'ur' },
+        { label: 'Узбекский', value: 'uz' },
+        { label: 'Венда', value: 've' },
+        { label: 'Вьетнамский', value: 'vi' },
+        { label: 'Волоф', value: 'wo' },
+        { label: 'Коса', value: 'xh' },
+        { label: 'Идиш', value: 'yi' },
+        { label: 'Йоруба', value: 'yo' },
+        { label: 'Зулусский', value: 'zu' }
+    ];
 
     const handleEditSampleTariffChange = (
         lang: string,
@@ -90,14 +240,32 @@ const AdminContent = () => {
 
     const handleSaveEditedSample = async () => {
         if (!editingSample) return;
-        await newRequest.patch(`/documents/${editingSample.docId}/samples/${editingSample.sampleIdx}`, {
-            title: editingSample.sample.title,
-            languageTariffs: editingSample.sample.languageTariffs,
-        });
-        showAlert('Образец успешно изменен', 'success');
+
+        const formData = new FormData();
+        formData.append('title', editingSample.sample.title);
+        formData.append('languageTariffs', JSON.stringify(editingSample.sample.languageTariffs || []));
+
+        if (newSampleImage) {
+            formData.append('image', newSampleImage);
+        }
+
+        await newRequest.patch(
+            `/documents/${editingSample.docId}/samples/${editingSample.sampleIdx}`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            }
+        );
+
+        showAlert('Образец успешно обновлен', 'success');
         setEditSampleDialogOpen(false);
         setEditingSample(null);
+        setNewSampleImage(null);
+        setNewSamplePreview(null);
     };
+
 
     const initialValues = {
         sitePaused: general?.sitePaused || false,
@@ -130,7 +298,7 @@ const AdminContent = () => {
     };
     const handleSaveDocument = async () => {
         try {
-            const tariffsArr = languageOptions.map(opt => ({
+            const tariffsArr = languageOptionsState.map(opt => ({
                 language: opt.value,
                 normal: Number(tariffs[opt.value].normal) || 0,
                 express: Number(tariffs[opt.value].express) || 0,
@@ -180,20 +348,147 @@ const AdminContent = () => {
     };
 
     const langCodeToName: Record<string, string> = {
-        en: 'Английский',
+        ab: 'Абхазский',
+        ae: 'Авестийский',
+        af: 'Африкаанс',
+        ak: 'Акан',
+        sq: 'Албанский',
+        am: 'Амхарский',
+        ar: 'Арабский',
+        hy: 'Армянский',
+        as: 'Ассамский',
+        av: 'Аварский',
+        ay: 'Аймара',
+        az: 'Азербайджанский',
+        ba: 'Башкирский',
+        be: 'Белорусский',
+        bg: 'Болгарский',
+        bh: 'Бихари',
+        bi: 'Бислама',
+        bm: 'Бамбара',
+        bn: 'Бенгальский',
+        bo: 'Тибетский',
+        br: 'Бретонский',
+        bs: 'Боснийский',
+        ca: 'Каталанский',
+        ce: 'Чеченский',
+        ch: 'Чаморро',
+        co: 'Корсиканский',
+        ht: 'Креольский (Гаити)',
+        cv: 'Чувашский',
+        cy: 'Уэльский (Валлийский)',
+        da: 'Датский',
         de: 'Немецкий',
-        fr: 'Французский',
-        it: 'Итальянский',
+        dv: 'Дивехи',
+        el: 'Греческий',
+        en: 'Английский',
+        eo: 'Эсперанто',
         es: 'Испанский',
-        pl: 'Польский',
-        cz: 'Чешский',
+        et: 'Эстонский',
+        eu: 'Баскский',
+        fa: 'Персидский',
+        fi: 'Финский',
+        fj: 'Фиджи',
+        fo: 'Фарерский',
+        fy: 'Фризский',
+        ga: 'Ирландский',
+        gd: 'Шотландский гэльский',
+        gl: 'Галицийский',
+        gu: 'Гуджарати',
+        gv: 'Манкс',
+        he: 'Иврит',
+        hi: 'Хинди',
+        ho: 'Хиримоту',
+        hr: 'Хорватский',
+        hu: 'Венгерский',
+        id: 'Индонезийский',
+        is: 'Исландский',
+        ja: 'Японский',
+        jv: 'Яванский',
+        ka: 'Грузинский',
+        kg: 'Конго',
+        ki: 'Кикуйю',
+        kk: 'Казахский',
+        kl: 'Гренландский',
+        km: 'Камбоджийский (кхмерский)',
+        kn: 'Каннада',
+        ko: 'Корейский',
+        ks: 'Кашмири',
+        ku: 'Курдский',
+        kv: 'Коми',
+        kw: 'Корнский',
+        ky: 'Киргизский',
+        la: 'Латинский',
+        lb: 'Люксембургский',
+        lg: 'Ганда',
+        li: 'Лимбургский',
+        ln: 'Лингала',
+        lo: 'Лаосский',
+        lv: 'Латышский',
+        mg: 'Малагасийский',
+        mi: 'Маори',
+        mk: 'Македонский',
+        ml: 'Малаялам',
+        mn: 'Монгольский',
+        mr: 'Маратхи',
+        ms: 'Малайский',
+        mt: 'Мальтийский',
+        bua: 'Бурятский',
+        my: 'Бирманский',
+        nl: 'Нидерландский',
+        no: 'Норвежский',
+        ne: 'Непальский',
+        or: 'Ория',
+        pa: 'Пенджаби',
+        ps: 'Пашто',
+        qu: 'Кечуа',
+        rm: 'Ретороманский',
+        ro: 'Румынский',
         ru: 'Русский',
+        rw: 'Киньяруанда',
+        sa: 'Санскрит',
+        sc: 'Сардский',
+        sd: 'Синдхи',
+        sg: 'Санго',
+        sr: 'Сербский',
+        si: 'Сингальский',
+        sk: 'Словацкий',
+        sl: 'Словенский',
+        sm: 'Самоанский',
+        sn: 'Шона',
+        so: 'Сомалийский',
+        sh: 'Сербохорватский',
+        st: 'Сесото',
+        su: 'Сунданский',
+        sv: 'Шведский',
+        sw: 'Суахили',
+        ta: 'Тамильский',
+        te: 'Телугу',
+        tg: 'Таджикский',
+        th: 'Тайский',
+        ti: 'Тигринья',
+        tk: 'Туркменский',
+        tl: 'Тагальский',
+        tn: 'Тсвана',
+        to: 'Тонганский',
+        tr: 'Турецкий',
+        ts: 'Цонга',
+        tt: 'Татарский',
+        tw: 'Твий',
+        ty: 'Тахитянский',
         uk: 'Украинский',
-        lt: 'Литовский',
-        pt: 'Португальский',
-        'fr_it_es': 'Французский/Итальянский/Испанский',
-        'pl_cz': 'Польский/Чешский',
-        'lt_pt': 'Литовский/Португальский',
+        ur: 'Урду',
+        uz: 'Узбекский',
+        ve: 'Венда',
+        vi: 'Вьетнамский',
+        wo: 'Волоф',
+        xh: 'Коса',
+        yi: 'Идиш',
+        yo: 'Йоруба',
+        zu: 'Зулусский',
+        fr_it_es: 'Французский/Итальянский/Испанский',
+        pl_cz: 'Польский/Чешский',
+        lt_pt: 'Литовский/Португальский',
     };
 
     return (
@@ -202,13 +497,14 @@ const AdminContent = () => {
                 <Form>
                     <Dialog open={editSampleDialogOpen} onClose={() => setEditSampleDialogOpen(false)}>
                         <div className={styles.sampleEditContent}>
-                            <Separator title="Изменить Образец" description="Тут вы сможете изменить заголовок образца и его цены" />
+                            <Separator title="Изменить Образец"
+                                       description="Тут вы сможете изменить заголовок образца и его цены"/>
                             <TextField
                                 label="Заголовок"
                                 value={editingSample?.sample.title || ''}
                                 onChange={handleEditSampleTitleChange}
                                 fullWidth
-                                style={{ marginTop: 16 }}
+                                style={{marginTop: 16}}
                             />
                             {editingSample?.sample.languageTariffs?.map(
                                 (tariff: {
@@ -218,7 +514,7 @@ const AdminContent = () => {
                                     fast: number;
                                     _id?: string;
                                 }) => (
-                                    <div key={tariff.language} style={{ marginBottom: 12 }}>
+                                    <div key={tariff.language} style={{marginBottom: 12}}>
                                         <Separator
                                             title={langCodeToName[tariff.language] || tariff.language}
                                             description="Тарифы для этого языка"
@@ -235,7 +531,7 @@ const AdminContent = () => {
                                                         e.target.value
                                                     )
                                                 }
-                                                style={{ marginRight: 8 }}
+                                                style={{marginRight: 8}}
                                             />
                                             <TextField
                                                 label="Express"
@@ -248,7 +544,7 @@ const AdminContent = () => {
                                                         e.target.value
                                                     )
                                                 }
-                                                style={{ marginRight: 8 }}
+                                                style={{marginRight: 8}}
                                             />
                                             <TextField
                                                 label="Fast"
@@ -263,14 +559,88 @@ const AdminContent = () => {
                                                 }
                                             />
                                         </div>
+
                                     </div>
                                 )
+                            )}
+                            {editingSample?.sample && (
+                                <div className={styles.imagePreview}>
+                                    <Separator title="Текущее изображение"
+                                               description="Вы можете изменить текущее изображение образца"/>
+                                    <Image
+                                        src={newSamplePreview || editingSample.sample.imageUrl || ""}
+                                        alt="preview"
+                                        width={120}
+                                        height={120}
+                                        style={{maxWidth: 160, borderRadius: 6}}
+                                    />
+                                    <ButtonOutlined
+                                        variant="outlined"
+                                        component="label"
+                                        style={{marginTop: 12}}
+                                    >
+                                        Изменить фото
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            hidden
+                                            onChange={(e) => {
+                                                if (e.target.files?.[0]) {
+                                                    setNewSampleImage(e.target.files[0]);
+                                                    setNewSamplePreview(URL.createObjectURL(e.target.files[0]));
+                                                }
+                                            }}
+                                        />
+                                    </ButtonOutlined>
+                                </div>
                             )}
                             <DialogActions>
                                 <ButtonOutlined onClick={() => setEditSampleDialogOpen(false)} white>
                                     Отменить
                                 </ButtonOutlined>
                                 <ButtonOutlined variant="contained" onClick={handleSaveEditedSample}>
+                                    Сохранить
+                                </ButtonOutlined>
+                            </DialogActions>
+                        </div>
+                    </Dialog>
+                    <Dialog open={addLangDialogOpen} onClose={() => setAddLangDialogOpen(false)}>
+                        <div style={{padding: 24, display: 'flex', flexDirection: 'column', gap: 16}}>
+                            <Separator title="Выберите язык" description="Добавьте новый язык для тарифа"/>
+                            <FormControl fullWidth>
+                                <InputLabel id="add-lang-label">Язык</InputLabel>
+                                <Select
+                                    labelId="add-lang-label"
+                                    value={selectedLang}
+                                    label="Язык"
+                                    onChange={e => setSelectedLang(e.target.value as string)}>
+                                    {allLanguages.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <DialogActions>
+                                <ButtonOutlined white
+                                                onClick={() => setAddLangDialogOpen(false)}>Отмена</ButtonOutlined>
+                                <ButtonOutlined
+                                    variant="contained"
+                                    onClick={() => {
+                                        if (selectedLang) {
+                                            const foundLang = allLanguages.find(lang => lang.value === selectedLang);
+                                            if (!foundLang) return;
+                                            setLanguageOptionsState(prev => [...prev, foundLang]);
+                                            setTariffs(prev => ({
+                                                ...prev,
+                                                [selectedLang]: { normal: '', express: '', fast: '' }
+                                            }));
+                                            setSelectedLang('');
+                                            setAddLangDialogOpen(false);
+                                        }
+                                    }}
+                                    disabled={!selectedLang}
+                                >
                                     Сохранить
                                 </ButtonOutlined>
                             </DialogActions>
@@ -301,14 +671,14 @@ const AdminContent = () => {
                                 </FormControl>
                                 <div className={styles.tariffsContent}>
                                     <Separator title="Цены за языки для перевода" description="Пожалуйста, заполните ниже все данные" />
-                                    {languageOptions.map((lang) => (
+                                    {languageOptionsState.map((lang) => (
                                         <div key={lang.value} className={styles.langTariff}>
                                             <Separator title={lang.label} description="Цены по тарифам за конкретный язык" />
                                             <div className={styles.inputs}>
                                                 <TextField
                                                     label="Normal"
                                                     type="number"
-                                                    value={tariffs[lang.value].normal}
+                                                    value={tariffs[lang.value]?.normal ?? ''}
                                                     onChange={e => handleTariffChange(lang.value, 'normal', e.target.value)}
                                                     fullWidth
                                                     InputProps={{ endAdornment: <FaTengeSign style={{ marginLeft: 4, color: '#888' }} /> }}
@@ -316,7 +686,7 @@ const AdminContent = () => {
                                                 <TextField
                                                     label="Express"
                                                     type="number"
-                                                    value={tariffs[lang.value].express}
+                                                    value={tariffs[lang.value]?.express ?? ''}
                                                     onChange={e => handleTariffChange(lang.value, 'express', e.target.value)}
                                                     fullWidth
                                                     InputProps={{ endAdornment: <FaTengeSign style={{ marginLeft: 4, color: '#888' }} /> }}
@@ -324,7 +694,7 @@ const AdminContent = () => {
                                                 <TextField
                                                     label="Fast"
                                                     type="number"
-                                                    value={tariffs[lang.value].fast}
+                                                    value={tariffs[lang.value]?.fast ?? ''}
                                                     onChange={e => handleTariffChange(lang.value, 'fast', e.target.value)}
                                                     fullWidth
                                                     InputProps={{ endAdornment: <FaTengeSign style={{ marginLeft: 4, color: '#888' }} /> }}
@@ -332,7 +702,12 @@ const AdminContent = () => {
                                             </div>
                                         </div>
                                     ))}
+                                    <Separator title="Добавить другой язык для перевода" description="Добавляйте другой язык из списка доступных" />
+                                    <ButtonOutlined onClick={() => setAddLangDialogOpen(true)}>
+                                        Добавить язык
+                                    </ButtonOutlined>
                                 </div>
+                                <Separator title="Добавить образец для документа" description="Образец должен включать фото и название" />
                                 <ButtonOutlined variant="outlined" startIcon={<HiOutlineDocumentAdd />} onClick={() => setSampleDialogOpen(true)}>
                                     Добавить образец
                                 </ButtonOutlined>
@@ -343,7 +718,7 @@ const AdminContent = () => {
                                             {samples.map((sample, idx) => (
                                                 <div key={idx} style={{ textAlign: 'center' }}>
                                                     <div>{sample.title}</div>
-                                                    <Image src={URL.createObjectURL(sample.imageFile)} alt={sample.title} style={{ maxWidth: 120, marginTop: 8 }} />
+                                                    <Image src={URL.createObjectURL(sample.imageFile)} className={styles.samplePreviewPhoto} width={100} height={100} alt={sample.title} style={{ maxWidth: 120, marginTop: 8 }} />
                                                 </div>
                                             ))}
                                         </Stack>

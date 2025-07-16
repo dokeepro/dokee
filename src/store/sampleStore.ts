@@ -44,6 +44,8 @@ interface SampleStore {
     selectedDate: Dayjs | null;
     setSelectedDate: (date: Dayjs | null) => void;
     clearAll: () => void;
+    localActivePage: number | null;
+    setLocalActivePage: (page: number | null) => void;
 }
 
 export const useSampleStore = create<SampleStore>((set, get) => ({
@@ -54,6 +56,8 @@ export const useSampleStore = create<SampleStore>((set, get) => ({
     uploadedFiles: [],
     country: null,
     selectedDate: null,
+    localActivePage: null,
+    setLocalActivePage: (page) => set({ localActivePage: page }),
     setSelectedDate: (date) => set({ selectedDate: date }),
     setCountry: (country) => set({ country }),
     toggleSample: (sample) => {
@@ -98,4 +102,5 @@ export const useSampleStore = create<SampleStore>((set, get) => ({
         selectedTariff: null,
         country: null,
     }),
+
 }));

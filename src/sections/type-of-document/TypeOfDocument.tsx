@@ -97,12 +97,156 @@ interface Sample {
 interface Document {
     name: string;
     documentCountry?: string;
-    languageTariffs?: LanguageTariff[]; // Make optional
+    languageTariffs?: LanguageTariff[];
     samples: Sample[];
     fioLatin?: string;
     sealText?: string;
     stampText?: string;
 }
+
+const langCodeToName: Record<string, string> = {
+    ab: 'Абхазский',
+    ae: 'Авестийский',
+    af: 'Африкаанс',
+    ak: 'Акан',
+    sq: 'Албанский',
+    am: 'Амхарский',
+    ar: 'Арабский',
+    hy: 'Армянский',
+    as: 'Ассамский',
+    av: 'Аварский',
+    ay: 'Аймара',
+    az: 'Азербайджанский',
+    ba: 'Башкирский',
+    be: 'Белорусский',
+    bg: 'Болгарский',
+    bh: 'Бихари',
+    bi: 'Бислама',
+    bm: 'Бамбара',
+    bn: 'Бенгальский',
+    bo: 'Тибетский',
+    br: 'Бретонский',
+    bs: 'Боснийский',
+    ca: 'Каталанский',
+    ce: 'Чеченский',
+    ch: 'Чаморро',
+    co: 'Корсиканский',
+    ht: 'Креольский (Гаити)',
+    cv: 'Чувашский',
+    cy: 'Уэльский (Валлийский)',
+    da: 'Датский',
+    de: 'Немецкий',
+    dv: 'Дивехи',
+    el: 'Греческий',
+    en: 'Английский',
+    eo: 'Эсперанто',
+    es: 'Испанский',
+    et: 'Эстонский',
+    eu: 'Баскский',
+    fa: 'Персидский',
+    fi: 'Финский',
+    fj: 'Фиджи',
+    fo: 'Фарерский',
+    fy: 'Фризский',
+    ga: 'Ирландский',
+    gd: 'Шотландский гэльский',
+    gl: 'Галицийский',
+    gu: 'Гуджарати',
+    gv: 'Манкс',
+    he: 'Иврит',
+    hi: 'Хинди',
+    ho: 'Хиримоту',
+    hr: 'Хорватский',
+    hu: 'Венгерский',
+    id: 'Индонезийский',
+    is: 'Исландский',
+    ja: 'Японский',
+    jv: 'Яванский',
+    ka: 'Грузинский',
+    kg: 'Конго',
+    ki: 'Кикуйю',
+    kk: 'Казахский',
+    kl: 'Гренландский',
+    km: 'Камбоджийский (кхмерский)',
+    kn: 'Каннада',
+    ko: 'Корейский',
+    ks: 'Кашмири',
+    ku: 'Курдский',
+    kv: 'Коми',
+    kw: 'Корнский',
+    ky: 'Киргизский',
+    la: 'Латинский',
+    lb: 'Люксембургский',
+    lg: 'Ганда',
+    li: 'Лимбургский',
+    ln: 'Лингала',
+    lo: 'Лаосский',
+    lv: 'Латышский',
+    mg: 'Малагасийский',
+    mi: 'Маори',
+    mk: 'Македонский',
+    ml: 'Малаялам',
+    mn: 'Монгольский',
+    mr: 'Маратхи',
+    ms: 'Малайский',
+    mt: 'Мальтийский',
+    bua: 'Бурятский',
+    my: 'Бирманский',
+    nl: 'Нидерландский',
+    no: 'Норвежский',
+    ne: 'Непальский',
+    or: 'Ория',
+    pa: 'Пенджаби',
+    ps: 'Пашто',
+    qu: 'Кечуа',
+    rm: 'Ретороманский',
+    ro: 'Румынский',
+    ru: 'Русский',
+    rw: 'Киньяруанда',
+    sa: 'Санскрит',
+    sc: 'Сардский',
+    sd: 'Синдхи',
+    sg: 'Санго',
+    sr: 'Сербский',
+    si: 'Сингальский',
+    sk: 'Словацкий',
+    sl: 'Словенский',
+    sm: 'Самоанский',
+    sn: 'Шона',
+    so: 'Сомалийский',
+    sh: 'Сербохорватский',
+    st: 'Сесото',
+    su: 'Сунданский',
+    sv: 'Шведский',
+    sw: 'Суахили',
+    ta: 'Тамильский',
+    te: 'Телугу',
+    tg: 'Таджикский',
+    th: 'Тайский',
+    ti: 'Тигринья',
+    tk: 'Туркменский',
+    tl: 'Тагальский',
+    tn: 'Тсвана',
+    to: 'Тонганский',
+    tr: 'Турецкий',
+    ts: 'Цонга',
+    tt: 'Татарский',
+    tw: 'Твий',
+    ty: 'Тахитянский',
+    uk: 'Украинский',
+    ur: 'Урду',
+    uz: 'Узбекский',
+    ve: 'Венда',
+    vi: 'Вьетнамский',
+    wo: 'Волоф',
+    xh: 'Коса',
+    yi: 'Идиш',
+    yo: 'Йоруба',
+    zu: 'Зулусский',
+    fr_it_es: 'Французский/Итальянский/Испанский',
+    pl_cz: 'Польский/Чешский',
+    lt_pt: 'Литовский/Португальский',
+};
 
 const toLangMap: Record<string, string> = {
     русский: 'ru',
@@ -113,9 +257,31 @@ const toLangMap: Record<string, string> = {
     французский: 'fr',
     итальянский: 'it',
     испанский: 'es',
-    литовский: 'lt',
+    литовский: 'lt', // keep only one
     португальский: 'pt',
-    чешский: 'cz',
+    чешский: 'cs',
+    греческий: 'el',
+    японский: 'ja',
+    китайский: 'zh',
+    корейский: 'ko',
+    турецкий: 'tr',
+    казахский: 'kk',
+    узбекский: 'uz',
+    румынский: 'ro',
+    болгарский: 'bg',
+    венгерский: 'hu',
+    словацкий: 'sk',
+    словенский: 'sl',
+    финский: 'fi',
+    шведский: 'sv',
+    датский: 'da',
+    норвежский: 'no',
+    нидерландский: 'nl',
+    эстонский: 'et',
+    латышский: 'lv',
+    армянский: 'hy',
+    грузинский: 'ka',
+    азербайджанский: 'az',
 };
 
 const TypeOfDocument = () => {
@@ -254,45 +420,214 @@ const TypeOfDocument = () => {
         }
     };
 
-    type TariffType = 'normal' | 'express' | 'fast';
+    const langDisplayNameMap: Record<string, string> = {
+        ab: 'Абхазский',
+        ae: 'Авестийский',
+        af: 'Африкаанс',
+        ak: 'Акан',
+        sq: 'Албанский',
+        am: 'Амхарский',
+        ar: 'Арабский',
+        hy: 'Армянский',
+        as: 'Ассамский',
+        av: 'Аварский',
+        ay: 'Аймара',
+        az: 'Азербайджанский',
+        ba: 'Башкирский',
+        be: 'Белорусский',
+        bg: 'Болгарский',
+        bh: 'Бихари',
+        bi: 'Бислама',
+        bm: 'Бамбара',
+        bn: 'Бенгальский',
+        bo: 'Тибетский',
+        br: 'Бретонский',
+        bs: 'Боснийский',
+        ca: 'Каталанский',
+        ce: 'Чеченский',
+        ch: 'Чаморро',
+        co: 'Корсиканский',
+        ht: 'Креольский (Гаити)',
+        cv: 'Чувашский',
+        cy: 'Уэльский (Валлийский)',
+        da: 'Датский',
+        de: 'Немецкий',
+        dv: 'Дивехи',
+        el: 'Греческий',
+        en: 'Английский',
+        eo: 'Эсперанто',
+        es: 'Испанский',
+        et: 'Эстонский',
+        eu: 'Баскский',
+        fa: 'Персидский',
+        fi: 'Финский',
+        fj: 'Фиджи',
+        fo: 'Фарерский',
+        fy: 'Фризский',
+        ga: 'Ирландский',
+        gd: 'Шотландский гэльский',
+        gl: 'Галицийский',
+        gu: 'Гуджарати',
+        gv: 'Манкс',
+        he: 'Иврит',
+        hi: 'Хинди',
+        ho: 'Хиримоту',
+        hr: 'Хорватский',
+        hu: 'Венгерский',
+        id: 'Индонезийский',
+        is: 'Исландский',
+        ja: 'Японский',
+        jv: 'Яванский',
+        ka: 'Грузинский',
+        kg: 'Конго',
+        ki: 'Кикуйю',
+        kk: 'Казахский',
+        kl: 'Гренландский',
+        km: 'Камбоджийский (кхмерский)',
+        kn: 'Каннада',
+        ko: 'Корейский',
+        ks: 'Кашмири',
+        ku: 'Курдский',
+        kv: 'Коми',
+        kw: 'Корнский',
+        ky: 'Киргизский',
+        la: 'Латинский',
+        lb: 'Люксембургский',
+        lg: 'Ганда',
+        li: 'Лимбургский',
+        ln: 'Лингала',
+        lo: 'Лаосский',
+        lv: 'Латышский',
+        mg: 'Малагасийский',
+        mi: 'Маори',
+        mk: 'Македонский',
+        ml: 'Малаялам',
+        mn: 'Монгольский',
+        mr: 'Маратхи',
+        ms: 'Малайский',
+        mt: 'Мальтийский',
+        bua: 'Бурятский',
+        my: 'Бирманский',
+        nl: 'Нидерландский',
+        no: 'Норвежский',
+        ne: 'Непальский',
+        or: 'Ория',
+        pa: 'Пенджаби',
+        ps: 'Пашто',
+        qu: 'Кечуа',
+        rm: 'Ретороманский',
+        ro: 'Румынский',
+        ru: 'Русский',
+        rw: 'Киньяруанда',
+        sa: 'Санскрит',
+        sc: 'Сардский',
+        sd: 'Синдхи',
+        sg: 'Санго',
+        sr: 'Сербский',
+        si: 'Сингальский',
+        sk: 'Словацкий',
+        sl: 'Словенский',
+        sm: 'Самоанский',
+        sn: 'Шона',
+        so: 'Сомалийский',
+        sh: 'Сербохорватский',
+        st: 'Сесото',
+        su: 'Сунданский',
+        sv: 'Шведский',
+        sw: 'Суахили',
+        ta: 'Тамильский',
+        te: 'Телугу',
+        tg: 'Таджикский',
+        th: 'Тайский',
+        ti: 'Тигринья',
+        tk: 'Туркменский',
+        tl: 'Тагальский',
+        tn: 'Тсвана',
+        to: 'Тонганский',
+        tr: 'Турецкий',
+        ts: 'Цонга',
+        tt: 'Татарский',
+        tw: 'Твий',
+        ty: 'Тахитянский',
+        uk: 'Украинский',
+        ur: 'Урду',
+        uz: 'Узбекский',
+        ve: 'Венда',
+        vi: 'Вьетнамский',
+        wo: 'Волоф',
+        xh: 'Коса',
+        yi: 'Идиш',
+        yo: 'Йоруба',
+        zu: 'Зулусский'
+    };
 
     const getTotalValueByTariff = (
-        tariff: TariffType,
-        toLang: string | null
+        tariff: 'normal' | 'express' | 'fast',
+        toLangInput: string | null
     ): number => {
-        const {selectedSamples, country, fromLanguage, toLanguage} = useSampleStore.getState();
+        const { selectedSamples, fromLanguage, toLanguage, country } = useSampleStore.getState();
 
         const normalize = (lang: string) =>
-            lang.trim().toLowerCase().replace(/[_\s-]+/g, '');
+            lang.trim().toLowerCase().replace(/[_\s,-]+/g, '');
 
-        let effectiveToLang = '';
-        const from = normalize(fromLanguage || '');
-        const to = normalize(toLanguage || '');
+        const getIsoCode = (lang: string | null): string => {
+            if (!lang) return '';
+            const normalized = normalize(lang);
+            if (langDisplayNameMap[normalized]) return normalized;
+            if (toLangMap[normalized]) return toLangMap[normalized];
+            const match = Object.entries(langDisplayNameMap).find(
+                ([name]) => normalize(name) === normalized
+            );
+            return match ? match[0] : normalized;
+        };
 
-        if (country === 'UA' && from === 'украинский' && to === 'русский') {
-            effectiveToLang = 'ru';
-        } else {
-            effectiveToLang = toLang ? normalize(toLang) : '';
-        }
+        const from = getIsoCode(fromLanguage);
+        const rawTo = getIsoCode(toLangInput || toLanguage);
+        const effectiveToLang = (country === 'UA' && from === 'uk' && rawTo === 'ru') ? 'ru' : rawTo;
 
         if (!effectiveToLang) return 0;
 
-        return selectedSamples.reduce((total, sample) => {
-            const matchingTariff = sample.languageTariffs.find((t) => {
-                if (!t.language) return false;
-                const langs = t.language
-                    .toLowerCase()
-                    .split(/[_-]/)
-                    .map((l: string) => l.trim());
-                return langs.includes(effectiveToLang);
-            });
+        const getLanguageGroup = (lang: string): string => {
+            switch (lang) {
+                case 'fr':
+                case 'it':
+                case 'es':
+                    return 'fr_it_es';
+                case 'pl':
+                case 'cz':
+                case 'cs':
+                    return 'pl_cz';
+                case 'lt':
+                case 'pt':
+                    return 'lt_pt';
+                default:
+                    return lang;
+            }
+        };
 
-            const price = matchingTariff?.[tariff] ?? 0;
-            return total + price;
-        }, 0);
+        const groupKey = getLanguageGroup(effectiveToLang);
+        const normalizedGroupKey = normalize(groupKey);
+
+        let total = 0;
+
+
+        selectedSamples.forEach((sample) => {
+            const foundMatch = sample.languageTariffs?.find(
+                (tariffObj) => normalize(tariffObj.language || '') === normalizedGroupKey
+            );
+
+            if (foundMatch) {
+                const price = foundMatch[tariff] || 0;
+                total += price;
+            } else {
+            }
+        });
+
+        return total;
     };
 
-    const normalizedToLang = toLangMap[toLanguage?.toLowerCase() || ''] || '';
+    const normalizedToLang =
+        toLangMap[toLanguage?.toLowerCase().trim() || ''] || '';
 
     const totalPriceNormal = getTotalValueByTariff("normal", normalizedToLang);
     const totalPriceExpress = getTotalValueByTariff("express", normalizedToLang);
@@ -372,15 +707,18 @@ const TypeOfDocument = () => {
             showAlert('Данные успешно отправлены на почту', 'success');
         } catch (err) {
             showAlert('Произошла ошибка при отправке данных', 'error');
-            console.log(err)
+            console.error('Error sending data:', err);
         } finally {
             setLoading(false);
         }
     };
 
+  /*dokee.pro@gmail.com*/
+
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
+        useSampleStore.getState().setFromLanguage(value);
     };
 
     const getGuaranteeText = () => {
@@ -414,10 +752,16 @@ const TypeOfDocument = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
+
     const handleToLanguageChange = (value: string) => {
+        const normalizedLabel = value.trim().toLowerCase();
+        const code = toLangMap[normalizedLabel] || normalizedLabel;
+        const langDisplayName = langCodeToName[code] || value;
         setToLanguage(value);
-        handleLanguagePairChange(fromLanguage, value);
+        handleLanguagePairChange(fromLanguage, langDisplayName);
+        useSampleStore.getState().setToLanguage(code);
     };
+
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
     };
@@ -443,15 +787,38 @@ const TypeOfDocument = () => {
     const isFastDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 16);
     const isNormalDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 21);
 
-    console.log("KZ time:", getKazakhstanTime().toTimeString());
-    console.log("Express disabled:", isExpressDisabled);
-    console.log("Fast disabled:", isFastDisabled);
-    console.log("Normal disabled:", isNormalDisabled);
 
+    const allAvailableToLanguages: string[] = Array.from(
+        new Set(
+            selectedSamples.flatMap(sample =>
+                sample.languageTariffs?.flatMap(t =>
+                    t.language
+                        ?.toLowerCase()
+                        .split(/[_\s,-]+/)
+                        .filter((code) => !!langDisplayNameMap[code] && code !== fromLanguage?.toLowerCase())
+                ) || []
+            )
+        )
+    );
     const areAllTariffsDisabled = isNormalDisabled && isExpressDisabled && isFastDisabled;
-    console.log("Is Express Disabled:", isExpressDisabled);
-    console.log("Is Fast Disabled:", isFastDisabled);
-    console.log("Is Normal Disabled:", isNormalDisabled);
+
+
+    const predefinedLangCodes = [
+        "ru",
+        "en",
+        "uk",
+        "pl",
+        "pt",
+        "fr",
+        "lt",
+        "de",
+        "it",
+        "es",
+    ];
+
+    const additionalToLanguages = allAvailableToLanguages.filter(
+        (code) => !predefinedLangCodes.includes(code)
+    );
 
     const renderPopupContent = (title: string) => {
         switch (title) {
@@ -589,8 +956,7 @@ const TypeOfDocument = () => {
                                     value={toLanguage}
                                     onChange={(_, value) => handleToLanguageChange(value || "")}
                                     sx={{width: "100%"}}
-                                    disabled={activeCountry === 'UA'}
-                                >
+                                    disabled={activeCountry === 'UA'}>
                                     <Option value="русский" disabled={fromLanguage === "русский"}>Русский</Option>
                                     <Option value="английский"
                                             disabled={fromLanguage === "английский"}>Английский</Option>
@@ -608,6 +974,14 @@ const TypeOfDocument = () => {
                                     <Option value="итальянский"
                                             disabled={fromLanguage === "итальянский"}>Итальянский</Option>
                                     <Option value="испанский" disabled={fromLanguage === "испанский"}>Испанский</Option>
+                                    {additionalToLanguages.map((code) => (
+                                        <Option
+                                            key={code}
+                                            value={code}
+                                            disabled={fromLanguage?.toLowerCase() === code}>
+                                            {langDisplayNameMap[code]}
+                                        </Option>
+                                    ))}
                                 </Select>
                             </div>
                             <p style={{color: "red"}}>{fromLanguage === toLanguage ? "Языковая пара не может быть одинаковой" : ""}</p>

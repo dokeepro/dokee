@@ -1,6 +1,6 @@
 "use client"
 
-import React, {createContext, useContext, useState, ReactNode} from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface DocumentSample {
     name: string;
@@ -35,19 +35,19 @@ interface DocumentContextProps {
 
 const DocumentContext = createContext<DocumentContextProps | undefined>(undefined);
 
-export const DocumentProvider = ({children}: { children: ReactNode }) => {
+export const DocumentProvider = ({ children }: { children: ReactNode }) => {
     const [selectedDocuments, setSelectedDocuments] = useState<Document[]>([]);
     const [languagePair, setLanguagePair] = useState<string | null>(null);
     const [tariff, setTariff] = useState<string | null>(null);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [activePage, setActivePage] = useState<number>(1);
-    const [country, setCountry] = useState<'KZ' | 'UA'>('KZ'); // ← Додано
+    const [country, setCountry] = useState<'KZ' | 'UA'>('KZ');
 
     const addDocument = (document: Document) => {
         setSelectedDocuments((prev) => {
             const exists = prev.find((doc) => doc.name === document.name);
             return exists
-                ? prev.map((doc) => doc.name === document.name ? {...doc, ...document} : doc)
+                ? prev.map((doc) => doc.name === document.name ? { ...doc, ...document } : doc)
                 : [...prev, document];
         });
     };
@@ -75,7 +75,6 @@ export const DocumentProvider = ({children}: { children: ReactNode }) => {
         </DocumentContext.Provider>
     );
 };
-
 
 export const useDocumentContext = () => {
     const context = useContext(DocumentContext);

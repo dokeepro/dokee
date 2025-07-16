@@ -22,67 +22,88 @@ const createDocument = async (req, res) => {
         console.log('--- Incoming request to /create-document ---');
         console.log('req.body:', req.body);
         console.log('req.files:', req.files);
+
         const lastDoc = await Document.findOne().sort({ order: -1 });
         const order = lastDoc ? lastDoc.order + 1 : 1;
+
         const { name, languageTariffs, samples, documentCountry } = req.body;
-        let parsedSamples = samples;
-        let parsedLanguageTariffs = languageTariffs;
+
+        let parsedLanguageTariffs = [];
+        let parsedSamples = [];
+
+        // Parse tariffs
         if (typeof languageTariffs === 'string') {
             try {
                 parsedLanguageTariffs = JSON.parse(languageTariffs);
                 console.log('Parsed languageTariffs:', parsedLanguageTariffs);
             } catch (e) {
-                console.log('Failed to parse languageTariffs:', e);
+                console.error('Failed to parse languageTariffs:', e);
             }
+        } else if (Array.isArray(languageTariffs)) {
+            parsedLanguageTariffs = languageTariffs;
         }
+
+        // Parse samples
         if (typeof samples === 'string') {
             try {
                 parsedSamples = JSON.parse(samples);
                 console.log('Parsed samples:', parsedSamples);
             } catch (e) {
-                console.log('Failed to parse samples:', e);
+                console.error('Failed to parse samples:', e);
             }
         }
+
+        // Upload images for samples (if present)
         if (req.files) {
-            const sampleEntries = Object.entries(req.files).filter(([key]) => key.startsWith('samples'));
+            const sampleEntries = Object.entries(req.files).filter(([key]) =>
+                key.startsWith('samples')
+            );
+
             if (sampleEntries.length > 0) {
                 parsedSamples = [];
                 for (const [key, file] of sampleEntries) {
                     const match = key.match(/samples\[(\d+)\]\[image\]/);
                     const idx = match ? Number(match[1]) : 0;
                     const titleKey = `samples[${idx}][title]`;
-                    const title = req.body[titleKey] || `Sample ${idx}`;
+                    const title = req.body[titleKey] || `Sample ${idx + 1}`;
                     const ext = file.name ? file.name.substring(file.name.lastIndexOf('.')) : '';
                     const fileName = `document-dokee-image-${order}-${idx + 1}${ext}`;
-                    console.log(`Uploading sample image for sample #${idx}:`, fileName);
                     const imageUrl = await uploadImage(file, fileName);
                     parsedSamples.push({ title, imageUrl });
                 }
-                console.log('All sample images uploaded:', parsedSamples);
             } else if (req.files.sampleImage) {
                 const file = req.files.sampleImage;
                 const ext = file.name ? file.name.substring(file.name.lastIndexOf('.')) : '';
                 const fileName = `document-dokee-image-${order}-1${ext}`;
-                console.log('Uploading single sample image:', fileName);
                 const imageUrl = await uploadImage(file, fileName);
                 parsedSamples = [{ title: req.body.sampleTitle, imageUrl }];
             }
         }
 
-        console.log('Final name:', name);
-        console.log('Final languageTariffs:', parsedLanguageTariffs);
-        console.log('Final samples:', parsedSamples);
-        console.log('Final order:', order);
+        // Inject tariffs into each sample
+        const samplesWithTariffs = (parsedSamples || []).map(sample => ({
+            ...sample,
+            languageTariffs: parsedLanguageTariffs || []
+        }));
 
-        const doc = new Document({ name, order, documentCountry, languageTariffs: parsedLanguageTariffs, samples: parsedSamples });
+        // Save document
+        const doc = new Document({
+            name,
+            order,
+            documentCountry,
+            languageTariffs: parsedLanguageTariffs,
+            samples: samplesWithTariffs
+        });
+
         await doc.save();
         console.log('Document saved:', doc);
         res.status(201).json(doc);
     } catch (err) {
-        console.log('Error in createDocument:', err);
+        console.error('Error in createDocument:', err);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 const getAllDocuments = async (req, res) => {
     try {
@@ -234,17 +255,42 @@ const initRussianTariffForUaSamples = async () => {
 const updateSample = async (req, res) => {
     try {
         const { docId, sampleIdx } = req.params;
-        const { title, languageTariffs } = req.body;
         const doc = await Document.findById(docId);
         if (!doc) return res.status(404).json({ error: 'Document not found' });
-        if (!doc.samples[sampleIdx]) return res.status(404).json({ error: 'Sample not found' });
 
-        if (title !== undefined) doc.samples[sampleIdx].title = title;
-        if (languageTariffs !== undefined) doc.samples[sampleIdx].languageTariffs = languageTariffs;
+        const sampleIndex = parseInt(sampleIdx, 10);
+        if (isNaN(sampleIndex) || sampleIndex < 0 || sampleIndex >= doc.samples.length) {
+            return res.status(400).json({ error: 'Invalid sample index' });
+        }
+
+        const sample = doc.samples[sampleIndex];
+
+        // Обновление текста
+        const { title, languageTariffs, removeImage } = req.body;
+        if (title !== undefined) sample.title = title;
+        if (languageTariffs !== undefined) {
+            sample.languageTariffs = Array.isArray(languageTariffs)
+                ? languageTariffs
+                : JSON.parse(languageTariffs);
+        }
+
+        // Замена изображения
+        if (req.files && req.files.image) {
+            const ext = req.files.image.name ? req.files.image.name.split('.').pop() : 'jpg';
+            const fileName = `document-sample-${docId}-${sampleIndex}.${ext}`;
+            const imageUrl = await uploadImage(req.files.image, fileName);
+            sample.imageUrl = imageUrl;
+        }
+
+        // Удаление изображения
+        if (removeImage === 'true') {
+            sample.imageUrl = '';
+        }
 
         await doc.save();
-        res.json(doc.samples[sampleIdx]);
+        res.json(sample);
     } catch (err) {
+        console.error('updateSample error:', err);
         res.status(500).json({ error: err.message });
     }
 };
