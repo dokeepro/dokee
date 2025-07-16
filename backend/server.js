@@ -14,6 +14,7 @@ app.use(cors({
         if (
             !origin ||
             origin === 'http://localhost:3000' ||
+            origin === 'https://dokee-zeta.vercel.app' ||
             /^https?:\/\/([a-z0-9-]+\.)*dokee\.pro(:\d+)?$/i.test(origin)
         ) {
             callback(null, true);
