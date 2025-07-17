@@ -4,7 +4,7 @@ import React, {
     createContext,
     useContext,
     useState,
-    ReactNode, useEffect,
+    ReactNode,
 } from "react";
 import { newRequest } from "@/utils/newRequest";
 import { Backdrop, CircularProgress } from "@mui/material";
@@ -87,10 +87,6 @@ export const GeneralProvider = ({
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchGeneral();
-    }, []);
 
     return (
         <GeneralContext.Provider
