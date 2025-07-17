@@ -104,7 +104,7 @@ export const GeneralProvider = ({
             }}
         >
             {children}
-            <Backdrop open={loading} sx={{ color: "#fff", zIndex: 1301 }}>
+            <Backdrop open={loading} invisible sx={{ color: "#fff", zIndex: 1301 }}>
                 <CircularProgress color="inherit" />
             </Backdrop>
         </GeneralContext.Provider>
