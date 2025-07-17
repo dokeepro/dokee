@@ -10,19 +10,7 @@ import generalRoutes from './routes/general.route.js';
 
 const app = express();
 app.use(cors({
-    origin: (origin, callback) => {
-        if (
-            !origin ||
-            origin === 'http://localhost:3000' ||
-            origin === 'https://dokee-zeta.vercel.app' ||
-            origin === 'https://dokee-iota.vercel.app/admin' ||
-            /^https?:\/\/([a-z0-9-]+\.)*dokee\.pro(:\d+)?$/i.test(origin)
-        ) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true,
     credentials: true
 }));
 app.use(express.json());
