@@ -6,6 +6,7 @@ const getGeneral = async (req, res) => {
         general = new General();
         await general.save();
     }
+    res.set('Cache-Control', 'no-store');
     res.json(general);
 };
 
@@ -16,6 +17,8 @@ const updateGeneral = async (req, res) => {
     }
     Object.assign(general, req.body);
     await general.save();
+
+    res.set('Cache-Control', 'no-store');
     res.json(general);
 };
 
