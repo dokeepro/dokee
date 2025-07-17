@@ -258,7 +258,7 @@ const AdminContent = () => {
                 }
             }
         );
-
+        await fetchDocuments();
         showAlert('Образец успешно обновлен', 'success');
         setEditSampleDialogOpen(false);
         setEditingSample(null);
