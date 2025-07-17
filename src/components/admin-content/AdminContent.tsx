@@ -38,7 +38,7 @@ const languageOptions = [
 ];
 
 const AdminContent = () => {
-    const { general, documents, fetchGeneral } = useGeneral();
+    const { general, documents, fetchGeneral, fetchDocuments } = useGeneral();
     const { showAlert } = useAlert();
     const [open, setOpen] = useState(false);
     const [docName, setDocName] = useState('');
@@ -318,6 +318,7 @@ const AdminContent = () => {
             await newRequest.post('/documents/create-document', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            await fetchDocuments();
             showAlert('Документ успешно добавлен', 'success');
             setOpen(false);
             setDocName('');
