@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import React, {
     createContext,
     useContext,
     useState,
     ReactNode,
+    useEffect,
 } from "react";
 import { newRequest } from "@/utils/newRequest";
 import { Backdrop, CircularProgress } from "@mui/material";
@@ -42,6 +43,7 @@ interface GeneralContextProps {
     loading: boolean;
     documents: Document[];
     fetchDocuments: () => Promise<void>;
+    documentLoader: boolean;
 }
 
 const GeneralContext = createContext<GeneralContextProps>({
@@ -51,42 +53,54 @@ const GeneralContext = createContext<GeneralContextProps>({
     loading: false,
     documents: [],
     fetchDocuments: async () => {},
+    documentLoader: false,
 });
 
 export const useGeneral = () => useContext(GeneralContext);
 
 export const GeneralProvider = ({
                                     children,
-                                    initialGeneral,
-                                    initialDocuments,
+                                    initialGeneral = null,
+                                    initialDocuments = [],
                                 }: {
     children: ReactNode;
-    initialGeneral: GeneralSettings | null;
-    initialDocuments: Document[];
+    initialGeneral?: GeneralSettings | null;
+    initialDocuments?: Document[];
 }) => {
     const [general, setGeneral] = useState<GeneralSettings | null>(initialGeneral);
     const [documents, setDocuments] = useState<Document[]>(initialDocuments);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [documentLoader, setDocumentLoader] = useState(true);
 
     const fetchGeneral = async () => {
-        setLoading(true);
         try {
             const res = await newRequest.get('/general-settings/get-general-settings');
             setGeneral(res.data);
-        } finally {
-            setLoading(false);
+        } catch (e) {
+            console.error("Error fetching general settings", e);
         }
     };
 
     const fetchDocuments = async () => {
-        setLoading(true);
+        setDocumentLoader(true);
         try {
             const res = await newRequest.get('/documents/get-all-documents');
             setDocuments(res.data);
+        } catch (e) {
+            console.error("Error fetching documents", e);
         } finally {
-            setLoading(false);
+            setDocumentLoader(false);
         }
     };
+
+    useEffect(() => {
+        const fetchAll = async () => {
+            setLoading(true);
+            await Promise.all([fetchGeneral(), fetchDocuments()]);
+            setLoading(false);
+        };
+        fetchAll();
+    }, []);
 
     return (
         <GeneralContext.Provider
@@ -97,6 +111,7 @@ export const GeneralProvider = ({
                 loading,
                 documents,
                 fetchDocuments,
+                documentLoader,
             }}
         >
             {children}

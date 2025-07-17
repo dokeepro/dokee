@@ -32,7 +32,6 @@ const DocumentItem: FC<DocumentItemProps> = ({
         setIsChecked(selected || false);
     }, [selected]);
 
-    // 👉 Click on layout selects ONLY IF not selected yet
     const handleWrapperClick = () => {
         if (mode === "sample" && !isChecked) {
             onSelect(title);

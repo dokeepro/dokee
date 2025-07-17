@@ -171,6 +171,7 @@
 }
 .documentCard {
   background: #fff;
+  position: relative;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   padding: 20px;
@@ -178,6 +179,15 @@
   max-width: 400px;
   flex: 1 1 320px;
 }
+
+.buttonDelete{
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    border: none;
+    cursor: pointer;
+}
+
 .order {
   color: #888;
   font-size: 0.9em;

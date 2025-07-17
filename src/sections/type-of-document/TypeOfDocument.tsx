@@ -2,7 +2,7 @@
 
 import React, {useEffect, useRef, useState} from 'react';
 import styles from "./TypeOfDocument.module.scss";
-import {Accordion, AccordionDetails, AccordionSummary, Button, Tooltip, useMediaQuery} from "@mui/material";
+import {Accordion, AccordionDetails, AccordionSummary, Button, Skeleton, Tooltip, useMediaQuery} from "@mui/material";
 import uaFlag from "@/assets/icons/ua-icon.png";
 import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
@@ -324,7 +324,7 @@ const TypeOfDocument = () => {
             () => doc.fioLatin?.trim() && doc.sealText?.trim() && doc.stampText?.trim()
         )
     );
-    const {documents, general} = useGeneral();
+    const {documents, general, documentLoader} = useGeneral();
     const tariffsRef = useRef<HTMLDivElement>(null);
     const [tariffStep, setTariffStep] = useState(1);
 
@@ -352,7 +352,6 @@ const TypeOfDocument = () => {
         });
     };
 
-
     const [currentDoc, setCurrentDoc] = useState<Document | null>(null);
 
     const handleTariffsScroll = () => {
@@ -370,7 +369,6 @@ const TypeOfDocument = () => {
             setTariffStep(1);
         }
     };
-
 
     const handleRemoveFile = (index: number) => {
         removeUploadedFile(index);
@@ -894,23 +892,33 @@ const TypeOfDocument = () => {
                         </div>
                     ) : (
                         <div className={styles.documentsContent}>
-                            {documents
-                                .filter(doc => doc.documentCountry === activeCountry.toLowerCase())
-                                .map((doc, index) => {
-                                    const selectedVariants = selectedSamples.filter(s => s.docName === doc.name).length;
-                                    const isSelected = selectedVariants > 0;
+                            {documentLoader
+                                ? Array.from({length: 16}).map((_, idx) => (
+                                    <Skeleton
+                                        key={idx}
+                                        variant="rectangular"
+                                        width="100%"
+                                        height={74}
+                                        style={{marginBottom: 16, borderRadius: 12}}
+                                    />
+                                ))
+                                : documents
+                                    .filter(doc => doc.documentCountry === activeCountry.toLowerCase())
+                                    .map((doc, index) => {
+                                        const selectedVariants = selectedSamples.filter(s => s.docName === doc.name).length;
+                                        const isSelected = selectedVariants > 0;
 
-                                    return (
-                                        <DocumentItem
-                                            key={doc._id || index}
-                                            title={doc.name}
-                                            selectedVariants={isSelected ? selectedVariants : undefined}
-                                            selected={isSelected}
-                                            onSelect={() => handleDocumentSelect(doc.name, false)}
-                                            onDeselect={() => handleDocumentSelect(doc.name, true)}
-                                        />
-                                    );
-                                })}
+                                        return (
+                                            <DocumentItem
+                                                key={doc._id || index}
+                                                title={doc.name}
+                                                selectedVariants={isSelected ? selectedVariants : undefined}
+                                                selected={isSelected}
+                                                onSelect={() => handleDocumentSelect(doc.name, false)}
+                                                onDeselect={() => handleDocumentSelect(doc.name, true)}
+                                            />
+                                        );
+                                    })}
                         </div>
                     )}
                     {/*{selectedSamples.length > 0 && (
