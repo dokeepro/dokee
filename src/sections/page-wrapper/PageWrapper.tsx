@@ -35,6 +35,8 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    console.log("GENERAL", general);
+
 
     return (
         <>

@@ -38,7 +38,7 @@ const languageOptions = [
 ];
 
 const AdminContent = () => {
-    const { general, documents } = useGeneral();
+    const { general, documents, fetchGeneral } = useGeneral();
     const { showAlert } = useAlert();
     const [open, setOpen] = useState(false);
     const [docName, setDocName] = useState('');
@@ -339,6 +339,7 @@ const AdminContent = () => {
                 expressSlots: Number(values.expressSlots),
                 fastSlots: Number(values.fastSlots),
             });
+            await fetchGeneral();
             showAlert('Изменения успешно сохранены', 'success');
         } catch {
             showAlert('Ошибка при сохранении', 'error');
