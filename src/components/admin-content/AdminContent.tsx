@@ -47,6 +47,8 @@ const AdminContent = () => {
     const [sampleDialogOpen, setSampleDialogOpen] = useState(false);
     const [sampleTitle, setSampleTitle] = useState('');
     const [sampleImage, setSampleImage] = useState<File | null>(null);
+    const [newSampleLangDialogOpen, setNewSampleLangDialogOpen] = useState(false);
+    const [newSampleLangCode, setNewSampleLangCode] = useState('');
     const [samplePreview, setSamplePreview] = useState<string | null>(null)
     const [addLangDialogOpen, setAddLangDialogOpen] = useState(false);
     const [newSampleImage, setNewSampleImage] = useState<File | null>(null);
@@ -497,6 +499,63 @@ const AdminContent = () => {
         <Formik initialValues={initialValues} enableReinitialize onSubmit={handleSubmit}>
             {({ values, handleChange, setFieldValue, isSubmitting }) => (
                 <Form>
+                    <Dialog open={newSampleLangDialogOpen} onClose={() => setNewSampleLangDialogOpen(false)}>
+                        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            <Separator title="Новый язык образца" description="Добавьте язык, которого ещё нет в тарифах образца" />
+                            <FormControl fullWidth>
+                                <InputLabel id="new-sample-lang-label">Язык</InputLabel>
+                                <Select
+                                    labelId="new-sample-lang-label"
+                                    value={newSampleLangCode}
+                                    label="Язык"
+                                    onChange={e => setNewSampleLangCode(e.target.value)}
+                                >
+                                    {allLanguages
+                                        .filter(
+                                            lang =>
+                                                !editingSample?.sample.languageTariffs?.some(t => t.language === lang.value)
+                                        )
+                                        .map(lang => (
+                                            <MenuItem key={lang.value} value={lang.value}>
+                                                {lang.label}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                            <DialogActions>
+                                <ButtonOutlined white onClick={() => setNewSampleLangDialogOpen(false)}>Отмена</ButtonOutlined>
+                                <ButtonOutlined
+                                    variant="contained"
+                                    disabled={!newSampleLangCode}
+                                    onClick={() => {
+                                        if (!editingSample || !newSampleLangCode) return;
+                                        const newTariff = {
+                                            language: newSampleLangCode,
+                                            normal: 0,
+                                            express: 0,
+                                            fast: 0,
+                                        };
+                                        const updatedTariffs = [
+                                            ...(editingSample.sample.languageTariffs || []),
+                                            newTariff
+                                        ];
+                                        setEditingSample({
+                                            ...editingSample,
+                                            sample: {
+                                                ...editingSample.sample,
+                                                languageTariffs: updatedTariffs,
+                                            },
+                                        });
+                                        setNewSampleLangCode('');
+                                        setNewSampleLangDialogOpen(false);
+                                    }}
+                                >
+                                    Добавить
+                                </ButtonOutlined>
+                            </DialogActions>
+                        </div>
+                    </Dialog>
+
                     <Dialog open={editSampleDialogOpen} onClose={() => setEditSampleDialogOpen(false)}>
                         <div className={styles.sampleEditContent}>
                             <Separator title="Изменить Образец"
@@ -526,45 +585,60 @@ const AdminContent = () => {
                                                 label="Normal"
                                                 type="number"
                                                 value={tariff.normal}
-                                                onChange={e =>
-                                                    handleEditSampleTariffChange(
-                                                        tariff.language,
-                                                        'normal',
-                                                        e.target.value
-                                                    )
-                                                }
-                                                style={{marginRight: 8}}
+                                                inputProps={{ min: 0, inputMode: "numeric", pattern: "[0-9]*" }}
+                                                onKeyDown={e => {
+                                                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onChange={e => {
+                                                    const sanitized = e.target.value.replace(/\D/g, '');
+                                                    handleEditSampleTariffChange(tariff.language, 'normal', sanitized);
+                                                }}
+                                                style={{ marginRight: 8 }}
                                             />
                                             <TextField
                                                 label="Express"
                                                 type="number"
                                                 value={tariff.express}
-                                                onChange={e =>
-                                                    handleEditSampleTariffChange(
-                                                        tariff.language,
-                                                        'express',
-                                                        e.target.value
-                                                    )
-                                                }
-                                                style={{marginRight: 8}}
+                                                inputProps={{ min: 0, inputMode: "numeric", pattern: "[0-9]*" }}
+                                                onKeyDown={e => {
+                                                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onChange={e => {
+                                                    const sanitized = e.target.value.replace(/\D/g, '');
+                                                    handleEditSampleTariffChange(tariff.language, 'express', sanitized);
+                                                }}
+                                                style={{ marginRight: 8 }}
                                             />
                                             <TextField
                                                 label="Fast"
                                                 type="number"
                                                 value={tariff.fast}
-                                                onChange={e =>
-                                                    handleEditSampleTariffChange(
-                                                        tariff.language,
-                                                        'fast',
-                                                        e.target.value
-                                                    )
-                                                }
+                                                inputProps={{ min: 0, inputMode: "numeric", pattern: "[0-9]*" }}
+                                                onKeyDown={e => {
+                                                    if (e.key === '-' || e.key === 'e' || e.key === '+') {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
+                                                onChange={e => {
+                                                    const sanitized = e.target.value.replace(/\D/g, '');
+                                                    handleEditSampleTariffChange(tariff.language, 'fast', sanitized);
+                                                }}
                                             />
                                         </div>
-
                                     </div>
                                 )
                             )}
+                            <ButtonOutlined
+                                style={{ marginTop: 12 }}
+                                onClick={() => setNewSampleLangDialogOpen(true)}
+                            >
+                                Добавить новый язык к образцу
+                            </ButtonOutlined>
+
                             {editingSample?.sample && (
                                 <div className={styles.imagePreview}>
                                     <Separator title="Текущее изображение"
