@@ -94,16 +94,6 @@ interface Sample {
     image?: string;
 }
 
-interface Document {
-    name: string;
-    documentCountry?: string;
-    languageTariffs?: LanguageTariff[];
-    samples: Sample[];
-    fioLatin?: string;
-    sealText?: string;
-    stampText?: string;
-}
-
 const langCodeToName: Record<string, string> = {
     ab: 'Абхазский',
     ae: 'Авестийский',
@@ -352,7 +342,7 @@ const TypeOfDocument = () => {
         });
     };
 
-    const [currentDoc, setCurrentDoc] = useState<Document | null>(null);
+    const { currentDoc, setCurrentDoc } = useDocumentContext();
 
     const handleTariffsScroll = () => {
         const el = tariffsRef.current;
@@ -416,6 +406,7 @@ const TypeOfDocument = () => {
             const doc = documents.find(d => d.name === docName && d.documentCountry === activeCountry.toLowerCase());
             setCurrentDoc(doc || null);
         }
+        scrollToSection()
     };
 
     const langDisplayNameMap: Record<string, string> = {
@@ -563,7 +554,7 @@ const TypeOfDocument = () => {
         tariff: 'normal' | 'express' | 'fast',
         toLangInput: string | null
     ): number => {
-        const { selectedSamples, fromLanguage, toLanguage, country } = useSampleStore.getState();
+        const {selectedSamples, fromLanguage, toLanguage, country} = useSampleStore.getState();
 
         const normalize = (lang: string) =>
             lang.trim().toLowerCase().replace(/[_\s,-]+/g, '');
@@ -656,13 +647,7 @@ const TypeOfDocument = () => {
 
     const scrollToSection = () => {
         setTimeout(() => {
-            const section = document.getElementById("calculator");
-            if (section) {
-                section.scrollIntoView({behavior: "smooth"});
-                setTimeout(() => {
-                    window.scrollBy({top: -450, left: 0, behavior: "smooth"});
-                }, 5);
-            }
+            window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
         }, 5);
     };
 
@@ -711,7 +696,7 @@ const TypeOfDocument = () => {
         }
     };
 
-  /*dokee.pro@gmail.com*/
+    /*dokee.pro@gmail.com*/
 
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
@@ -872,13 +857,14 @@ const TypeOfDocument = () => {
                 return null;
         }
     }
+
     const renderContent = () => {
         switch (activePage) {
             case 1:
                 return <>
                     {currentDoc ? (
                         <div className={styles.documentsContent}>
-                            {currentDoc.samples.map((sample: Sample, index: number) => (
+                            {(currentDoc.samples ?? []).map((sample: Sample, index: number) => (
                                 <DocumentItem
                                     key={index}
                                     title={sample.title}

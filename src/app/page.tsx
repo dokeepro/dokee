@@ -20,9 +20,9 @@ const AnimatedSection: React.FC<{ children: React.ReactNode }> = ({ children }) 
 );
 
 const PageContent = () => {
-    const { activePage } = useDocumentContext();
+    const { activePage, currentDoc } = useDocumentContext();
 
-    if (activePage === 2 || activePage === 3 || activePage === 4 || activePage === 5) {
+    if (activePage === 2 || activePage === 3 || activePage === 4 || activePage === 5 || currentDoc) {
         return (
             <AnimatedSection>
                 <div style={{padding: "5% 0"}}>

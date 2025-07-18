@@ -2,15 +2,31 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
+interface LanguageTariff {
+    language: string;
+    normal: number;
+    express: number;
+    fast: number;
+    _id?: string;
+}
+
 interface DocumentSample {
     name: string;
     image: string;
+}
+
+interface Sample {
+    title: string;
+    languageTariffs?: LanguageTariff[];
+    imageUrl?: string;
+    image?: string;
 }
 
 interface Document {
     name: string;
     type?: string;
     selectedSamples?: DocumentSample[];
+    samples?: Sample[];
     fioLatin?: string;
     sealText?: string;
     stampText?: string;
@@ -31,6 +47,8 @@ interface DocumentContextProps {
     removeDocument: (name: string) => void;
     country: 'KZ' | 'UA';
     setCountry: (country: 'KZ' | 'UA') => void;
+    currentDoc: Document | null;
+    setCurrentDoc: (doc: Document | null) => void;
 }
 
 const DocumentContext = createContext<DocumentContextProps | undefined>(undefined);
@@ -41,6 +59,7 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
     const [tariff, setTariff] = useState<string | null>(null);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [activePage, setActivePage] = useState<number>(1);
+    const [currentDoc, setCurrentDoc] = useState<Document | null>(null);
     const [country, setCountry] = useState<'KZ' | 'UA'>('KZ');
 
     const addDocument = (document: Document) => {
@@ -64,6 +83,8 @@ export const DocumentProvider = ({ children }: { children: ReactNode }) => {
                 setUploadedFiles,
                 addDocument,
                 setLanguagePair,
+                currentDoc,
+                setCurrentDoc,
                 setTariff,
                 removeDocument: (name: string) =>
                     setSelectedDocuments((prev) => prev.filter((doc) => doc.name !== name)),
