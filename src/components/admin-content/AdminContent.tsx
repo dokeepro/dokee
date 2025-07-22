@@ -274,9 +274,12 @@ const AdminContent = () => {
 
     const initialValues = {
         sitePaused: general?.sitePaused || false,
-        normalSlots: general?.normalSlots || '',
-        expressSlots: general?.expressSlots || '',
-        fastSlots: general?.fastSlots || '',
+        kzNormalSlots: general?.kzNormalSlots || '',
+        kzExpressSlots: general?.kzExpressSlots || '',
+        kzFastSlots: general?.kzFastSlots || '',
+        uaNormalSlots: general?.uaNormalSlots || '',
+        uaExpressSlots: general?.uaExpressSlots || '',
+        uaFastSlots: general?.uaFastSlots || '',
     };
 
     const handleSampleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,9 +348,12 @@ const AdminContent = () => {
         try {
             await newRequest.put('/general-settings/update-general', {
                 sitePaused: values.sitePaused,
-                normalSlots: Number(values.normalSlots),
-                expressSlots: Number(values.expressSlots),
-                fastSlots: Number(values.fastSlots),
+                kzNormalSlots: Number(values.kzNormalSlots),
+                kzExpressSlots: Number(values.kzExpressSlots),
+                kzFastSlots: Number(values.kzFastSlots),
+                uaNormalSlots: Number(values.uaNormalSlots),
+                uaExpressSlots: Number(values.uaExpressSlots),
+                uaFastSlots: Number(values.uaFastSlots),
             });
             await fetchGeneral();
             showAlert('Изменения успешно сохранены', 'success');
@@ -520,7 +526,6 @@ const AdminContent = () => {
         <Formik initialValues={initialValues} enableReinitialize onSubmit={handleSubmit}>
             {({values, handleChange, setFieldValue, isSubmitting}) => (
                 <Form>
-
                     <Dialog open={newSampleLangDialogOpen} onClose={() => setNewSampleLangDialogOpen(false)}>
                         <div style={{padding: 24, display: 'flex', flexDirection: 'column', gap: 16}}>
                             <Separator title="Новый язык образца"
@@ -907,40 +912,23 @@ const AdminContent = () => {
                             </div>
                         </div>
                         <div className={styles.selectorWrapper}>
-                            <h2>Блок с управлением тарифов</h2>
-                            <p>Управление доступных слотов для тарифов</p>
-                            <hr/>
+                            <h2>Блок с управлением тарифов для Казахстана</h2>
                             <div className={styles.selectors}>
-                                <div className={styles.tariffInputs}>
-                                    <TextField
-                                        label="Normal Slots"
-                                        type="number"
-                                        name="normalSlots"
-                                        value={values.normalSlots}
-                                        onChange={handleChange}
-                                        fullWidth
-                                    />
-                                </div>
-                                <div className={styles.tariffInputs}>
-                                    <TextField
-                                        label="Express Slots"
-                                        type="number"
-                                        name="expressSlots"
-                                        value={values.expressSlots}
-                                        onChange={handleChange}
-                                        fullWidth
-                                    />
-                                </div>
-                                <div className={styles.tariffInputs}>
-                                    <TextField
-                                        label="Fast Slots"
-                                        type="number"
-                                        name="fastSlots"
-                                        value={values.fastSlots}
-                                        onChange={handleChange}
-                                        fullWidth
-                                    />
-                                </div>
+                                <TextField label="Normal Slots" type="number" name="kzNormalSlots"
+                                           value={values.kzNormalSlots} onChange={handleChange} fullWidth/>
+                                <TextField label="Express Slots" type="number" name="kzExpressSlots"
+                                           value={values.kzExpressSlots} onChange={handleChange} fullWidth/>
+                                <TextField label="Fast Slots" type="number" name="kzFastSlots"
+                                           value={values.kzFastSlots} onChange={handleChange} fullWidth/>
+                            </div>
+                            <h2>Блок с управлением тарифов для Украины</h2>
+                            <div className={styles.selectors}>
+                                <TextField label="Normal Slots" type="number" name="uaNormalSlots"
+                                           value={values.uaNormalSlots} onChange={handleChange} fullWidth/>
+                                <TextField label="Express Slots" type="number" name="uaExpressSlots"
+                                           value={values.uaExpressSlots} onChange={handleChange} fullWidth/>
+                                <TextField label="Fast Slots" type="number" name="uaFastSlots"
+                                           value={values.uaFastSlots} onChange={handleChange} fullWidth/>
                             </div>
                         </div>
                         <div className={styles.selectorWrapper}>
@@ -1031,8 +1019,7 @@ const AdminContent = () => {
                                                                     key={idx}
                                                                     className={styles.sampleCard}
                                                                     style={{cursor: 'pointer'}}
-                                                                    onClick={() => handleEditSample(doc._id, idx, sample)}
-                                                                >
+                                                                    onClick={() => handleEditSample(doc._id, idx, sample)}>
                                                                     <Image src={sample.imageUrl || ""}
                                                                            alt={sample.title} width={100} height={100}
                                                                            className={styles.sampleImage}/>

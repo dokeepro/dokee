@@ -137,7 +137,6 @@ const TariffItem: FC<TariffItemProps> = ({
         handleClose();
     };
 
-
     return (
         <div
             className={styles.tariffItem}
@@ -148,8 +147,7 @@ const TariffItem: FC<TariffItemProps> = ({
                 pointerEvents: disabled ? 'none' : 'auto',
                 transition: 'opacity 0.3s ease-in-out',
             }}
-            aria-disabled={disabled}
-        >
+            aria-disabled={disabled}>
             <div className={styles.tariffItemInner}>
                 <div className={styles.tariffTitle}>
                     <h2 style={{color: getTextColor()}}>{title}</h2>

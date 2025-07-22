@@ -13,9 +13,12 @@ import { LanguageTariff } from "@/store/sampleStore";
 
 export interface GeneralSettings {
     sitePaused: boolean;
-    normalSlots: number;
-    expressSlots: number;
-    fastSlots: number;
+    kzNormalSlots: number;
+    kzExpressSlots: number;
+    kzFastSlots: number;
+    uaNormalSlots: number;
+    uaExpressSlots: number;
+    uaFastSlots: number;
 }
 
 export interface Sample {

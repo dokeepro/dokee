@@ -36,6 +36,7 @@ import {TiTimes} from "react-icons/ti";
 import IconButton from '@mui/material/IconButton';
 import {useGeneral} from "@/context/GeneralContext";
 import {useAlert} from "@/context/AlertContext";
+import 'dayjs/locale/ru';
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -681,13 +682,16 @@ const TypeOfDocument = () => {
             formData.append('samples', JSON.stringify(selectedSamples));
             formData.append('totalValue', totalValueByTariff(tariff).toString());
             if (selectedDate) {
-                formData.append('selectedDate', selectedDate.format('YYYY-MM-DD'));
+                formData.append('selectedDate', selectedDate.locale('ru').format('D MMMM YYYY года'));
             }
             uploadedFiles.forEach((file) => {
                 formData.append('files', file);
             });
             await newRequest.post('/documents/send-data', formData);
             showAlert('Данные успешно отправлены на почту', 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500)
         } catch (err) {
             showAlert('Произошла ошибка при отправке данных', 'error');
             console.error('Error sending data:', err);
@@ -705,14 +709,16 @@ const TypeOfDocument = () => {
     };
 
     const getGuaranteeText = () => {
+        const dateStr = selectedDate ? selectedDate.locale('ru').format('D MMMM') : null;
+
         if (tariff === 'Normal') {
-            return `  (Гарантия доставки до ${tomorrowDate} 9:00 (Астаны))`;
+            return `(Гарантия доставки до ${dateStr || tomorrowDate} 9:00 (Астаны))`;
         }
         if (tariff === 'Express') {
-            return `  (Гарантия доставки до ${todayDate} 21:00 (Астаны))`;
+            return `(Гарантия доставки до ${dateStr || todayDate} 21:00 (Астаны))`;
         }
         if (tariff === 'Fast') {
-            return `  (Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны))`;
+            return `(Гарантия доставки до ${dateStr || todayDate} ${astanaTimeStr} (Астаны))`;
         }
         return '';
     };
@@ -766,10 +772,9 @@ const TypeOfDocument = () => {
         }
     };
 
-    const isExpressDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 14);
-    const isFastDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 16);
-    const isNormalDisabled = activeCountry === 'KZ' && isOutsideInterval(8, 21);
-
+    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
+    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
+    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(
@@ -994,7 +999,11 @@ const TypeOfDocument = () => {
                                     {iconSrc: discount, text: 'на 15% дешевле средней цены на рынке'},
                                 ]}
                                 price={totalPriceNormal}
-                                availableSlots={general?.normalSlots ?? 0}
+                                availableSlots={
+                                    activeCountry === 'KZ'
+                                        ? general?.kzNormalSlots ?? 0
+                                        : general?.uaNormalSlots ?? 0
+                                }
                                 borderRadius={['30px', '0', '0', '30px']}
                                 onSelect={() => handleTariffSelect('Normal')}
                                 isSelected={tariff === 'Normal'}
@@ -1010,7 +1019,11 @@ const TypeOfDocument = () => {
                                     {iconSrc: discountPurple, text: 'на 25% дешевле средней цены на рынке'},
                                 ]}
                                 price={totalPriceExpress}
-                                availableSlots={general?.expressSlots ?? 0}
+                                availableSlots={
+                                    activeCountry === 'KZ'
+                                        ? general?.kzExpressSlots ?? 0
+                                        : general?.uaExpressSlots ?? 0
+                                }
                                 borderRadius={['0', '0', '0', '0']}
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
@@ -1020,7 +1033,11 @@ const TypeOfDocument = () => {
                             <TariffItem
                                 title="Fast"
                                 description="Перевод документов за 2-3 часа"
-                                availableSlots={general?.fastSlots ?? 0}
+                                availableSlots={
+                                    activeCountry === 'KZ'
+                                        ? general?.kzFastSlots ?? 0
+                                        : general?.uaFastSlots ?? 0
+                                }
                                 benefits={[
                                     {
                                         iconSrc: timeIconWhite,
@@ -1372,7 +1389,7 @@ const TypeOfDocument = () => {
             <div className={styles.toggles}>
                 <Button
                     onClick={() => handleCountrySwitch('KZ')}
-                    disabled={activePage >= 2}
+                    disabled={activePage >= 2 || !!currentDoc}
                     sx={{
                         borderRadius: "10px 0 0 0",
                         backgroundColor: activeCountry === 'KZ' ? '#565add' : '#eff0ff',
@@ -1381,8 +1398,7 @@ const TypeOfDocument = () => {
                         gap: "7px",
                         fontSize: "16px",
                         padding: "14px 27px",
-                        // Override disabled styles for active button
-                        ...(activeCountry === 'KZ' && activePage >= 2
+                        ...(activeCountry === 'KZ' && (activePage >= 2 || !!currentDoc)
                             ? {
                                 '&.Mui-disabled': {
                                     backgroundColor: '#565add',
@@ -1401,7 +1417,7 @@ const TypeOfDocument = () => {
                 </Button>
                 <Button
                     onClick={() => handleCountrySwitch('UA')}
-                    disabled={activePage >= 2}
+                    disabled={activePage >= 2 || !!currentDoc}
                     sx={{
                         borderRadius: "0 10px 0 0",
                         backgroundColor: activeCountry === 'UA' ? '#565add' : '#eff0ff',
@@ -1410,7 +1426,7 @@ const TypeOfDocument = () => {
                         gap: "7px",
                         padding: "14px 27px",
                         fontSize: "16px",
-                        ...(activeCountry === 'UA' && activePage >= 2
+                        ...(activeCountry === 'UA' && (activePage >= 2 || !!currentDoc)
                             ? {
                                 '&.Mui-disabled': {
                                     backgroundColor: '#565add',
