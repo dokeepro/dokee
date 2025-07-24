@@ -7,6 +7,7 @@ import React from "react";
 import {AlertProvider} from "@/context/AlertContext";
 import {DocumentProvider} from "@/context/DocumentContext";
 import { GeneralProvider } from "@/context/GeneralContext";
+import WayforpayScript from "@/utils/WayforpayScript";
 
 type RootLayoutProps = {
     children: React.ReactNode;
@@ -16,6 +17,7 @@ const RootLayout: React.FC<RootLayoutProps> = ({children}) => {
     return (
         <html lang="en">
         <body>
+        <WayforpayScript/>
         <GeneralProvider>
             <Header/>
             <DocumentProvider>

@@ -702,6 +702,31 @@ const TypeOfDocument = () => {
 
     /*dokee.pro@gmail.com*/
 
+    const handleWayforpayPayment = async () => {
+        const orderReference = `ORD-${Date.now()}`;
+
+        const response = await newRequest.post('/general-settings/payment-init', {
+            email: 'dokee.pro@gmail.com',
+            totalValue: totalValueByTariff(tariff),
+            productName: 'Document translation',
+            orderReference
+        });
+
+        const data = response.data;
+
+        const wayforpay = new window.Wayforpay();
+
+        wayforpay.run({
+            ...data,
+            onApproved: async () => {
+                await handleSendData();
+            },
+            onDeclined: () => showAlert("Платёж отклонён", "error"),
+            onPending: () => showAlert("Платёж в ожидании", "info")
+        });
+    };
+
+
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
@@ -772,9 +797,9 @@ const TypeOfDocument = () => {
         }
     };
 
-    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
-    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
-    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
+    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(0, 0);
+    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 35);
+    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 35);
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(
@@ -1339,7 +1364,7 @@ const TypeOfDocument = () => {
                                             onClick={handlePreviousStep}>
                                 Назад
                             </ButtonOutlined>
-                            <ButtonOutlined onClick={handleSendData}>
+                            <ButtonOutlined onClick={handleWayforpayPayment}>
                                 {loading ? 'Обработка...' : 'Перейти к оплате'}
                             </ButtonOutlined>
                         </div>
