@@ -63,6 +63,9 @@ type WayforpayPaymentData = {
     holdTimeout: number;
     orderTimeout: number;
     orderLifetime: number;
+    onApproved?: () => void;
+    onDeclined?: () => void;
+    onPending?: () => void;
 };
 
 
@@ -704,22 +707,39 @@ const TypeOfDocument = () => {
 
     const handleWayforpayPayment = async () => {
         const orderReference = `ORD-${Date.now()}`;
-
+        const currentCurrency = 'KZT';
         const response = await newRequest.post('/general-settings/payment-init', {
             email: 'dokee.pro@gmail.com',
             totalValue: totalValueByTariff(tariff),
             productName: 'Document translation',
-            orderReference
+            orderReference,
+            currency: currentCurrency
         });
-
         const data = response.data;
+        const paymentDataForWidget: WayforpayPaymentData = {
+            ...data,
+            clientFirstName: 'Test',
+            clientLastName: 'User',
+            clientPhone: '+380991234567',
+            language: 'RU',
+            returnUrl: 'https://www.dokee.pro/payment-success',
+            serviceUrl: 'https://www.dokee.pro/payment-callback',
+            auth: 'SimpleSignature',
+            transactionType: 'SALE',
+            paymentSystems: 'card;privat24', // Пример: доступные платежные системы, настройте по необходимости
+            defaultPaymentSystem: 'card', // Пример: платежная система по умолчанию
+            holdTimeout: 1440, // Пример: время удержания средств в минутах (24 часа)
+            orderTimeout: 48000, // Пример: время жизни заказа в минутах
+            orderLifetime: 48000, // Пример: время жизни заказа в минутах
+        };
 
         const wayforpay = new window.Wayforpay();
 
         wayforpay.run({
-            ...data,
+            ...paymentDataForWidget,
             onApproved: async () => {
-                await handleSendData();
+                showAlert("Платёж успешно завершён!", "success");
+                await handleSendData(); // Затем отправляем данные на ваш бэкенд
             },
             onDeclined: () => showAlert("Платёж отклонён", "error"),
             onPending: () => showAlert("Платёж в ожидании", "info")
