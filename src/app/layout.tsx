@@ -8,6 +8,7 @@ import {AlertProvider} from "@/context/AlertContext";
 import {DocumentProvider} from "@/context/DocumentContext";
 import { GeneralProvider } from "@/context/GeneralContext";
 import WayforpayScript from "@/utils/WayforpayScript";
+import ErrorBoundaryWrapper from "@/components/error-boundary/ErrorBoundaryWrapper";
 
 type RootLayoutProps = {
     children: React.ReactNode;
@@ -17,21 +18,23 @@ const RootLayout: React.FC<RootLayoutProps> = ({children}) => {
     return (
         <html lang="en">
         <body>
-        <WayforpayScript/>
-        <GeneralProvider>
-            <Header/>
-            <DocumentProvider>
-                <PageWrapper>
-                    <PopupProvider>
-                        <AlertProvider>
-                            <Popup/>
-                            {children}
-                        </AlertProvider>
-                    </PopupProvider>
-                </PageWrapper>
-            </DocumentProvider>
-            <Footer/>
-        </GeneralProvider>
+        <ErrorBoundaryWrapper>
+            <WayforpayScript/>
+            <GeneralProvider>
+                <Header/>
+                <DocumentProvider>
+                    <PageWrapper>
+                        <PopupProvider>
+                            <AlertProvider>
+                                <Popup/>
+                                {children}
+                            </AlertProvider>
+                        </PopupProvider>
+                    </PageWrapper>
+                </DocumentProvider>
+                <Footer/>
+            </GeneralProvider>
+        </ErrorBoundaryWrapper>
         </body>
         </html>
     );
