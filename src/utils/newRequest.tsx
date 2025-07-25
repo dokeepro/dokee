@@ -1,10 +1,8 @@
-// lib/api.ts
 import axios from 'axios';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 let token = '';
-// Check if window is defined to ensure this code only runs in the browser
 if (typeof window !== 'undefined') {
     token = document.cookie
         .split('; ')
@@ -24,15 +22,10 @@ export const newRequest = axios.create({
     },
 });
 
-// Function to update the token in the newRequest instance
-// This is useful if the token changes after initial load (e.g., after login)
 export const updateAuthToken = (newToken: string) => {
     newRequest.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 };
 
-// Listen for token changes (e.g., from a login component)
-// This is a simplified example; in a real app, you might use a state management library
-// or a custom event to notify about token changes.
 if (typeof window !== 'undefined') {
     window.addEventListener('token-updated', (event: Event) => {
         const customEvent = event as CustomEvent<string>;

@@ -37,6 +37,7 @@ import IconButton from '@mui/material/IconButton';
 import {useGeneral} from "@/context/GeneralContext";
 import {useAlert} from "@/context/AlertContext";
 import 'dayjs/locale/ru';
+import WayforpayRedirectButton from "@/components/wayforpay-button/WayforpayRedirectButton";
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -1067,6 +1068,7 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
+                        <button style={{display: "none"}} onClick={handleSendData}>{loading && "loading"}</button>
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
@@ -1339,9 +1341,31 @@ const TypeOfDocument = () => {
                                             onClick={handlePreviousStep}>
                                 Назад
                             </ButtonOutlined>
-                            <ButtonOutlined onClick={handleSendData}>
-                                {loading ? 'Обработка...' : 'Перейти к оплате'}
-                            </ButtonOutlined>
+                            <WayforpayRedirectButton
+                                products={selectedSamples.map(s => {
+                                    const toLangRaw = toLanguage?.toLowerCase() || '';
+                                    const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
+                                    const tariffKey = (tariff?.toLowerCase() || 'normal') as 'normal' | 'express' | 'fast';
+                                    const langTariff = s.languageTariffs.find(t => {
+                                        if (!t.language) return false;
+                                        const lang = t.language.toLowerCase();
+                                        if (lang.includes('_') || lang.includes('-')) {
+                                            return lang.split(/[_\s-]+/).includes(normalizedToLang);
+                                        }
+                                        return lang === normalizedToLang;
+                                    });
+                                    const price = langTariff ? langTariff[tariffKey] || 0 : 0;
+                                    const baseName = s.docName.replace(/\s*\(.*?\)/, '');
+                                    const fullName = `${baseName}${s.sampleTitle ? ` (${s.sampleTitle})` : ''} - ${price}₸`;
+                                    return {
+                                        sampleTitle: fullName,
+                                        price,
+                                        count: 1,
+                                    };
+                                })}
+                                totalValue={totalValueByTariff(tariff)}
+                                currency="KZT"
+                            />
                         </div>
                     </div>
                 );
