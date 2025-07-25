@@ -703,6 +703,7 @@ const TypeOfDocument = () => {
         }
     };
 
+
     /*dokee.pro@gmail.com*/
 
     const handleFromLanguageChange = (value: string) => {
@@ -831,6 +832,7 @@ const TypeOfDocument = () => {
             case 'Штамп':
                 return (
                     <div className={styles.popupContent}>
+                        <button onClick={handleSendData}>Оплатить</button>
                         <div className={styles.column}>
                             <h3>Пример штампа</h3>
                             <Image src={stampExample} alt="image" width={281} height={211}/>
@@ -1367,7 +1369,6 @@ const TypeOfDocument = () => {
                                 })}
                                 totalValue={totalValueByTariff(tariff)}
                                 currency="KZT"
-                                onSuccess={handleSendData}
                             />
                         </div>
                     </div>

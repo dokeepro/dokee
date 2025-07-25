@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import {newRequest} from "@/utils/newRequest";
+import { newRequest } from "@/utils/newRequest";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
+import Cookies from "js-cookie";
 
 type Product = {
     sampleTitle: string;
@@ -23,7 +24,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              products,
                                                                              totalValue,
                                                                              currency = "KZT",
-                                                                             onSuccess,
                                                                              loading,
                                                                              clientEmail = "dokee.pro@gmail.com",
                                                                          }) => {
@@ -35,7 +35,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 alert("WayForPay environment variables are not set!");
                 return;
             }
-            console.log("WayForPay environment variables are set:", onSuccess)
+
             const orderReference = `order_${Date.now()}`;
             const orderDate = Math.floor(Date.now() / 1000);
 
@@ -44,7 +44,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             const productCount = products.map((p) => String(p.count ?? 1));
             const amount = String(totalValue);
 
-            const returnUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/success`;
+            const returnUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/check-payment-status`;
             const serviceUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/wayforpay-callback`;
 
             const res = await newRequest.post("/payment/generate-wayforpay-signature", {
@@ -108,22 +108,26 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             });
 
             document.body.appendChild(form);
-            localStorage.setItem("wayforpay_order_ref", orderReference);
-            form.submit();
-        } catch
-            (err)
-            {
-                alert("Unexpected error: " + (err as Error).message);
-                console.error(err);
-            }
-        }
-        ;
 
-        return (
-            <ButtonOutlined type="button" onClick={handleClick}>
-                {loading ? "Обработка..." : "Перейти к оплате"}
-            </ButtonOutlined>
-        );
+            localStorage.setItem("wayforpay_order_ref", orderReference);
+            Cookies.set("wayforpay_order_ref", orderReference, {
+                domain: "dokee.pro",
+                expires: 1,
+                secure: true,
+            });
+
+            form.submit();
+        } catch (err) {
+            alert("Unexpected error: " + (err as Error).message);
+            console.error(err);
+        }
     };
 
-    export default WayforpayRedirectButton;
+    return (
+        <ButtonOutlined type="button" onClick={handleClick}>
+            {loading ? "Обработка..." : "Перейти к оплате"}
+        </ButtonOutlined>
+    );
+};
+
+export default WayforpayRedirectButton;
