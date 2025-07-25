@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { newRequest } from "@/utils/newRequest";
+import {newRequest} from "@/utils/newRequest";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 
 type Product = {
@@ -35,7 +35,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 alert("WayForPay environment variables are not set!");
                 return;
             }
-
+            console.log("WayForPay environment variables are set:", onSuccess)
             const orderReference = `order_${Date.now()}`;
             const orderDate = Math.floor(Date.now() / 1000);
 
@@ -83,24 +83,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 serviceUrl,
             };
 
-            window.addEventListener("message", async (event) => {
-                try {
-                    if (event.data?.transactionStatus === "Approved" && onSuccess) {
-                        const result = await onSuccess();
-                        if (result?.success) {
-                            window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/success`;
-                        } else {
-                            window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
-                        }
-                    } else {
-                        window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
-                    }
-                } catch (err) {
-                    console.error("Post-payment logic failed:", err);
-                    window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
-                }
-            });
-
             const form = document.createElement("form");
             form.method = "POST";
             form.action = "https://secure.wayforpay.com/pay";
@@ -128,17 +110,20 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             document.body.appendChild(form);
             localStorage.setItem("wayforpay_order_ref", orderReference);
             form.submit();
-        } catch (err) {
-            alert("Unexpected error: " + (err as Error).message);
-            console.error(err);
+        } catch
+            (err)
+            {
+                alert("Unexpected error: " + (err as Error).message);
+                console.error(err);
+            }
         }
+        ;
+
+        return (
+            <ButtonOutlined type="button" onClick={handleClick}>
+                {loading ? "Обработка..." : "Перейти к оплате"}
+            </ButtonOutlined>
+        );
     };
 
-    return (
-        <ButtonOutlined type="button" onClick={handleClick}>
-            {loading ? "Обработка..." : "Перейти к оплате"}
-        </ButtonOutlined>
-    );
-};
-
-export default WayforpayRedirectButton;
+    export default WayforpayRedirectButton;
