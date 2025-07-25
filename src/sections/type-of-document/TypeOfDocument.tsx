@@ -63,9 +63,6 @@ type WayforpayPaymentData = {
     holdTimeout: number;
     orderTimeout: number;
     orderLifetime: number;
-    onApproved?: () => void;
-    onDeclined?: () => void;
-    onPending?: () => void;
 };
 
 
@@ -705,48 +702,6 @@ const TypeOfDocument = () => {
 
     /*dokee.pro@gmail.com*/
 
-    const handleWayforpayPayment = async () => {
-        const orderReference = `ORD-${Date.now()}`;
-        const currentCurrency = 'KZT';
-        const response = await newRequest.post('/general-settings/payment-init', {
-            email: 'dokee.pro@gmail.com',
-            totalValue: totalValueByTariff(tariff),
-            productName: 'Document translation',
-            orderReference,
-            currency: currentCurrency
-        });
-        const data = response.data;
-        const paymentDataForWidget: WayforpayPaymentData = {
-            ...data,
-            clientFirstName: 'Test',
-            clientLastName: 'User',
-            clientPhone: '+380991234567',
-            language: 'RU',
-            returnUrl: 'https://www.dokee.pro/payment-success',
-            serviceUrl: 'https://www.dokee.pro/payment-callback',
-            auth: 'SimpleSignature',
-            transactionType: 'SALE',
-            paymentSystems: 'card;privat24', // Пример: доступные платежные системы, настройте по необходимости
-            defaultPaymentSystem: 'card', // Пример: платежная система по умолчанию
-            holdTimeout: 1440, // Пример: время удержания средств в минутах (24 часа)
-            orderTimeout: 48000, // Пример: время жизни заказа в минутах
-            orderLifetime: 48000, // Пример: время жизни заказа в минутах
-        };
-
-        const wayforpay = new window.Wayforpay();
-
-        wayforpay.run({
-            ...paymentDataForWidget,
-            onApproved: async () => {
-                showAlert("Платёж успешно завершён!", "success");
-                await handleSendData(); // Затем отправляем данные на ваш бэкенд
-            },
-            onDeclined: () => showAlert("Платёж отклонён", "error"),
-            onPending: () => showAlert("Платёж в ожидании", "info")
-        });
-    };
-
-
     const handleFromLanguageChange = (value: string) => {
         setFromLanguage(value);
         handleLanguagePairChange(value, toLanguage);
@@ -817,9 +772,9 @@ const TypeOfDocument = () => {
         }
     };
 
-    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(0, 0);
-    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 35);
-    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 35);
+    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
+    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
+    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(
@@ -1384,7 +1339,7 @@ const TypeOfDocument = () => {
                                             onClick={handlePreviousStep}>
                                 Назад
                             </ButtonOutlined>
-                            <ButtonOutlined onClick={handleWayforpayPayment}>
+                            <ButtonOutlined onClick={handleSendData}>
                                 {loading ? 'Обработка...' : 'Перейти к оплате'}
                             </ButtonOutlined>
                         </div>
