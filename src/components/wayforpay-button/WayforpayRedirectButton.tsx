@@ -15,12 +15,16 @@ interface WayforpayRedirectButtonProps {
     totalValue: number | string;
     currency?: string;
     clientEmail?: string;
+    loading?: boolean;
+    onSuccess?: () => Promise<{ success: boolean }>;
 }
 
 const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              products,
                                                                              totalValue,
                                                                              currency = "KZT",
+                                                                             onSuccess,
+                                                                             loading,
                                                                              clientEmail = "dokee.pro@gmail.com",
                                                                          }) => {
     const handleClick = async () => {
@@ -79,6 +83,24 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 serviceUrl,
             };
 
+            window.addEventListener("message", async (event) => {
+                try {
+                    if (event.data?.transactionStatus === "Approved" && onSuccess) {
+                        const result = await onSuccess();
+                        if (result?.success) {
+                            window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/success`;
+                        } else {
+                            window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
+                        }
+                    } else {
+                        window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
+                    }
+                } catch (err) {
+                    console.error("Post-payment logic failed:", err);
+                    window.location.href = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/error`;
+                }
+            });
+
             const form = document.createElement("form");
             form.method = "POST";
             form.action = "https://secure.wayforpay.com/pay";
@@ -113,7 +135,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
 
     return (
         <ButtonOutlined type="button" onClick={handleClick}>
-            Перейти к оплате
+            {loading ? "Обработка..." : "Перейти к оплате"}
         </ButtonOutlined>
     );
 };

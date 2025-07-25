@@ -673,7 +673,7 @@ const TypeOfDocument = () => {
 
     const selectedDate = useSampleStore(state => state.selectedDate);
 
-    const handleSendData = async () => {
+    const handleSendData = async (): Promise<{ success: boolean }> => {
         setLoading(true);
         try {
             const formData = new FormData();
@@ -693,9 +693,11 @@ const TypeOfDocument = () => {
             setTimeout(() => {
                 window.location.reload();
             }, 1500)
+            return { success: true };
         } catch (err) {
             showAlert('Произошла ошибка при отправке данных', 'error');
             console.error('Error sending data:', err);
+            return { success: false };
         } finally {
             setLoading(false);
         }
@@ -1068,7 +1070,6 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
-                        <button style={{display: "none"}} onClick={handleSendData}>{loading && "loading"}</button>
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
@@ -1342,6 +1343,7 @@ const TypeOfDocument = () => {
                                 Назад
                             </ButtonOutlined>
                             <WayforpayRedirectButton
+                                loading={loading}
                                 products={selectedSamples.map(s => {
                                     const toLangRaw = toLanguage?.toLowerCase() || '';
                                     const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
@@ -1365,6 +1367,7 @@ const TypeOfDocument = () => {
                                 })}
                                 totalValue={totalValueByTariff(tariff)}
                                 currency="KZT"
+                                onSuccess={handleSendData}
                             />
                         </div>
                     </div>
