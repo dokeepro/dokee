@@ -44,7 +44,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             const productCount = products.map((p) => String(p.count ?? 1));
             const amount = String(totalValue);
 
-            const returnUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/check-payment-status`;
+            const returnUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/`;
             const serviceUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/wayforpay-callback`;
 
             const res = await newRequest.post("/payment/generate-wayforpay-signature", {
