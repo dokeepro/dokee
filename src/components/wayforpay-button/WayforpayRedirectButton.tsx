@@ -44,8 +44,8 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             const productCount = products.map((p) => String(p.count ?? 1));
             const amount = String(totalValue);
 
-            const returnUrl = `${window.location.origin}/success`;
-            const serviceUrl = `${window.location.origin}/api/wayforpay-callback`;
+            const returnUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/success`;
+            const serviceUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/api/wayforpay-callback`;
 
             const res = await newRequest.post("/payment/generate-wayforpay-signature", {
                 merchantAccount,
@@ -126,6 +126,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             });
 
             document.body.appendChild(form);
+            localStorage.setItem("wayforpay_order_ref", orderReference);
             form.submit();
         } catch (err) {
             alert("Unexpected error: " + (err as Error).message);
