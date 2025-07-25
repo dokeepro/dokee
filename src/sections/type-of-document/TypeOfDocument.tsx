@@ -677,7 +677,7 @@ const TypeOfDocument = () => {
         setLoading(true);
         try {
             const formData = new FormData();
-            formData.append('email', 'dokee.pro@gmail.com');
+            formData.append('email', 'yaroslav7v@gmail.com');
             formData.append('languagePair', localLanguagePair || "");
             formData.append('tariff', tariff || '');
             formData.append('samples', JSON.stringify(selectedSamples));
