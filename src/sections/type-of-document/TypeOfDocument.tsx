@@ -11,6 +11,7 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
+import Cookies from "js-cookie";
 import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
 import timeIconPurple from "@/assets/icons/box-time-purple.svg"
@@ -639,6 +640,8 @@ const TypeOfDocument = () => {
         }
     }
 
+
+
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
         if (from && to && from !== to) {
             const formatted = `${capitalize(from)} - ${capitalize(to)}`;
@@ -867,6 +870,22 @@ const TypeOfDocument = () => {
                 return null;
         }
     }
+
+    useEffect(() => {
+        const orderData = {
+            selectedSamples,
+            fromLanguage,
+            toLanguage,
+            selectedTariff: tariff,
+            selectedDate: selectedDate ? selectedDate.toISOString() : null,
+            uploadedFiles: uploadedFiles.map(f => ({
+                name: f.name,
+                type: f.type,
+                size: f.size,
+            })),
+        };
+        Cookies.set("wayforpay_order_data", JSON.stringify(orderData), { expires: 1 });
+    }, [selectedSamples, fromLanguage, toLanguage, tariff, selectedDate, uploadedFiles]);
 
     const renderContent = () => {
         switch (activePage) {

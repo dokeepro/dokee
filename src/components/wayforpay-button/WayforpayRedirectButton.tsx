@@ -49,7 +49,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                     ? window.location.origin
                     : process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
-            const returnUrl = window.location.origin;
+            const returnUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/redirect-to-dokee`;
             const serviceUrl = `${baseUrl}/api/wayforpay-callback`;
 
             const res = await newRequest.post("/payment/generate-wayforpay-signature", {
@@ -115,10 +115,12 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             document.body.appendChild(form);
 
             localStorage.setItem("wayforpay_order_ref", orderReference);
+            const isLocalhost = window.location.hostname === "localhost";
+
             Cookies.set("wayforpay_order_ref", orderReference, {
-                domain: "dokee.pro",
+                domain: isLocalhost ? undefined : "dokee.pro",
                 expires: 1,
-                secure: true,
+                secure: !isLocalhost,
             });
 
             form.submit();
