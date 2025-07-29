@@ -1,8 +1,11 @@
-// app/context/GeneralContext.tsx
 'use client';
 
 import React, {
-    createContext, useContext, useState, ReactNode, useEffect,
+    createContext,
+    useContext,
+    useState,
+    ReactNode,
+    useEffect,
 } from 'react';
 import { newRequest } from '@/utils/newRequest';
 import { Backdrop, CircularProgress } from '@mui/material';
@@ -93,16 +96,23 @@ export const GeneralProvider = ({
         }
     };
 
-    // Optional: Keep data fresh after hydration
     useEffect(() => {
-        if (!initialGeneral || !initialDocuments.length) {
-            const fetchAll = async () => {
-                setLoading(true);
-                await Promise.all([fetchGeneral(), fetchDocuments()]);
-                setLoading(false);
-            };
-            fetchAll();
-        }
+        const shouldFetch = !initialGeneral || !initialDocuments.length;
+        const fetchAll = async () => {
+            setLoading(true);
+            await Promise.all([fetchGeneral(), fetchDocuments()]);
+            setLoading(false);
+        };
+        if (shouldFetch) fetchAll();
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchGeneral();
+            fetchDocuments();
+        }, 20000);
+
+        return () => clearInterval(interval);
     }, []);
 
     return (
