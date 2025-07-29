@@ -1,15 +1,12 @@
+// app/context/GeneralContext.tsx
 'use client';
 
 import React, {
-    createContext,
-    useContext,
-    useState,
-    ReactNode,
-    useEffect,
-} from "react";
-import { newRequest } from "@/utils/newRequest";
-import { Backdrop, CircularProgress } from "@mui/material";
-import { LanguageTariff } from "@/store/sampleStore";
+    createContext, useContext, useState, ReactNode, useEffect,
+} from 'react';
+import { newRequest } from '@/utils/newRequest';
+import { Backdrop, CircularProgress } from '@mui/material';
+import { LanguageTariff } from '@/store/sampleStore';
 
 export interface GeneralSettings {
     sitePaused: boolean;
@@ -72,15 +69,15 @@ export const GeneralProvider = ({
 }) => {
     const [general, setGeneral] = useState<GeneralSettings | null>(initialGeneral);
     const [documents, setDocuments] = useState<Document[]>(initialDocuments);
-    const [loading, setLoading] = useState(true);
-    const [documentLoader, setDocumentLoader] = useState(true);
+    const [loading, setLoading] = useState(!initialGeneral || !initialDocuments.length);
+    const [documentLoader, setDocumentLoader] = useState(false);
 
     const fetchGeneral = async () => {
         try {
             const res = await newRequest.get('/general-settings/get-general-settings');
             setGeneral(res.data);
         } catch (e) {
-            console.error("Error fetching general settings", e);
+            console.error('Error fetching general settings', e);
         }
     };
 
@@ -90,19 +87,22 @@ export const GeneralProvider = ({
             const res = await newRequest.get('/documents/get-all-documents');
             setDocuments(res.data);
         } catch (e) {
-            console.error("Error fetching documents", e);
+            console.error('Error fetching documents', e);
         } finally {
             setDocumentLoader(false);
         }
     };
 
+    // Optional: Keep data fresh after hydration
     useEffect(() => {
-        const fetchAll = async () => {
-            setLoading(true);
-            await Promise.all([fetchGeneral(), fetchDocuments()]);
-            setLoading(false);
-        };
-        fetchAll();
+        if (!initialGeneral || !initialDocuments.length) {
+            const fetchAll = async () => {
+                setLoading(true);
+                await Promise.all([fetchGeneral(), fetchDocuments()]);
+                setLoading(false);
+            };
+            fetchAll();
+        }
     }, []);
 
     return (
@@ -118,7 +118,7 @@ export const GeneralProvider = ({
             }}
         >
             {children}
-            <Backdrop open={loading} invisible sx={{ color: "#fff", zIndex: 1301 }}>
+            <Backdrop open={loading} invisible sx={{ color: '#fff', zIndex: 1301 }}>
                 <CircularProgress color="inherit" />
             </Backdrop>
         </GeneralContext.Provider>
