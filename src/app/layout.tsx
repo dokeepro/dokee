@@ -9,22 +9,22 @@ import { DocumentProvider } from "@/context/DocumentContext";
 import { GeneralProvider } from "@/context/GeneralContext";
 import WayforpayScript from "@/utils/WayforpayScript";
 import ErrorBoundaryWrapper from "@/components/error-boundary/ErrorBoundaryWrapper";
-import { getInitialGeneralData } from "@/utils/getInitialGeneralData";
+import { getInitialDocuments } from "@/utils/getInitialGeneralData"; // renamed
 
 export default async function RootLayout({
                                              children,
                                          }: {
     children: React.ReactNode;
 }) {
-    const { general, documents } = await getInitialGeneralData();
+    const { documents } = await getInitialDocuments();
 
     return (
         <html lang="en">
         <body>
         <ErrorBoundaryWrapper>
             <WayforpayScript />
-            <GeneralProvider initialGeneral={general} initialDocuments={documents}>
-                <Header />
+            <GeneralProvider initialDocuments={documents}>
+            <Header />
                 <DocumentProvider>
                     <PageWrapper>
                         <PopupProvider>

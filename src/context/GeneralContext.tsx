@@ -1,11 +1,7 @@
 'use client';
 
 import React, {
-    createContext,
-    useContext,
-    useState,
-    ReactNode,
-    useEffect,
+    createContext, useContext, useState, ReactNode, useEffect,
 } from 'react';
 import { newRequest } from '@/utils/newRequest';
 import { Backdrop, CircularProgress } from '@mui/material';
@@ -63,16 +59,14 @@ export const useGeneral = () => useContext(GeneralContext);
 
 export const GeneralProvider = ({
                                     children,
-                                    initialGeneral = null,
                                     initialDocuments = [],
                                 }: {
     children: ReactNode;
-    initialGeneral?: GeneralSettings | null;
     initialDocuments?: Document[];
 }) => {
-    const [general, setGeneral] = useState<GeneralSettings | null>(initialGeneral);
+    const [general, setGeneral] = useState<GeneralSettings | null>(null);
     const [documents, setDocuments] = useState<Document[]>(initialDocuments);
-    const [loading, setLoading] = useState(!initialGeneral || !initialDocuments.length);
+    const [loading, setLoading] = useState(true);
     const [documentLoader, setDocumentLoader] = useState(false);
 
     const fetchGeneral = async () => {
@@ -97,22 +91,11 @@ export const GeneralProvider = ({
     };
 
     useEffect(() => {
-        const shouldFetch = !initialGeneral || !initialDocuments.length;
         const fetchAll = async () => {
-            setLoading(true);
-            await Promise.all([fetchGeneral(), fetchDocuments()]);
+            await fetchGeneral();
             setLoading(false);
         };
-        if (shouldFetch) fetchAll();
-    }, []);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchGeneral();
-            fetchDocuments();
-        }, 20000);
-
-        return () => clearInterval(interval);
+        fetchAll();
     }, []);
 
     return (
