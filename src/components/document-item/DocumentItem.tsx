@@ -3,6 +3,7 @@
 import React, { FC, useEffect, useState } from "react";
 import { Checkbox, Tooltip, Dialog, IconButton } from "@mui/material";
 import styles from "./DocumentItem.module.scss";
+import Image from "next/image";
 import { IoSearchOutline } from "react-icons/io5";
 
 interface DocumentItemProps {
@@ -79,7 +80,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
             >
                 {img && (
                     <div className={styles.imgWrapper}>
-                        <img src={img} className={styles.image} alt={title} width={330} height={150}/>
+                        <Image src={img} className={styles.image} alt={title} width={330} height={150} priority/>
                         <div className={styles.icon}>
                             <Tooltip title="Посмотреть документ" placement="top">
                                 <IconButton
@@ -112,12 +113,13 @@ const DocumentItem: FC<DocumentItemProps> = ({
             <Dialog open={isDialogOpen} onClose={handleDialogClose} maxWidth="md">
                 <div style={{ textAlign: "center" }}>
                     {img && (
-                        <img
+                        <Image
                             className={styles.dialogImage}
                             src={img}
                             alt={title}
                             width={600}
                             height={400}
+                            priority
                         />
                     )}
                 </div>
