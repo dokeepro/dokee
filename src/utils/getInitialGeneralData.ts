@@ -1,19 +1,21 @@
-
 import axios from 'axios';
 
-export const getInitialDocuments = async () => {
+export const getInitialGeneralData = async () => {
     try {
-        const documentsRes = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/get-all-documents`
-        );
+        const [documentsRes, generalRes] = await Promise.all([
+            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/get-all-documents`),
+            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/get-general-settings`)
+        ]);
 
         return {
             documents: documentsRes.data,
+            general: generalRes.data
         };
     } catch (error) {
-        console.error('SSR fetch error (documents)', error);
+        console.error('SSR fetch error', error);
         return {
             documents: [],
+            general: null
         };
     }
 };

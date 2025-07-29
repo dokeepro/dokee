@@ -1,11 +1,9 @@
 'use client';
 
-import React, {
-    createContext, useContext, useState, ReactNode, useEffect,
-} from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { newRequest } from '@/utils/newRequest';
-import { Backdrop, CircularProgress } from '@mui/material';
 import { LanguageTariff } from '@/store/sampleStore';
+import axios from 'axios';
 
 export interface GeneralSettings {
     sitePaused: boolean;
@@ -45,6 +43,12 @@ interface GeneralContextProps {
     documentLoader: boolean;
 }
 
+interface GeneralProviderProps {
+    children: React.ReactNode;
+    initialDocuments?: Document[];
+    initialGeneral?: GeneralSettings | null;
+}
+
 const GeneralContext = createContext<GeneralContextProps>({
     general: null,
     setGeneral: () => {},
@@ -60,42 +64,55 @@ export const useGeneral = () => useContext(GeneralContext);
 export const GeneralProvider = ({
                                     children,
                                     initialDocuments = [],
-                                }: {
-    children: ReactNode;
-    initialDocuments?: Document[];
-}) => {
-    const [general, setGeneral] = useState<GeneralSettings | null>(null);
-    const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+                                    initialGeneral = null,
+                                }: GeneralProviderProps) => {
+    const [documents, setDocuments] = useState(initialDocuments);
+    const [general, setGeneral] = useState(initialGeneral);
     const [loading, setLoading] = useState(true);
     const [documentLoader, setDocumentLoader] = useState(false);
 
-    const fetchGeneral = async () => {
-        try {
-            const res = await newRequest.get('/general-settings/get-general-settings');
-            setGeneral(res.data);
-        } catch (e) {
-            console.error('Error fetching general settings', e);
-        }
+    const fetchDocuments = async () => {
+        const res = await newRequest.get("/documents/get-all-documents");
+        setDocuments(res.data);
+        setDocumentLoader(false);
+        return res.data;
     };
 
-    const fetchDocuments = async () => {
-        setDocumentLoader(true);
-        try {
-            const res = await newRequest.get('/documents/get-all-documents');
-            setDocuments(res.data);
-        } catch (e) {
-            console.error('Error fetching documents', e);
-        } finally {
-            setDocumentLoader(false);
+    const fetchGeneral = async () => {
+        const res = await newRequest.get("/general-settings/get-general-settings");
+        setGeneral(res.data);
+        return res.data;
+    };
+
+    const syncWithServer = async () => {
+        const [latestDocuments, latestGeneral] = await Promise.all([
+            fetchDocuments(),
+            fetchGeneral()
+        ]);
+
+
+        const isDocumentsDifferent = JSON.stringify(latestDocuments) !== JSON.stringify(initialDocuments);
+        if (isDocumentsDifferent) {
+            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/update-cache`, {
+                documents: latestDocuments
+            });
+        }
+
+
+        const isGeneralDifferent = JSON.stringify(latestGeneral) !== JSON.stringify(initialGeneral);
+        if (isGeneralDifferent) {
+            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/update-cache`, {
+                general: latestGeneral
+            });
         }
     };
 
     useEffect(() => {
-        const fetchAll = async () => {
-            await fetchGeneral();
+        const load = async () => {
+            await syncWithServer();
             setLoading(false);
         };
-        fetchAll();
+        load();
     }, []);
 
     return (
@@ -111,9 +128,6 @@ export const GeneralProvider = ({
             }}
         >
             {children}
-            <Backdrop open={loading} invisible sx={{ color: '#fff', zIndex: 1301 }}>
-                <CircularProgress color="inherit" />
-            </Backdrop>
         </GeneralContext.Provider>
     );
 };
