@@ -80,7 +80,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
             >
                 {img && (
                     <div className={styles.imgWrapper}>
-                        <Image src={img} className={styles.image} alt={title} width={330} height={150}  />
+                        <Image src={img} className={styles.image} alt={title} width={330} height={150} priority/>
                         <div className={styles.icon}>
                             <Tooltip title="Посмотреть документ" placement="top">
                                 <IconButton
@@ -119,6 +119,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
                             alt={title}
                             width={600}
                             height={400}
+                            priority
                         />
                     )}
                 </div>

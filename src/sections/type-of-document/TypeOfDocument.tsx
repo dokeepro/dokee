@@ -92,7 +92,7 @@ interface LanguageTariff {
 
 interface Sample {
     title: string;
-    languageTariffs?: LanguageTariff[]; // Make optional
+    languageTariffs?: LanguageTariff[];
     imageUrl?: string;
     image?: string;
 }
