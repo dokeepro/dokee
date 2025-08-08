@@ -12,6 +12,7 @@ import {useAlert} from "@/context/AlertContext";
 const OfferDocument = () => {
     const isMobileView = useMediaQuery('(max-width:768px)');
     const [files, setFiles] = useState<File[]>([]);
+    const [loading, setLoading] = useState(false);
     const {showAlert} = useAlert();
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,12 +39,11 @@ const OfferDocument = () => {
     const handleSend = async (e: React.MouseEvent) => {
         e.preventDefault();
         if (files.length === 0) return;
-
+        setLoading(true);
         const formData = new FormData();
         files.forEach((file) => {
             formData.append("files", file);
         });
-
         try {
             const res = await newRequest.post("/documents/new-request", formData);
             if (res.data?.success) {
@@ -53,7 +53,9 @@ const OfferDocument = () => {
             } else {
                 showAlert('Ошибка при отправке', 'error');
             }
+            setLoading(false);
         } catch {
+            setLoading(false);
             showAlert('Ошибка при отправке', 'error');
         }
     };
@@ -135,7 +137,7 @@ const OfferDocument = () => {
                         endIcon={<GrSend />}
                         onClick={handleSend}
                     >
-                        Отправить
+                        {loading ? 'Отправка...' : 'Отправить'}
                     </Button>
                 </form>
             </div>
