@@ -16,7 +16,7 @@ interface PageWrapperProps {
 const PageWrapper: FC<PageWrapperProps> = ({children}) => {
     const [open, setOpen] = useState(false);
     const [visible, setVisible] = useState(false);
-    const YT_VIDEO_ID = "RzVvThhjAKw";
+    const YT_VIDEO_ID = "OLgrHEJvqew";
     const pathname = usePathname();
     const {general} = useGeneral();
     const { activePage } = useDocumentContext();

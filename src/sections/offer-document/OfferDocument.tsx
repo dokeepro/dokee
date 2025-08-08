@@ -6,10 +6,13 @@ import doc from "@/assets/icons/file-download.svg";
 import { GrSend } from "react-icons/gr";
 import IconButton from '@mui/material/IconButton';
 import { TiTimes } from "react-icons/ti";
+import {newRequest} from "@/utils/newRequest";
+import {useAlert} from "@/context/AlertContext";
 
 const OfferDocument = () => {
     const isMobileView = useMediaQuery('(max-width:768px)');
     const [files, setFiles] = useState<File[]>([]);
+    const {showAlert} = useAlert();
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -32,20 +35,26 @@ const OfferDocument = () => {
         inputRef.current?.click();
     };
 
-    const scrollToSection = (id: string) => {
-        if (id === "header") {
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        } else {
-            const section = document.getElementById(id);
-            if (section) {
-                const offset = id === "footer" ? 0 : window.innerHeight * 0.2;
-                const top = id === "footer"
-                    ? document.body.scrollHeight - window.innerHeight
-                    : section.getBoundingClientRect().top + window.scrollY - offset;
-                window.scrollTo({ top, behavior: "smooth" });
+    const handleSend = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (files.length === 0) return;
+
+        const formData = new FormData();
+        files.forEach((file) => {
+            formData.append("files", file);
+        });
+
+        try {
+            const res = await newRequest.post("/documents/new-request", formData);
+            if (res.data?.success) {
+                showAlert('Документ отправлен', 'success');
+                setFiles([]);
+                setTimeout(() => window.location.reload(), 1200);
             } else {
-                console.error(`Element with id "${id}" not found.`);
+                showAlert('Ошибка при отправке', 'error');
             }
+        } catch {
+            showAlert('Ошибка при отправке', 'success');
         }
     };
 
@@ -124,7 +133,7 @@ const OfferDocument = () => {
                             },
                         }}
                         endIcon={<GrSend />}
-                        onClick={() => scrollToSection("calculator")}
+                        onClick={handleSend}
                     >
                         Отправить
                     </Button>

@@ -65,7 +65,7 @@ const Header = () => {
                     </ButtonOutlined>
                 ) : (
                     <ButtonOutlined
-                        onClick={() => window.open("https://wa.me/+380972796855", "_blank")}>
+                        onClick={() => window.open("https://wa.me/+380930560388", "_blank")}>
                         <Image src={whatsIcon} alt={"icon"} width={24} height={24}/>
                         Whatsapp
                     </ButtonOutlined>

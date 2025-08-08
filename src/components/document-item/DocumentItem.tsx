@@ -76,8 +76,7 @@ const DocumentItem: FC<DocumentItemProps> = ({
         <>
             <div
                 className={`${styles.wrapper} ${isChecked ? styles.active : ""} ${isEGov ? styles.eGov : ""}`}
-                onClick={handleWrapperClick}
-            >
+                onClick={handleWrapperClick}>
                 {img && (
                     <div className={styles.imgWrapper}>
                         <Image src={img} className={styles.image} alt={title} width={330} height={150} priority/>

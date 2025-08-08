@@ -345,7 +345,7 @@ const TypeOfDocument = () => {
         });
     };
 
-    const { currentDoc, setCurrentDoc } = useDocumentContext();
+    const {currentDoc, setCurrentDoc} = useDocumentContext();
 
     const handleTariffsScroll = () => {
         const el = tariffsRef.current;
@@ -550,7 +550,10 @@ const TypeOfDocument = () => {
         xh: 'Коса',
         yi: 'Идиш',
         yo: 'Йоруба',
-        zu: 'Зулусский'
+        zu: 'Зулусский',
+        cs: 'Чешский',
+        cz: 'Чешский',
+        ua: 'Украинский',
     };
 
     const getTotalValueByTariff = (
@@ -641,7 +644,6 @@ const TypeOfDocument = () => {
     }
 
 
-
     const handleLanguagePairChange = (from: string | null, to: string | null) => {
         if (from && to && from !== to) {
             const formatted = `${capitalize(from)} - ${capitalize(to)}`;
@@ -652,7 +654,7 @@ const TypeOfDocument = () => {
 
     const scrollToSection = () => {
         setTimeout(() => {
-            window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+            window.scrollTo({top: 0, left: 0, behavior: "smooth"});
         }, 5);
     };
 
@@ -696,11 +698,11 @@ const TypeOfDocument = () => {
             setTimeout(() => {
                 window.location.reload();
             }, 1500)
-            return { success: true };
+            return {success: true};
         } catch (err) {
             showAlert('Произошла ошибка при отправке данных', 'error');
             console.error('Error sending data:', err);
-            return { success: false };
+            return {success: false};
         } finally {
             setLoading(false);
         }
@@ -809,6 +811,8 @@ const TypeOfDocument = () => {
         "de",
         "it",
         "es",
+        "cs",
+        "cz"
     ];
 
     const additionalToLanguages = allAvailableToLanguages.filter(
@@ -884,7 +888,7 @@ const TypeOfDocument = () => {
                 size: f.size,
             })),
         };
-        Cookies.set("wayforpay_order_data", JSON.stringify(orderData), { expires: 1 });
+        Cookies.set("wayforpay_order_data", JSON.stringify(orderData), {expires: 1});
     }, [selectedSamples, fromLanguage, toLanguage, tariff, selectedDate, uploadedFiles]);
 
     const renderContent = () => {
@@ -978,33 +982,45 @@ const TypeOfDocument = () => {
                                 <Select
                                     value={toLanguage}
                                     onChange={(_, value) => handleToLanguageChange(value || "")}
-                                    sx={{width: "100%"}}
-                                    disabled={activeCountry === 'UA'}>
-                                    <Option value="русский" disabled={fromLanguage === "русский"}>Русский</Option>
-                                    <Option value="английский"
-                                            disabled={fromLanguage === "английский"}>Английский</Option>
-                                    {activeCountry !== 'KZ' && (
-                                        <Option value="украинский"
-                                                disabled={fromLanguage === "украинский"}>Украинский</Option>
-                                    )}
-                                    <Option value="польский" disabled={fromLanguage === "польский"}>Польский</Option>
-                                    <Option value="португальский"
-                                            disabled={fromLanguage === "португальский"}>Португальский</Option>
-                                    <Option value="французский"
-                                            disabled={fromLanguage === "французский"}>Французский</Option>
-                                    <Option value="литовский" disabled={fromLanguage === "литовский"}>Литовский</Option>
-                                    <Option value="немецкий" disabled={fromLanguage === "немецкий"}>Немецкий</Option>
-                                    <Option value="итальянский"
-                                            disabled={fromLanguage === "итальянский"}>Итальянский</Option>
-                                    <Option value="испанский" disabled={fromLanguage === "испанский"}>Испанский</Option>
-                                    {additionalToLanguages.map((code) => (
-                                        <Option
-                                            key={code}
-                                            value={code}
-                                            disabled={fromLanguage?.toLowerCase() === code}>
-                                            {langDisplayNameMap[code]}
-                                        </Option>
-                                    ))}
+                                    sx={{ width: "100%" }}
+                                    disabled={activeCountry === 'UA'}
+                                >
+                                    {[
+                                        { value: "английский", label: "Английский" },
+                                        { value: "испанский", label: "Испанский" },
+                                        { value: "итальянский", label: "Итальянский" },
+                                        { value: "литовский", label: "Литовский" },
+                                        { value: "немецкий", label: "Немецкий" },
+                                        { value: "польский", label: "Польский" },
+                                        { value: "португальский", label: "Португальский" },
+                                        { value: "украинский", label: "Украинский" },
+                                        { value: "французский", label: "Французский" },
+                                        { value: "чешский", label: "Чешский" },
+                                    ]
+                                        .sort((a, b) => a.label.localeCompare(b.label, 'ru'))
+                                        .map(lang => (
+                                            <Option
+                                                key={lang.value}
+                                                value={lang.value}
+                                                disabled={fromLanguage === lang.value}
+                                            >
+                                                {lang.label}
+                                            </Option>
+                                        ))}
+
+                                    {additionalToLanguages
+                                        .sort((a, b) =>
+                                            (langDisplayNameMap[a] || a).localeCompare(langDisplayNameMap[b] || b, 'ru')
+                                        )
+                                        .map(code => (
+                                            <Option
+                                                key={code}
+                                                value={code}
+                                                disabled={fromLanguage?.toLowerCase() === code}
+                                            >
+                                                {langDisplayNameMap[code]}
+                                            </Option>
+                                        ))}
                                 </Select>
                             </div>
                             <p style={{color: "red"}}>{fromLanguage === toLanguage ? "Языковая пара не может быть одинаковой" : ""}</p>

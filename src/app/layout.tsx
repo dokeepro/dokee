@@ -2,15 +2,15 @@ import "./globals.css";
 import Header from "@/components/header/Header";
 import Footer from "@/components/footer/Footer";
 import PageWrapper from "@/sections/page-wrapper/PageWrapper";
-import Popup, { PopupProvider } from "@/context/PopupContext";
+import Popup, {PopupProvider} from "@/context/PopupContext";
 import React from "react";
-import { AlertProvider } from "@/context/AlertContext";
-import { DocumentProvider } from "@/context/DocumentContext";
-import { GeneralProvider } from "@/context/GeneralContext";
+import {AlertProvider} from "@/context/AlertContext";
+import {DocumentProvider} from "@/context/DocumentContext";
+import {GeneralProvider} from "@/context/GeneralContext";
 import WayforpayScript from "@/utils/WayforpayScript";
 import ErrorBoundaryWrapper from "@/components/error-boundary/ErrorBoundaryWrapper";
 import {getInitialGeneralData} from "@/utils/getInitialGeneralData";
-import type { Metadata } from "next";
+import type {Metadata} from "next";
 
 export const generateMetadata = async (): Promise<Metadata> => ({
     title: "Dokee — сервис для перевода документов",
@@ -47,26 +47,26 @@ export default async function RootLayout({
                                          }: {
     children: React.ReactNode;
 }) {
-    const { documents, general } = await getInitialGeneralData();
+    const {documents, general} = await getInitialGeneralData();
 
     return (
         <html lang="en">
         <body>
         <ErrorBoundaryWrapper>
-            <WayforpayScript />
+            <WayforpayScript/>
             <GeneralProvider initialDocuments={documents} initialGeneral={general}>
-            <Header />
+                <Header/>
                 <DocumentProvider>
                     <PageWrapper>
                         <PopupProvider>
                             <AlertProvider>
-                                <Popup />
+                                <Popup/>
                                 {children}
                             </AlertProvider>
                         </PopupProvider>
                     </PageWrapper>
                 </DocumentProvider>
-                <Footer />
+                <Footer/>
             </GeneralProvider>
         </ErrorBoundaryWrapper>
         </body>
