@@ -54,7 +54,7 @@ const OfferDocument = () => {
                 showAlert('Ошибка при отправке', 'error');
             }
         } catch {
-            showAlert('Ошибка при отправке', 'success');
+            showAlert('Ошибка при отправке', 'error');
         }
     };
 
