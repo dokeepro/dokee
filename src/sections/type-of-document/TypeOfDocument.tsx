@@ -250,9 +250,9 @@ const toLangMap: Record<string, string> = {
     французский: 'fr',
     итальянский: 'it',
     испанский: 'es',
-    литовский: 'lt', // keep only one
+    литовский: 'lt',
     португальский: 'pt',
-    чешский: 'cs',
+    чешский: 'cz',
     греческий: 'el',
     японский: 'ja',
     китайский: 'zh',
@@ -674,6 +674,7 @@ const TypeOfDocument = () => {
     const handleClosePopup = () => {
         closePopup();
         setActivePage(activePage + 1);
+        scrollToSection();
     }
 
     const selectedDate = useSampleStore(state => state.selectedDate);
@@ -998,6 +999,7 @@ const TypeOfDocument = () => {
                                         { value: "французский", label: "Французский" },
                                         { value: "чешский", label: "Чешский" },
                                     ]
+                                        .filter(lang => !(activeCountry === 'KZ' && lang.value === "русский"))
                                         .sort((a, b) => a.label.localeCompare(b.label, 'ru'))
                                         .map(lang => (
                                             <Option
@@ -1010,6 +1012,7 @@ const TypeOfDocument = () => {
                                         ))}
 
                                     {additionalToLanguages
+                                        .filter(code => !(activeCountry === 'KZ' && code === 'ru'))
                                         .sort((a, b) =>
                                             (langDisplayNameMap[a] || a).localeCompare(langDisplayNameMap[b] || b, 'ru')
                                         )
