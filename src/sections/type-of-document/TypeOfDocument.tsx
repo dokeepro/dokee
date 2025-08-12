@@ -725,7 +725,7 @@ const TypeOfDocument = () => {
             return `(Гарантия доставки до ${dateStr || tomorrowDate} 9:00 (Астаны))`;
         }
         if (tariff === 'Express') {
-            return `(Гарантия доставки до ${dateStr || todayDate} 21:00 (Астаны))`;
+            return `(Гарантия доставки до ${dateStr || todayDate} 16:00 (Астаны))`;
         }
         if (tariff === 'Fast') {
             return `(Гарантия доставки до ${dateStr || todayDate} ${astanaTimeStr} (Астаны))`;
@@ -782,9 +782,9 @@ const TypeOfDocument = () => {
         }
     };
 
-    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
-    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
-    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
+    const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(0, 0);
+    const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(0, 0);
+    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(0, 0);
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(

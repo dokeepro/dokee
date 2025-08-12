@@ -15,7 +15,6 @@ interface WayforpayRedirectButtonProps {
     products: Product[];
     totalValue: number | string;
     currency?: string;
-    clientEmail?: string;
     loading?: boolean;
     onSuccess?: () => Promise<{ success: boolean }>;
 }
@@ -25,7 +24,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              totalValue,
                                                                              currency = "KZT",
                                                                              loading,
-                                                                             clientEmail = "dokee.pro@gmail.com",
                                                                          }) => {
     const handleClick = async () => {
         try {
@@ -83,7 +81,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 "productName[]": productName,
                 "productPrice[]": productPrice,
                 "productCount[]": productCount,
-                clientEmail,
                 returnUrl,
                 serviceUrl,
             };

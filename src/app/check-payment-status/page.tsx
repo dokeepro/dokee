@@ -5,9 +5,10 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import Message from "@/components/success-page/Message";
 import { newRequest } from "@/utils/newRequest";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
 
 const COOKIE_KEY = "wayforpay_order_ref";
-const COOKIE_DOMAINS = ["localhost", "dokee.pro"];
 const ORDER_DATA_KEY = "wayforpay_order_data";
 
 const toLangMap: Record<string, string> = {
@@ -21,7 +22,7 @@ const toLangMap: Record<string, string> = {
     испанский: "es",
     литовский: "lt",
     португальский: "pt",
-    чешский: "cs",
+    чешский: "cz",
     греческий: "el",
     японский: "ja",
     китайский: "zh",
@@ -51,7 +52,6 @@ interface LanguageTariff {
     normal: number;
     express: number;
     fast: number;
-    _id?: string;
 }
 
 interface SelectedSample {
@@ -109,10 +109,7 @@ const CheckPaymentStatus = () => {
         if (hasRun.current) return;
         hasRun.current = true;
 
-        const orderRef =
-            Cookies.get(COOKIE_KEY) ||
-            localStorage.getItem(COOKIE_KEY);
-
+        const orderRef = Cookies.get(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY);
         if (!orderRef) {
             setStatus("error");
             return;
@@ -123,99 +120,67 @@ const CheckPaymentStatus = () => {
                 const statusRes = await newRequest.post("/payment/check-wayforpay-status", {
                     orderReference: orderRef,
                 });
+                const wfp = statusRes.data || {};
+                const orderStatus = String(wfp.orderStatus || wfp.transactionStatus || wfp.status || "");
+                const isApproved = ["Approved", "Settled", "Ok", "success"].includes(orderStatus);
 
-                if (statusRes.status === 200) {
-                    // Read order data from cookie
-                    const orderDataRaw = Cookies.get(ORDER_DATA_KEY);
-                    if (!orderDataRaw) {
-                        setStatus("error");
-                        return;
-                    }
-                    const orderData: OrderData = JSON.parse(orderDataRaw);
-
-                    // Calculate total value
-                    const totalValue = getTotalValueByTariff(
-                        orderData.selectedSamples,
-                        orderData.selectedTariff,
-                        orderData.toLanguage
-                    );
-
-                    const formData = new FormData();
-                    formData.append("email", "dokee.pro@gmail.com");
-                    formData.append(
-                        "languagePair",
-                        `${orderData.fromLanguage}-${orderData.toLanguage}`
-                    );
-                    formData.append("tariff", orderData.selectedTariff || "");
-                    formData.append("samples", JSON.stringify(orderData.selectedSamples));
-                    formData.append("totalValue", totalValue.toString());
-
-                    if (orderData.selectedDate) {
-                        formData.append("selectedDate", orderData.selectedDate);
-                    }
-
-                    orderData.uploadedFiles?.forEach((file) => {
-                        formData.append("files", new Blob([], { type: file.type }), file.name);
-                    });
-
-                    await newRequest.post("/documents/send-data", formData);
-                    setStatus("success");
-                } else {
+                if (!isApproved) {
                     setStatus("error");
+                    return;
                 }
 
-                localStorage.removeItem(COOKIE_KEY);
-                COOKIE_DOMAINS.forEach((domain) => {
-                    Cookies.remove(COOKIE_KEY, { domain });
-                });
-                Cookies.remove(ORDER_DATA_KEY);
+                const orderDataRaw = Cookies.get(ORDER_DATA_KEY);
+                if (!orderDataRaw) {
+                    setStatus("error");
+                    return;
+                }
+                const orderData: OrderData = JSON.parse(orderDataRaw);
 
-                Cookies.set("wayforpay_status_cooldown", "1", {
-                    expires: 1 / (24 * 60 * 4),
-                    domain: window.location.hostname.includes("localhost") ? "localhost" : "dokee.pro",
-                });
-            } catch (e) {
-                console.error("Error checking status or sending data", e);
+                const payerEmail =
+                    wfp.email || wfp.payerEmail || (wfp.paymentInfo && wfp.paymentInfo.email) || "dokee.pro@gmail.com";
+
+                const formattedDate = orderData.selectedDate
+                    ? dayjs(orderData.selectedDate).locale("ru").format("D MMMM YYYY года")
+                    : undefined;
+
+                const totalValue = getTotalValueByTariff(
+                    orderData.selectedSamples,
+                    orderData.selectedTariff,
+                    orderData.toLanguage
+                );
+
+                const formData = new FormData();
+                formData.append("email", String(payerEmail));
+                formData.append("languagePair", `${orderData.fromLanguage}-${orderData.toLanguage}`);
+                formData.append("tariff", orderData.selectedTariff || "");
+                formData.append("samples", JSON.stringify(orderData.selectedSamples));
+                formData.append("totalValue", totalValue.toString());
+                if (formattedDate) formData.append("selectedDate", formattedDate);
+
+                await newRequest.post("/documents/send-data", formData);
+                setStatus("success");
+            } catch {
                 setStatus("error");
             } finally {
-                setTimeout(() => {
-                    router.push("/");
-                }, 6000);
+                localStorage.removeItem(COOKIE_KEY);
+                Cookies.remove(COOKIE_KEY);
+                Cookies.remove(COOKIE_KEY, { domain: ".dokee.pro" });
+                Cookies.remove(ORDER_DATA_KEY);
+                Cookies.remove(ORDER_DATA_KEY, { domain: ".dokee.pro" });
+                setTimeout(() => router.push("/"), 6000);
             }
         };
 
-        const cooldown = Cookies.get("wayforpay_status_cooldown");
-        if (!cooldown) {
-            checkStatus();
-        } else {
-            setStatus("error");
-        }
+        checkStatus();
     }, []);
 
     if (status === "checking") {
-        return (
-            <Message
-                title="Проверяем статус платежа..."
-                description="Это займет несколько секунд"
-            />
-        );
+        return <Message title="Проверяем статус платежа..." description="Это займет несколько секунд" />;
     }
-
     if (status === "success") {
-        return (
-            <Message
-                title="Платеж успешен"
-                description="Ваш заказ оформлен успешно"
-            />
-        );
+        return <Message title="Платеж успешен" description="Ваш заказ оформлен успешно" />;
     }
-
-    return (
-        <Message
-            title="Ошибка проверки платежа"
-            description="Попробуйте снова через некоторое время"
-        />
-    );
+    return <Message title="Ошибка проверки платежа" description="Попробуйте снова через некоторое время" />;
 };
 
 export default CheckPaymentStatus;
