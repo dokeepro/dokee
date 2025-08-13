@@ -73,7 +73,7 @@ export default function CheckPaymentStatus() {
             }));
 
             const formData = new FormData();
-            formData.append("email", "yaroslav7v@gmail.com");
+            formData.append("email", "dokee.pro@gmail.com");
             formData.append("languagePair", data.localLanguagePair || `${data.fromLanguage} - ${data.toLanguage}`);
             formData.append("tariff", data.tariff || "");
             formData.append("samples", JSON.stringify(samplesForEmail));

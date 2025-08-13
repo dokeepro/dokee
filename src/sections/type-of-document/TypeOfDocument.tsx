@@ -721,7 +721,7 @@ const TypeOfDocument = () => {
                 : `${fromLanguage || ""} - ${toLanguage || ""}`;
 
             const formData = new FormData();
-            formData.append("email", "yaroslav7v@gmail.com");
+            formData.append("email", "dokee.pro@gmail.com");
             formData.append("languagePair", lp);
             formData.append("tariff", tariff || "");
             formData.append("samples", JSON.stringify(samplesForEmail));
@@ -1228,7 +1228,6 @@ const TypeOfDocument = () => {
             case 4:
                 return (
                     <div className={styles.accordionWrapper}>
-                        <button onClick={handleSendData}>Оплатить</button>
                         {selectedSamples.map((sample, idx) => (
                             <Accordion
                                 key={`${sample.docName}-${sample.sampleTitle}-${idx}`}
