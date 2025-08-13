@@ -5,56 +5,117 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import Message from "@/components/success-page/Message";
 import { newRequest } from "@/utils/newRequest";
-import dayjs from "dayjs";
 import "dayjs/locale/ru";
+import dayjs from "dayjs";
+interface LanguageTariff {
+    language: string;
+    normal: number;
+    express: number;
+    fast: number;
+    _id?: string;
+}
 
+interface SelectedSample {
+    id: string;
+    docName: string;
+    sampleTitle: string;
+    languageTariffs?: LanguageTariff[];
+    fioLatin?: string;
+    sealText?: string;
+    stampText?: string;
+    image?: string;
+}
 const COOKIE_KEY = "wayforpay_order_ref";
-const ORDER_DATA_KEY = "wayforpay_order_data";
+interface UploadedFileData {
+    name: string;
+    type: string;
+    size: number;
+    dataUrl: string;
+}
+const toLangMap: Record<string, string> = {
+    русский: "ru", английский: "en", украинский: "uk", немецкий: "de", польский: "pl",
+    французский: "fr", итальянский: "it", испанский: "es", литовский: "lt", португальский: "pt",
+    чешский: "cz", греческий: "el", японский: "ja", китайский: "zh", корейский: "ko",
+    турецкий: "tr", казахский: "kk", узбекский: "uz", румынский: "ro", болгарский: "bg",
+    венгерский: "hu", словацкий: "sk", словенский: "sl", финский: "fi", шведский: "sv",
+    датский: "da", норвежский: "no", нидерландский: "nl", эстонский: "et", латышский: "lv",
+    армянский: "hy", грузинский: "ka", азербайджанский: "az",
+};
 
-const CheckPaymentStatus = () => {
+export default function CheckPaymentStatus() {
     const [status, setStatus] = useState<"checking" | "success" | "error">("checking");
-    const hasRun = useRef(false);
     const router = useRouter();
+    const ran = useRef(false);
 
-    useEffect(() => {
-        if (hasRun.current) return;
-        hasRun.current = true;
+    function getSamplePrice(sample: SelectedSample, toLanguage: string, tariff: string, toLangMap: Record<string, string>) {
+        const toLangRaw = (toLanguage || "").toLowerCase().trim();
+        const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
+        const tariffKey = (tariff?.toLowerCase() || "normal") as "normal" | "express" | "fast";
+        const langTariff = sample.languageTariffs?.find((t: LanguageTariff) => {
+            if (!t.language) return false;
+            const lang = t.language.toLowerCase();
+            return lang.includes("_") || lang.includes("-")
+                ? lang.split(/[_\s-]+/).includes(normalizedToLang)
+                : lang === normalizedToLang;
+        });
+        return langTariff ? (langTariff[tariffKey] || 0) : 0;
+    }
 
-        const orderRef = Cookies.get(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY);
-        if (!orderRef) {
+    const handleSendData = async () => {
+        try {
+            const raw = localStorage.getItem("wayforpay_order_data_full");
+            if (!raw) { setStatus("error"); return; }
+            const data = JSON.parse(raw);
+
+            const samplesForEmail = (data.selectedSamples || []).map((sample: SelectedSample) => ({
+                ...sample,
+                computedPrice: getSamplePrice(sample, data.toLanguage, data.tariff, toLangMap),
+            }));
+
+            const formData = new FormData();
+            formData.append("email", "yaroslav7v@gmail.com");
+            formData.append("languagePair", data.localLanguagePair || `${data.fromLanguage} - ${data.toLanguage}`);
+            formData.append("tariff", data.tariff || "");
+            formData.append("samples", JSON.stringify(samplesForEmail));
+            formData.append("totalValue", String(data.totalPriceFast || 0));
+            if (data.selectedDate) {
+                formData.append("selectedDate", dayjs(data.selectedDate).locale("ru").format("D MMMM YYYY года"));
+            }
+            (data.uploadedFiles || []).forEach((file: UploadedFileData, i: number) => {
+                const arr = file.dataUrl.split(",");
+                const mime = arr[0].match(/:(.*?);/)?.[1] || "";
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) u8arr[n] = bstr.charCodeAt(n);
+                const blob = new Blob([u8arr], { type: mime });
+                formData.append("files", blob, file.name || `file-${i}`);
+            });
+
+            const res = await newRequest.post("/documents/send-data", formData);
+            setStatus(res.status === 200 ? "success" : "error");
+        } catch (err) {
             setStatus("error");
-            return;
+            console.error("Error sending data:", err);
+        } finally {
+            setTimeout(() => router.push("/"), 6000);
         }
+    };
+    useEffect(() => {
+        if (ran.current) return;
+        ran.current = true;
 
-        const checkStatus = async () => {
+        (async () => {
             try {
+                const orderRef = Cookies.get(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY);
+                if (!orderRef) { setStatus("error"); return; }
+
                 const statusRes = await newRequest.post("/payment/check-wayforpay-status", {
                     orderReference: orderRef,
                 });
 
                 if (statusRes.status === 200) {
-                    const orderDataRaw = Cookies.get(ORDER_DATA_KEY);
-                    if (!orderDataRaw) {
-                        setStatus("error");
-                        return;
-                    }
-                    const orderData = JSON.parse(orderDataRaw);
-
-                    const payerEmail = "dokee.pro@gmail.com";
-                    const formattedDate = orderData.selectedDate
-                        ? dayjs(orderData.selectedDate).locale("ru").format("D MMMM YYYY года")
-                        : undefined;
-
-                    const formData = new FormData();
-                    formData.append("email", payerEmail);
-                    formData.append("languagePair", `${orderData.fromLanguage}-${orderData.toLanguage}`);
-                    formData.append("tariff", orderData.selectedTariff || "");
-                    formData.append("samples", JSON.stringify(orderData.selectedSamples));
-                    formData.append("totalValue", "0"); // якщо не треба рахувати — ставимо 0
-                    if (formattedDate) formData.append("selectedDate", formattedDate);
-
-                    await newRequest.post("/documents/send-data", formData);
-                    setStatus("success");
+                    await handleSendData();
                 } else {
                     setStatus("error");
                 }
@@ -63,21 +124,14 @@ const CheckPaymentStatus = () => {
             } finally {
                 localStorage.removeItem(COOKIE_KEY);
                 Cookies.remove(COOKIE_KEY);
-                Cookies.remove(ORDER_DATA_KEY);
-                setTimeout(() => router.push("/"), 6000);
+                if (status !== "success") {
+                    setTimeout(() => router.push("/"), 6000);
+                }
             }
-        };
-
-        checkStatus();
+        })();
     }, []);
 
-    if (status === "checking") {
-        return <Message title="Проверяем статус платежа..." description="Это займет несколько секунд" />;
-    }
-    if (status === "success") {
-        return <Message title="Успешно! Платеж подтверждён!" description="Данные отправлены на почту" />;
-    }
-    return <Message title="Ошибка" description="Попробуйте снова через некоторое время" />;
-};
-
-export default CheckPaymentStatus;
+    if (status === "checking") return <Message title="Отправляем данные…" description="Это займет несколько секунд" />;
+    if (status === "success")  return <Message title="Успех!" description="Данные отправлены на почту" />;
+    return <Message title="Ошибка" description="Попробуйте снова" />;
+}

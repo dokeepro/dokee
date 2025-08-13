@@ -17,13 +17,14 @@ interface WayforpayRedirectButtonProps {
     currency?: string;
     loading?: boolean;
     onSuccess?: () => Promise<{ success: boolean }>;
+    onBeforeRedirect?: () => Promise<void>;
 }
-
 const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              products,
                                                                              totalValue,
                                                                              currency = "KZT",
                                                                              loading,
+                                                                             onBeforeRedirect,
                                                                          }) => {
     const handleClick = async () => {
         try {
@@ -36,7 +37,9 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
 
             const orderReference = `order_${Date.now()}`;
             const orderDate = Math.floor(Date.now() / 1000);
-
+            if (onBeforeRedirect) {
+                await onBeforeRedirect();
+            }
             const productName = products.map((p) => p.sampleTitle);
             const productPrice = products.map((p) => String(p.price));
             const productCount = products.map((p) => String(p.count ?? 1));

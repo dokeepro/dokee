@@ -11,6 +11,7 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
+import {readFilesAsDataUrl} from '@/utils/orderSync';
 import Cookies from "js-cookie";
 import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
@@ -280,6 +281,7 @@ const toLangMap: Record<string, string> = {
 const TypeOfDocument = () => {
     const {country: activeCountry, setCountry: setActiveCountry} = useDocumentContext();
     const isMobileView = useMediaQuery('(max-width:768px)');
+
     const {
         selectedDocuments,
         setLanguagePair,
@@ -682,34 +684,87 @@ const TypeOfDocument = () => {
     const handleSendData = async (): Promise<{ success: boolean }> => {
         setLoading(true);
         try {
+            // функция для цены одного выбранного образца
+            const getSamplePrice = (sample: SelectedSample) => {
+                const toLangRaw = (toLanguage || "").toLowerCase().trim();
+                const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
+                const tariffKey = (tariff?.toLowerCase() || "normal") as "normal" | "express" | "fast";
+                const langTariff = sample.languageTariffs?.find(t => {
+                    if (!t.language) return false;
+                    const lang = t.language.toLowerCase();
+                    return lang.includes("_") || lang.includes("-")
+                        ? lang.split(/[_\s-]+/).includes(normalizedToLang)
+                        : lang === normalizedToLang;
+                });
+                return langTariff ? (langTariff[tariffKey] || 0) : 0;
+            };
+
+            // массив для отправки (лёгкий + цена)
+            const samplesForEmail = selectedSamples.map(s => ({
+                id: s.id,
+                docName: s.docName,
+                sampleTitle: s.sampleTitle,
+                fioLatin: s.fioLatin || "",
+                sealText: s.sealText || "",
+                stampText: s.stampText || "",
+                computedPrice: getSamplePrice(s),
+            }));
+
+            // общий итог
+            const total =
+                (tariff === "Normal") ? totalPriceNormal :
+                    (tariff === "Express") ? totalPriceExpress :
+                        (tariff === "Fast") ? totalPriceFast : 0;
+
+            const lp = localLanguagePair && localLanguagePair.trim()
+                ? localLanguagePair
+                : `${fromLanguage || ""} - ${toLanguage || ""}`;
+
             const formData = new FormData();
-            formData.append('email', 'yaroslav7v@gmail.com');
-            formData.append('languagePair', localLanguagePair || "");
-            formData.append('tariff', tariff || '');
-            formData.append('samples', JSON.stringify(selectedSamples));
-            formData.append('totalValue', totalValueByTariff(tariff).toString());
+            formData.append("email", "yaroslav7v@gmail.com");
+            formData.append("languagePair", lp);
+            formData.append("tariff", tariff || "");
+            formData.append("samples", JSON.stringify(samplesForEmail));
+            formData.append("totalValue", String(total));
             if (selectedDate) {
-                formData.append('selectedDate', selectedDate.locale('ru').format('D MMMM YYYY года'));
+                formData.append("selectedDate", selectedDate.locale("ru").format("D MMMM YYYY года"));
             }
-            uploadedFiles.forEach((file) => {
-                formData.append('files', file);
-            });
-            await newRequest.post('/documents/send-data', formData);
-            showAlert('Данные успешно отправлены на почту', 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500)
-            return {success: true};
+            uploadedFiles.forEach((file) => formData.append("files", file, file.name || "file"));
+
+            const { status } = await newRequest.post("/documents/send-data", formData);
+            showAlert(status === 200 ? "Данные успешно отправлены на почту" : "Произошла ошибка при отправке данных",
+                status === 200 ? "success" : "error");
+
+            if (status === 200) {
+                setTimeout(() => window.location.reload(), 1500);
+                return { success: true };
+            }
+            return { success: false };
         } catch (err) {
-            showAlert('Произошла ошибка при отправке данных', 'error');
-            console.error('Error sending data:', err);
-            return {success: false};
+            showAlert("Произошла ошибка при отправке данных", "error");
+            console.error("Error sending data:", err);
+            return { success: false };
         } finally {
             setLoading(false);
         }
     };
-
-
+    const saveFullOrderData = async () => {
+        const filesData = await readFilesAsDataUrl(uploadedFiles);
+        const orderData = {
+            selectedSamples,
+            fromLanguage,
+            toLanguage,
+            selectedTariff: tariff,
+            selectedDate: selectedDate ? selectedDate.toISOString() : null,
+            uploadedFiles: filesData,
+            localLanguagePair,
+            totalPriceNormal,
+            totalPriceExpress,
+            totalPriceFast,
+            tariff,
+        };
+        localStorage.setItem("wayforpay_order_data_full", JSON.stringify(orderData));
+    };
     /*dokee.pro@gmail.com*/
 
     const handleFromLanguageChange = (value: string) => {
@@ -763,6 +818,7 @@ const TypeOfDocument = () => {
 
     const handleTariffSelect = (selectedTariff: string) => {
         setTariff(selectedTariff);
+        useSampleStore.getState().setSelectedTariff(selectedTariff);
     };
 
     const getKazakhstanTime = () => {
@@ -799,7 +855,6 @@ const TypeOfDocument = () => {
         )
     );
     const areAllTariffsDisabled = isNormalDisabled && isExpressDisabled && isFastDisabled;
-
 
     const predefinedLangCodes = [
         "ru",
@@ -1173,6 +1228,7 @@ const TypeOfDocument = () => {
             case 4:
                 return (
                     <div className={styles.accordionWrapper}>
+                        <button onClick={handleSendData}>Оплатить</button>
                         {selectedSamples.map((sample, idx) => (
                             <Accordion
                                 key={`${sample.docName}-${sample.sampleTitle}-${idx}`}
@@ -1385,6 +1441,7 @@ const TypeOfDocument = () => {
                             </ButtonOutlined>
                             <WayforpayRedirectButton
                                 loading={loading}
+                                onBeforeRedirect={saveFullOrderData}
                                 products={selectedSamples.map(s => {
                                     const toLangRaw = toLanguage?.toLowerCase() || '';
                                     const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
