@@ -77,7 +77,11 @@ export default function CheckPaymentStatus() {
             formData.append("languagePair", data.localLanguagePair || `${data.fromLanguage} - ${data.toLanguage}`);
             formData.append("tariff", data.tariff || "");
             formData.append("samples", JSON.stringify(samplesForEmail));
-            formData.append("totalValue", String(data.totalPriceFast || 0));
+            let totalValue = 0;
+            if (data.tariff === "Normal") totalValue = data.totalPriceNormal || 0;
+            else if (data.tariff === "Express") totalValue = data.totalPriceExpress || 0;
+            else if (data.tariff === "Fast") totalValue = data.totalPriceFast || 0;
+            formData.append("totalValue", String(totalValue));
             if (data.selectedDate) {
                 formData.append("selectedDate", dayjs(data.selectedDate).locale("ru").format("D MMMM YYYY года"));
             }
@@ -94,13 +98,15 @@ export default function CheckPaymentStatus() {
 
             const res = await newRequest.post("/documents/send-data", formData);
             setStatus(res.status === 200 ? "success" : "error");
+            if (res.status === 200) {
+                setTimeout(() => router.push("/"), 6000);
+            }
         } catch (err) {
             setStatus("error");
             console.error("Error sending data:", err);
-        } finally {
-            setTimeout(() => router.push("/"), 6000);
         }
     };
+
     useEffect(() => {
         if (ran.current) return;
         ran.current = true;
@@ -124,9 +130,6 @@ export default function CheckPaymentStatus() {
             } finally {
                 localStorage.removeItem(COOKIE_KEY);
                 Cookies.remove(COOKIE_KEY);
-                if (status !== "success") {
-                    setTimeout(() => router.push("/"), 6000);
-                }
             }
         })();
     }, []);
