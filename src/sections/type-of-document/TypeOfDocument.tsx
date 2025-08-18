@@ -11,7 +11,6 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
-import {readFilesAsDataUrl} from '@/utils/orderSync';
 import Cookies from "js-cookie";
 import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
