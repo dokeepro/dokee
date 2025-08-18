@@ -714,7 +714,7 @@ const TypeOfDocument = () => {
             const total =
                 (tariff === "Normal") ? totalPriceNormal :
                     (tariff === "Express") ? totalPriceExpress :
-                        (tariff === "Fast") ? totalPriceFast : 0;
+                        (tariff === "Fast") ? totalPriceFast : 0;.
 
             const lp = localLanguagePair && localLanguagePair.trim()
                 ? localLanguagePair
