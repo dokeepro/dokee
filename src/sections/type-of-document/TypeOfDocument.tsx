@@ -748,6 +748,7 @@ const TypeOfDocument = () => {
         }
     };
     const saveFullOrderData = async () => {
+        localStorage.removeItem("wayforpay_order_data_full");
         const filesData = await readFilesAsDataUrl(uploadedFiles);
         const orderData = {
             selectedSamples,
