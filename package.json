@@ -29,6 +29,8 @@
     "express-fileupload": "^1.5.1",
     "formik": "^2.4.6",
     "framer-motion": "^12.11.3",
+    "idb": "^8.0.3",
+    "idb-keyval": "^6.2.2",
     "js-cookie": "^3.0.5",
     "lodash.isequal": "^4.5.0",
     "mongoose": "^8.16.1",

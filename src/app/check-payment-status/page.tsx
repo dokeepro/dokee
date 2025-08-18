@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { getOrderData, deleteOrderData } from '@/utils/indexDbOrder';
 import Message from "@/components/success-page/Message";
 import { newRequest } from "@/utils/newRequest";
 import "dayjs/locale/ru";
@@ -14,6 +15,20 @@ interface LanguageTariff {
     fast: number;
     _id?: string;
 }
+
+interface OrderData {
+    selectedSamples: SelectedSample[];
+    fromLanguage: string;
+    toLanguage: string;
+    tariff: string;
+    localLanguagePair?: string;
+    totalPriceNormal?: number;
+    totalPriceExpress?: number;
+    totalPriceFast?: number;
+    selectedDate?: string;
+    uploadedFiles?: UploadedFileData[];
+}
+
 
 interface SelectedSample {
     id: string;
@@ -63,9 +78,8 @@ export default function CheckPaymentStatus() {
 
     const handleSendData = async () => {
         try {
-            const raw = localStorage.getItem("wayforpay_order_data_full");
-            if (!raw) { setStatus("error"); return; }
-            const data = JSON.parse(raw);
+            const data = await getOrderData<OrderData>("wayforpay_order_data_full");
+            if (!data) { setStatus("error"); return; }
 
             const samplesForEmail = (data.selectedSamples || []).map((sample: SelectedSample) => ({
                 ...sample,
@@ -101,6 +115,7 @@ export default function CheckPaymentStatus() {
             if (res.status === 200) {
                 setTimeout(() => router.push("/"), 6000);
             }
+            await deleteOrderData("wayforpay_order_data_full");
         } catch (err) {
             setStatus("error");
             console.error("Error sending data:", err);

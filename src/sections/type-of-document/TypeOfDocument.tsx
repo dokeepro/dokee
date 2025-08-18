@@ -6,6 +6,7 @@ import {Accordion, AccordionDetails, AccordionSummary, Button, Skeleton, Tooltip
 import uaFlag from "@/assets/icons/ua-icon.png";
 import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
+import { saveOrderData } from '@/utils/indexDbOrder';
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
@@ -747,6 +748,7 @@ const TypeOfDocument = () => {
             setLoading(false);
         }
     };
+
     const saveFullOrderData = async () => {
         const filesData = await readFilesAsDataUrl(uploadedFiles);
         const orderData = {
@@ -762,7 +764,7 @@ const TypeOfDocument = () => {
             totalPriceFast,
             tariff,
         };
-        localStorage.setItem("wayforpay_order_data_full", JSON.stringify(orderData));
+        await saveOrderData("wayforpay_order_data_full", orderData);
     };
     /*dokee.pro@gmail.com*/
 
