@@ -749,14 +749,18 @@ const TypeOfDocument = () => {
     };
     const saveFullOrderData = async () => {
         localStorage.removeItem("wayforpay_order_data_full");
-        const filesData = await readFilesAsDataUrl(uploadedFiles);
+        const filesMeta = uploadedFiles.map(file => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+        }));
         const orderData = {
             selectedSamples,
             fromLanguage,
             toLanguage,
             selectedTariff: tariff,
             selectedDate: selectedDate ? selectedDate.toISOString() : null,
-            uploadedFiles: filesData,
+            uploadedFiles: filesMeta,
             localLanguagePair,
             totalPriceNormal,
             totalPriceExpress,
