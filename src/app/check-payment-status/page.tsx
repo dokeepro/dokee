@@ -128,18 +128,8 @@ export default function CheckPaymentStatus() {
 
         (async () => {
             try {
-                const orderRef = Cookies.get(COOKIE_KEY) || localStorage.getItem(COOKIE_KEY);
-                if (!orderRef) { setStatus("error"); return; }
 
-                const statusRes = await newRequest.post("/payment/check-wayforpay-status", {
-                    orderReference: orderRef,
-                });
-
-                if (statusRes.status === 200) {
-                    await handleSendData();
-                } else {
-                    setStatus("error");
-                }
+                await handleSendData();
             } catch {
                 setStatus("error");
             } finally {
