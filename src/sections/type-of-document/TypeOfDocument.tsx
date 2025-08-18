@@ -12,7 +12,6 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
-import {readFilesAsDataUrl} from '@/utils/orderSync';
 import Cookies from "js-cookie";
 import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
@@ -750,14 +749,19 @@ const TypeOfDocument = () => {
     };
 
     const saveFullOrderData = async () => {
-        const filesData = await readFilesAsDataUrl(uploadedFiles);
+        localStorage.removeItem("wayforpay_order_data_full");
+        const filesMeta = uploadedFiles.map(file => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+        }));
         const orderData = {
             selectedSamples,
             fromLanguage,
             toLanguage,
             selectedTariff: tariff,
             selectedDate: selectedDate ? selectedDate.toISOString() : null,
-            uploadedFiles: filesData,
+            uploadedFiles: filesMeta,
             localLanguagePair,
             totalPriceNormal,
             totalPriceExpress,
