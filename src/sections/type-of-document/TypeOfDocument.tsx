@@ -6,7 +6,6 @@ import {Accordion, AccordionDetails, AccordionSummary, Button, Skeleton, Tooltip
 import uaFlag from "@/assets/icons/ua-icon.png";
 import kzFlag from "@/assets/icons/kz-icon.png";
 import Image from "next/image";
-import { saveOrderData } from '@/utils/indexDbOrder';
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
@@ -748,28 +747,41 @@ const TypeOfDocument = () => {
         }
     };
 
-    const saveFullOrderData = async () => {
-        localStorage.removeItem("wayforpay_order_data_full");
-        const filesMeta = uploadedFiles.map(file => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-        }));
-        const orderData = {
-            selectedSamples,
-            fromLanguage,
-            toLanguage,
-            selectedTariff: tariff,
-            selectedDate: selectedDate ? selectedDate.toISOString() : null,
-            uploadedFiles: filesMeta,
-            localLanguagePair,
-            totalPriceNormal,
-            totalPriceExpress,
-            totalPriceFast,
-            tariff,
-        };
-        await saveOrderData("wayforpay_order_data_full", orderData);
+    const saveFullOrderData: () => Promise<void> = async () => {
+        const orderReference = `order_${Date.now()}`;
+        const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+
+        Cookies.set("wayforpay_order_ref", orderReference, {
+            expires: 30,
+            domain: isLocalhost ? undefined : "dokee.pro",
+            secure: !isLocalhost,
+        });
+        localStorage.setItem("wayforpay_order_ref", orderReference);
+
+        const formData = new FormData();
+        formData.append("orderReference", orderReference);
+        formData.append("selectedSamples", JSON.stringify(selectedSamples));
+        formData.append("fromLanguage", fromLanguage || "");
+        formData.append("toLanguage", toLanguage || "");
+        formData.append("tariff", tariff || "");
+        formData.append("localLanguagePair", localLanguagePair || "");
+        formData.append("totalPriceNormal", String(totalPriceNormal));
+        formData.append("totalPriceExpress", String(totalPriceExpress));
+        formData.append("totalPriceFast", String(totalPriceFast));
+        if (selectedDate) formData.append("selectedDate", selectedDate.toISOString());
+
+        uploadedFiles.forEach((file, i) => {
+            formData.append("files", file, file.name || `file-${i}`);
+        });
+
+        try {
+            await newRequest.post("/order/save-order", formData);
+        } catch (e) {
+            showAlert("Не вдалося зберегти файли. Спробуйте знову.", "error");
+            throw e;
+        }
     };
+
     /*dokee.pro@gmail.com*/
 
     const handleFromLanguageChange = (value: string) => {
