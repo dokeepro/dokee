@@ -308,6 +308,14 @@ const TypeOfDocument = () => {
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
+    const [isFileSizeExceeded, setIsFileSizeExceeded] = useState(false);
+    const LIMIT_BYTES = 15 * 1024 * 1024;
+    const calcTotal = (files: File[]) =>
+        files.reduce((sum, f) => sum + (f?.size ?? 0), 0);
+
+    useEffect(() => {
+        setIsFileSizeExceeded(calcTotal(uploadedFiles) > LIMIT_BYTES);
+    }, [uploadedFiles]);
     const [loading, setLoading] = useState(false);
     const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
     const isPage1Valid = selectedSamples.length > 0;
@@ -364,25 +372,31 @@ const TypeOfDocument = () => {
         }
     };
 
-    const handleRemoveFile = (index: number) => {
-        removeUploadedFile(index);
-    };
-
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
-
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
+        const next = [...uploadedFiles, ...files];      // <-- compute next list
+        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);
         addUploadedFiles(files);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const files = Array.from(e.dataTransfer.files);
+        const next = [...uploadedFiles, ...files];      // <-- compute next list
+        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);
         addUploadedFiles(files);
     };
+
+    const handleRemoveFile = (index: number) => {
+        const next = uploadedFiles.filter((_, i) => i !== index); // <-- next list after removal
+        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);     // updates to false when under limit
+        removeUploadedFile(index);
+    };
+
+
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
 
     const isNextDisabled = () => {
         switch (activePage) {
@@ -1183,7 +1197,7 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
-                        <Image src={dropFile} alt="file" width={120} height={120}/>
+                        <Image src={dropFile} alt="file" width={120} height={120} />
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
                             Обращаем Ваше внимание, что в случае предоставления некачественных изображений оригинала
@@ -1211,15 +1225,20 @@ const TypeOfDocument = () => {
                                 multiple
                                 ref={fileInputRef}
                                 onChange={handleFileInput}
-                                style={{display: 'none'}}
+                                style={{ display: 'none' }}
                             />
                         </label>
+                        {isFileSizeExceeded && (
+                            <p className={styles.warning}>
+                                Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как скан-копии в формате PDF.
+                            </p>
+                        )}
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
                                     <li
                                         key={index}
-                                        style={{display: 'flex', alignItems: 'center', gap: 8}}
+                                        style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                                     >
                                         {index + 1}. {file.name}
                                         <IconButton
@@ -1228,13 +1247,13 @@ const TypeOfDocument = () => {
                                                 marginLeft: 1,
                                                 color: '#fff',
                                                 backgroundColor: '#f44336',
-                                                '&:hover': {backgroundColor: '#d32f2f'},
+                                                '&:hover': { backgroundColor: '#d32f2f' },
                                                 width: 24,
                                                 height: 24,
                                             }}
                                             onClick={() => handleRemoveFile(index)}
                                         >
-                                            <TiTimes size={16}/>
+                                            <TiTimes size={16} />
                                         </IconButton>
                                     </li>
                                 ))}
@@ -1413,14 +1432,21 @@ const TypeOfDocument = () => {
                     </div>
                 );
             case 3:
+
+
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
                             Назад
                         </ButtonOutlined>
-                        <ButtonOutlined sx={nextButtonStyle} onClick={handleNextStep} disabled={isNextDisabled()}>
+                        <ButtonOutlined
+                            sx={nextButtonStyle}
+                            onClick={handleNextStep}
+                            disabled={!isPage3Valid}
+                        >
                             Продолжить
                         </ButtonOutlined>
+
                     </div>
                 );
             case 4:

@@ -26,6 +26,13 @@
   }
 }
 
+.warning {
+  display: flex;
+  font-size: 12px;
+  text-align: center;
+  color: red;
+}
+
 .toggles {
   display: flex;
   gap: 0;
@@ -148,12 +155,12 @@
   align-content: center;
 }
 
-.infoP{
+.infoP {
   display: flex;
   flex-direction: column;
   width: 100%;
 
-  p{
+  p {
     display: flex;
     max-width: 450px;
     line-height: 140%;
@@ -162,12 +169,12 @@
   }
 }
 
-.buttonsFlex{
+.buttonsFlex {
   display: flex;
   gap: 20px;
 }
 
-.buttonsFlexText{
+.buttonsFlexText {
   display: flex;
   gap: 20px;
   align-content: flex-end;
@@ -175,7 +182,7 @@
   justify-items: center;
   align-items: center;
 
-  p{
+  p {
     display: flex;
     max-width: 326px;
     width: 100%;
@@ -199,7 +206,7 @@
   justify-items: center;
   align-items: center;
 
-  p{
+  p {
     display: flex;
     max-width: 326px;
     width: 100%;
