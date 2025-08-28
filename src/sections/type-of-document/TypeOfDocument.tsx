@@ -308,14 +308,7 @@ const TypeOfDocument = () => {
     const [fromLanguage, setFromLanguage] = useState<string | null>("русский");
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
-    const [isFileSizeExceeded, setIsFileSizeExceeded] = useState(false);
-    const LIMIT_BYTES = 15 * 1024 * 1024;
-    const calcTotal = (files: File[]) =>
-        files.reduce((sum, f) => sum + (f?.size ?? 0), 0);
 
-    useEffect(() => {
-        setIsFileSizeExceeded(calcTotal(uploadedFiles) > LIMIT_BYTES);
-    }, [uploadedFiles]);
     const [loading, setLoading] = useState(false);
     const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
     const isPage1Valid = selectedSamples.length > 0;
@@ -374,8 +367,6 @@ const TypeOfDocument = () => {
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
-        const next = [...uploadedFiles, ...files];      // <-- compute next list
-        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);
         addUploadedFiles(files);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -383,14 +374,10 @@ const TypeOfDocument = () => {
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const files = Array.from(e.dataTransfer.files);
-        const next = [...uploadedFiles, ...files];      // <-- compute next list
-        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);
         addUploadedFiles(files);
     };
 
     const handleRemoveFile = (index: number) => {
-        const next = uploadedFiles.filter((_, i) => i !== index); // <-- next list after removal
-        setIsFileSizeExceeded(calcTotal(next) > LIMIT_BYTES);     // updates to false when under limit
         removeUploadedFile(index);
     };
 
@@ -743,19 +730,19 @@ const TypeOfDocument = () => {
             }
             uploadedFiles.forEach((file) => formData.append("files", file, file.name || "file"));
 
-            const { status } = await newRequest.post("/documents/send-data", formData);
+            const {status} = await newRequest.post("/documents/send-data", formData);
             showAlert(status === 200 ? "Данные успешно отправлены на почту" : "Произошла ошибка при отправке данных",
                 status === 200 ? "success" : "error");
 
             if (status === 200) {
                 setTimeout(() => window.location.reload(), 1500);
-                return { success: true };
+                return {success: true};
             }
-            return { success: false };
+            return {success: false};
         } catch (err) {
             showAlert("Произошла ошибка при отправке данных", "error");
             console.error("Error sending data:", err);
-            return { success: false };
+            return {success: false};
         } finally {
             setLoading(false);
         }
@@ -1069,21 +1056,21 @@ const TypeOfDocument = () => {
                                 <Select
                                     value={toLanguage}
                                     onChange={(_, value) => handleToLanguageChange(value || "")}
-                                    sx={{ width: "100%" }}
+                                    sx={{width: "100%"}}
                                     disabled={activeCountry === 'UA'}
                                 >
                                     {[
-                                        { value: "английский", label: "Английский" },
-                                        { value: "испанский", label: "Испанский" },
-                                        { value: "итальянский", label: "Итальянский" },
-                                        { value: "литовский", label: "Литовский" },
-                                        { value: "немецкий", label: "Немецкий" },
-                                        { value: "польский", label: "Польский" },
-                                        { value: "португальский", label: "Португальский" },
-                                        { value: "украинский", label: "Украинский" },
-                                        { value: "русский", label: "Русский" },
-                                        { value: "французский", label: "Французский" },
-                                        { value: "чешский", label: "Чешский" },
+                                        {value: "английский", label: "Английский"},
+                                        {value: "испанский", label: "Испанский"},
+                                        {value: "итальянский", label: "Итальянский"},
+                                        {value: "литовский", label: "Литовский"},
+                                        {value: "немецкий", label: "Немецкий"},
+                                        {value: "польский", label: "Польский"},
+                                        {value: "португальский", label: "Португальский"},
+                                        {value: "украинский", label: "Украинский"},
+                                        {value: "русский", label: "Русский"},
+                                        {value: "французский", label: "Французский"},
+                                        {value: "чешский", label: "Чешский"},
                                     ]
                                         .filter(lang => !(activeCountry === 'KZ' && lang.value === "русский"))
                                         .sort((a, b) => a.label.localeCompare(b.label, 'ru'))
@@ -1197,7 +1184,7 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
-                        <Image src={dropFile} alt="file" width={120} height={120} />
+                        <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
                             Обращаем Ваше внимание, что в случае предоставления некачественных изображений оригинала
@@ -1225,20 +1212,19 @@ const TypeOfDocument = () => {
                                 multiple
                                 ref={fileInputRef}
                                 onChange={handleFileInput}
-                                style={{ display: 'none' }}
+                                style={{display: 'none'}}
                             />
                         </label>
-                        {isFileSizeExceeded && (
-                            <p className={styles.warning}>
-                                Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как скан-копии в формате PDF.
-                            </p>
-                        )}
+                        <p className={styles.warning}>
+                            Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как
+                            скан-копии в формате PDF.
+                        </p>
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
                                     <li
                                         key={index}
-                                        style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                                        style={{display: 'flex', alignItems: 'center', gap: 8}}
                                     >
                                         {index + 1}. {file.name}
                                         <IconButton
@@ -1247,13 +1233,13 @@ const TypeOfDocument = () => {
                                                 marginLeft: 1,
                                                 color: '#fff',
                                                 backgroundColor: '#f44336',
-                                                '&:hover': { backgroundColor: '#d32f2f' },
+                                                '&:hover': {backgroundColor: '#d32f2f'},
                                                 width: 24,
                                                 height: 24,
                                             }}
                                             onClick={() => handleRemoveFile(index)}
                                         >
-                                            <TiTimes size={16} />
+                                            <TiTimes size={16}/>
                                         </IconButton>
                                     </li>
                                 ))}
