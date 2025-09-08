@@ -293,6 +293,7 @@ const TypeOfDocument = () => {
     const {showAlert} = useAlert();
 
 
+
     const {
         selectedSamples,
         toggleSample,
@@ -380,10 +381,13 @@ const TypeOfDocument = () => {
     const handleRemoveFile = (index: number) => {
         removeUploadedFile(index);
     };
-
-
+    const totalFileSizeMB = React.useMemo(() => {
+        if (!uploadedFiles.length) return 0;
+        const totalBytes = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
+        return (totalBytes / (1024 * 1024)).toFixed(2);
+    }, [uploadedFiles]);
+    const isFileSizeExceeded = parseFloat(totalFileSizeMB as string) > 15;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-
 
     const isNextDisabled = () => {
         switch (activePage) {
@@ -392,7 +396,7 @@ const TypeOfDocument = () => {
             case 2:
                 return !isPage2Valid || areAllTariffsDisabled;
             case 3:
-                return !isPage3Valid;
+                return !isPage3Valid || isFileSizeExceeded;
             case 4:
                 return !isPage4Valid;
             default:
@@ -1184,6 +1188,9 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
+                        {/*<p className={styles.fileSizeCounter}>
+                            Загальний розмір файлів: <strong>{totalFileSizeMB} MB</strong> / 15 MB
+                        </p>*/}
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
@@ -1215,10 +1222,12 @@ const TypeOfDocument = () => {
                                 style={{display: 'none'}}
                             />
                         </label>
-                        <p className={styles.warning}>
-                            Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как
-                            скан-копии в формате PDF.
-                        </p>
+                        {isFileSizeExceeded && (
+                            <p className={styles.warning}>
+                                Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как
+                                скан-копии в формате PDF.
+                            </p>
+                        )}
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
                                 {uploadedFiles.map((file, index) => (
@@ -1418,8 +1427,6 @@ const TypeOfDocument = () => {
                     </div>
                 );
             case 3:
-
-
                 return (
                     <div className={styles.documentNavigation}>
                         <ButtonOutlined outlined sx={{borderColor: "1px solid #d6e0ec"}} onClick={handlePreviousStep}>
@@ -1428,11 +1435,10 @@ const TypeOfDocument = () => {
                         <ButtonOutlined
                             sx={nextButtonStyle}
                             onClick={handleNextStep}
-                            disabled={!isPage3Valid}
+                            disabled={!isPage3Valid || isFileSizeExceeded}
                         >
                             Продолжить
                         </ButtonOutlined>
-
                     </div>
                 );
             case 4:
