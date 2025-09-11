@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { newRequest } from "@/utils/newRequest";
+import React, {useState} from "react";
+import {newRequest} from "@/utils/newRequest";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import Cookies from "js-cookie";
 
@@ -19,6 +19,7 @@ interface WayforpayRedirectButtonProps {
     onSuccess?: () => Promise<{ success: boolean }>;
     onBeforeRedirect?: () => Promise<void>;
 }
+
 const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              products,
                                                                              totalValue,
@@ -26,7 +27,9 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                                                                              loading,
                                                                              onBeforeRedirect,
                                                                          }) => {
+    const [loader, setLoader] = useState(false);
     const handleClick = async () => {
+        setLoader(true);
         try {
             const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
             const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN_NAME;
@@ -122,17 +125,19 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 expires: 1,
                 secure: !isLocalhost,
             });
-
+            console.log(loading)
             form.submit();
+            setLoader(false);
         } catch (err) {
             alert("Unexpected error: " + (err as Error).message);
+            setLoader(false);
             console.error(err);
         }
     };
 
     return (
-        <ButtonOutlined type="button" onClick={handleClick}>
-            {loading ? "Обработка..." : "Перейти к оплате"}
+        <ButtonOutlined type="button" onClick={handleClick} loading={loader}>
+            Перейти к оплате
         </ButtonOutlined>
     );
 };

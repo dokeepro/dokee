@@ -32,17 +32,22 @@ export default function CheckPaymentStatus() {
 
                 if (res.status === 200) {
                     setStatus("success");
-                    setTimeout(() => router.push("/"), 6000);
                 } else {
                     setStatus("error");
                 }
             } catch (err) {
                 setStatus("error");
                 console.error("Error checking payment status:", err);
-            } finally {
             }
         })();
     }, []);
+
+    useEffect(() => {
+        if (status === "success") {
+            const timer = setTimeout(() => router.push("/"), 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [status, router]);
 
     if (status === "checking") return <Message title="Отправляем данные…" description="Это займет несколько секунд" />;
     if (status === "success")  return <Message title="Успех!" description="Данные отправлены на почту" />;

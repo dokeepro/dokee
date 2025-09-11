@@ -251,6 +251,7 @@ const AdminContent = () => {
         formData.append('languageTariffs', JSON.stringify(editingSample.sample.languageTariffs || []));
 
         if (newSampleImage) {
+            console.log('Sending file:', newSampleImage);
             formData.append('image', newSampleImage);
         }
 
@@ -690,9 +691,11 @@ const AdminContent = () => {
                                             accept="image/*"
                                             hidden
                                             onChange={(e) => {
-                                                if (e.target.files?.[0]) {
-                                                    setNewSampleImage(e.target.files[0]);
-                                                    setNewSamplePreview(URL.createObjectURL(e.target.files[0]));
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    console.log('Selected file:', file);
+                                                    setNewSampleImage(file);
+                                                    setNewSamplePreview(URL.createObjectURL(file));
                                                 }
                                             }}
                                         />
