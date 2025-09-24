@@ -917,7 +917,7 @@ const TypeOfDocument = () => {
             case 'Штамп':
                 return (
                     <div className={styles.popupContent}>
-                        <button onClick={handleSendData}>Оплатить</button>
+                        <button className={styles.buttonSendData} onClick={handleSendData}>Оплатить</button>
                         <div className={styles.column}>
                             <h3>Пример штампа</h3>
                             <Image src={stampExample} alt="image" width={281} height={211}/>
