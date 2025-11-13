@@ -820,14 +820,23 @@ const TypeOfDocument = () => {
         }
     }, [activeCountry]);
 
-    const kzNow = new Date();
-    const todayDate = kzNow.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
-    const astanaTime = new Date(kzNow.getTime() + 3 * 60 * 60 * 1000);
+    const getAstanaNow = () => {
+        const now = new Date();
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        return new Date(utc + 5 * 3600 * 1000); // UTC+5
+    };
+
+
+    const todayAstana = getAstanaNow();
+    const todayDate = todayAstana.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+
+    const astanaTime = getAstanaNow();
     astanaTime.setMinutes(0, 0, 0);
-    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'});
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDate = tomorrow.toLocaleDateString('ru-RU', {day: '2-digit', month: 'long'});
+    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    const tomorrowAstana = getAstanaNow();
+    tomorrowAstana.setDate(tomorrowAstana.getDate() + 1);
+    const tomorrowDate = tomorrowAstana.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
 
     const handleToLanguageChange = (value: string) => {
         const normalizedLabel = value.trim().toLowerCase();
