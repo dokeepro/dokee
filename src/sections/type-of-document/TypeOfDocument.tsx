@@ -820,23 +820,74 @@ const TypeOfDocument = () => {
         }
     }, [activeCountry]);
 
-    const getAstanaNow = () => {
+
+    const getAstanaTime = () => {
         const now = new Date();
         const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        return new Date(utc + 5 * 3600 * 1000); // UTC+5
+        return new Date(utc + 5 * 60 * 60 * 1000);
+    };
+
+    const FAST_TABLE: Record<number, string> = {
+        8: "до 11:00",
+        9: "до 12:00",
+        10: "до 13:00",
+        11: "до 14:00",
+        12: "до 15:00",
+        13: "до 16:00",
+        14: "до 17:00",
+        15: "до 18:00",
+    };
+
+    const getFastText = () => {
+        const astana = getAstanaTime();
+        const hour = astana.getHours();
+
+        // Вибір правильного слоту без переносів
+        let slotHour = hour;
+
+        if (hour < 8) slotHour = 8;
+        if (hour > 15) slotHour = 15;
+
+        const dateStr = astana.toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "long",
+        });
+
+        const guarantee = FAST_TABLE[slotHour];
+
+        return `${dateStr} доставка ${guarantee} (Астаны)`;
     };
 
 
-    const todayAstana = getAstanaNow();
-    const todayDate = todayAstana.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
 
-    const astanaTime = getAstanaNow();
-    astanaTime.setMinutes(0, 0, 0);
-    const astanaTimeStr = astanaTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-    const tomorrowAstana = getAstanaNow();
+
+    const fastGuaranteeText = getFastText();
+
+    const astanaNow = getAstanaTime();
+    const todayDate = astanaNow.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+    });
+
+    const astanaFastDeadline = new Date(astanaNow);
+    astanaFastDeadline.setHours(astanaNow.getHours() + 3);
+    astanaFastDeadline.setMinutes(0, 0, 0);
+
+    const astanaTimeStr = astanaFastDeadline.toLocaleTimeString("ru-RU", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    const tomorrowAstana = getAstanaTime();
     tomorrowAstana.setDate(tomorrowAstana.getDate() + 1);
-    const tomorrowDate = tomorrowAstana.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+
+    const tomorrowDate = tomorrowAstana.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "long",
+    });
+
+
 
     const handleToLanguageChange = (value: string) => {
         const normalizedLabel = value.trim().toLowerCase();
@@ -1171,7 +1222,7 @@ const TypeOfDocument = () => {
                                 benefits={[
                                     {
                                         iconSrc: timeIconWhite,
-                                        text: `Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны)`
+                                        text: `${fastGuaranteeText}`
                                     },
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},
