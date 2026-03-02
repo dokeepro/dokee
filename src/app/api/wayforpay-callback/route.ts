@@ -1,65 +1,110 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import crypto from "crypto";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://dokee-backend.onrender.com";
 
-const generateSignature = (data: Record<string, string>): string => {
-    const fields = [
-        "merchantAccount",
-        "orderReference",
-        "amount",
-        "currency",
-        "authCode",
-        "cardPan",
-        "transactionStatus",
-        "reasonCode",
-    ];
+type WayForPayPayload = Record<string, unknown>;
 
-    const signatureString = fields.map((key) => data[key] ?? "").join(";");
+const SIGN_FIELDS = [
+    "merchantAccount",
+    "orderReference",
+    "amount",
+    "currency",
+    "authCode",
+    "cardPan",
+    "transactionStatus",
+    "reasonCode",
+] as const;
+
+const asString = (v: unknown): string => {
+    if (v === null || v === undefined) return "";
+    if (Array.isArray(v)) return v.map(asString).join(",");
+    if (typeof v === "number" || typeof v === "bigint" || typeof v === "boolean") return String(v);
+    if (typeof v === "string") return v;
+    return String(v);
+};
+
+const generateSignature = (data: WayForPayPayload): string => {
+    const signatureString = SIGN_FIELDS.map((key) => asString(data[key])).join(";");
     return crypto.createHmac("md5", SECRET_KEY).update(signatureString).digest("hex");
 };
 
+async function readWayForPayBody(req: NextRequest): Promise<WayForPayPayload> {
+    const contentType = req.headers.get("content-type") || "";
+
+    // WayForPay часто шле form-urlencoded. Підтримуємо обидва варіанти.
+    if (contentType.includes("application/x-www-form-urlencoded")) {
+        const text = await req.text();
+        const params = new URLSearchParams(text);
+        const obj: Record<string, string> = {};
+        params.forEach((value, key) => {
+            obj[key] = value;
+        });
+        return obj;
+    }
+
+    // default: JSON
+    return (await req.json()) as WayForPayPayload;
+}
+
+function okAck(orderReference: string) {
+    // Мінімальний ack, який приймає більшість інтеграцій WayForPay.
+    return NextResponse.json({
+        orderReference,
+        status: "accept",
+        time: Date.now(),
+    });
+}
+
 export async function POST(req: NextRequest) {
     try {
-        const body: Record<string, string> = await req.json();
+        const body = await readWayForPayBody(req);
+        const orderReference = asString(body.orderReference);
 
+        // Якщо нема orderReference — все одно повертаємо 200, щоб WayForPay не вважав колбек помилкою.
+        if (!orderReference) {
+            console.warn("WayForPay callback: missing orderReference", body);
+            return NextResponse.json({ status: "accept", time: Date.now() });
+        }
+
+        const receivedSignature = asString(body.merchantSignature);
         const expectedSignature = generateSignature(body);
-        const receivedSignature = body.merchantSignature;
 
-        if (expectedSignature !== receivedSignature) {
-            return NextResponse.json({ success: false, error: "Invalid signature" }, { status: 400 });
-        }
-
-        const cookieStore = await cookies();
-        const orderRef = cookieStore.get("wayforpay_order_ref")?.value;
-
-        if (!orderRef) {
-            return NextResponse.json({ success: false, error: "Missing orderReference in cookie" }, { status: 400 });
-        }
-
-        const res = await fetch(`${BACKEND_URL}/check-wayforpay-status`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderReference: orderRef }),
-        });
-
-        const data = await res.json();
-
-        if (data.transactionStatus === "Approved") {
-            console.log("✅ Status check confirmed payment for:", orderRef);
-            return NextResponse.json({
-                orderReference: orderRef,
-                status: "confirmed",
-                time: Date.now(),
+        if (!receivedSignature || expectedSignature !== receivedSignature) {
+            console.warn("WayForPay callback: invalid signature", {
+                orderReference,
+                receivedSignature,
+                expectedSignature,
             });
-        } else {
-            console.log("❌ Status check says NOT approved:", data.transactionStatus);
-            return NextResponse.json({ success: false, status: data.transactionStatus });
+            // Не віддаємо 400 — лише ack 200.
+            return okAck(orderReference);
         }
+
+        // Після успішної валідації можна підтвердити статус на бекенді.
+        try {
+            const res = await fetch(`${BACKEND_URL}/check-wayforpay-status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ orderReference }),
+            });
+
+            const data = await res.json();
+
+            if (data?.transactionStatus === "Approved") {
+                console.log("[32m%s[0m", "✅ Status check confirmed payment for:", orderReference);
+            } else {
+                console.log("❌ Status check says NOT approved:", data?.transactionStatus, "for", orderReference);
+            }
+        } catch (err) {
+            // Не блокуємо ack навіть якщо бекенд тимчасово недоступний.
+            console.error("WayForPay callback: backend status check failed", err);
+        }
+
+        return okAck(orderReference);
     } catch (e) {
         console.error("❌ Callback error:", e);
-        return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
+        // Навіть на помилці парсингу — 200, щоб не було 400/500.
+        return NextResponse.json({ status: "accept", time: Date.now() });
     }
 }
