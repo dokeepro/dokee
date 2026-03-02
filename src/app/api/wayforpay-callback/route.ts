@@ -62,9 +62,7 @@ export async function POST(req: NextRequest) {
         const body = await readWayForPayBody(req);
         const orderReference = asString(body.orderReference);
 
-        // Якщо нема orderReference — все одно повертаємо 200, щоб WayForPay не вважав колбек помилкою.
         if (!orderReference) {
-            console.warn("WayForPay callback: missing orderReference", body);
             return NextResponse.json({ status: "accept", time: Date.now() });
         }
 
@@ -72,11 +70,6 @@ export async function POST(req: NextRequest) {
         const expectedSignature = generateSignature(body);
 
         if (!receivedSignature || expectedSignature !== receivedSignature) {
-            console.warn("WayForPay callback: invalid signature", {
-                orderReference,
-                receivedSignature,
-                expectedSignature,
-            });
             // Не віддаємо 400 — лише ack 200.
             return okAck(orderReference);
         }
@@ -92,19 +85,17 @@ export async function POST(req: NextRequest) {
             const data = await res.json();
 
             if (data?.transactionStatus === "Approved") {
-                console.log("[32m%s[0m", "✅ Status check confirmed payment for:", orderReference);
+
             } else {
-                console.log("❌ Status check says NOT approved:", data?.transactionStatus, "for", orderReference);
+
             }
         } catch (err) {
-            // Не блокуємо ack навіть якщо бекенд тимчасово недоступний.
-            console.error("WayForPay callback: backend status check failed", err);
+
         }
 
         return okAck(orderReference);
     } catch (e) {
-        console.error("❌ Callback error:", e);
-        // Навіть на помилці парсингу — 200, щоб не було 400/500.
+
         return NextResponse.json({ status: "accept", time: Date.now() });
     }
 }
