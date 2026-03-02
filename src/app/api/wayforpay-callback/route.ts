@@ -62,9 +62,7 @@ export async function POST(req: NextRequest) {
         const body = await readWayForPayBody(req);
         const orderReference = asString(body.orderReference);
 
-        // Якщо нема orderReference — все одно повертаємо 200, щоб WayForPay не вважав колбек помилкою.
         if (!orderReference) {
-            console.warn("WayForPay callback: missing orderReference", body);
             return NextResponse.json({ status: "accept", time: Date.now() });
         }
 
