@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 import crypto from "crypto";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         const orderReference = asString(body.orderReference);
 
         if (!orderReference) {
-            return NextResponse.json({ status: "accept", time: Date.now() });
+            return NextResponse.json({status: "accept", time: Date.now()});
         }
 
         const receivedSignature = asString(body.merchantSignature);
@@ -78,24 +78,24 @@ export async function POST(req: NextRequest) {
         try {
             const res = await fetch(`${BACKEND_URL}/check-wayforpay-status`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderReference }),
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({orderReference}),
             });
 
             const data = await res.json();
 
             if (data?.transactionStatus === "Approved") {
-
+                console.log("Payment approved for order:", orderReference);
             } else {
-
+                console.log("Payment approved for order:", orderReference);
             }
         } catch (err) {
-
+            console.error(err)
         }
 
         return okAck(orderReference);
     } catch (e) {
 
-        return NextResponse.json({ status: "accept", time: Date.now() });
+        return NextResponse.json({status: "accept", time: Date.now()});
     }
 }
