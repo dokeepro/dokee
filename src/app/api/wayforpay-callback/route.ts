@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
         return okAck(orderReference);
     } catch (e) {
-
+        console.error(e)
         return NextResponse.json({status: "accept", time: Date.now()});
     }
 }
