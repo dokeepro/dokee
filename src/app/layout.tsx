@@ -10,6 +10,7 @@ import {GeneralProvider} from "@/context/GeneralContext";
 import WayforpayScript from "@/utils/WayforpayScript";
 import ErrorBoundaryWrapper from "@/components/error-boundary/ErrorBoundaryWrapper";
 import {getInitialGeneralData} from "@/utils/getInitialGeneralData";
+import Blocker from "@/components/blocker/Blocker";
 import type {Metadata} from "next";
 
 export const generateMetadata = async (): Promise<Metadata> => ({
@@ -52,23 +53,25 @@ export default async function RootLayout({
     return (
         <html lang="en">
         <body>
-        {/*<ErrorBoundaryWrapper>
-            <WayforpayScript/>
-            <GeneralProvider initialDocuments={documents} initialGeneral={general}>
-                <Header/>
-                <DocumentProvider>
-                    <PageWrapper>
-                        <PopupProvider>
-                            <AlertProvider>
-                                <Popup/>
-                                {children}
-                            </AlertProvider>
-                        </PopupProvider>
-                    </PageWrapper>
-                </DocumentProvider>
-                <Footer/>
-            </GeneralProvider>
-        </ErrorBoundaryWrapper>*/}
+        <Blocker>
+            <ErrorBoundaryWrapper>
+                <WayforpayScript/>
+                <GeneralProvider initialDocuments={documents} initialGeneral={general}>
+                    <Header/>
+                    <DocumentProvider>
+                        <PageWrapper>
+                            <PopupProvider>
+                                <AlertProvider>
+                                    <Popup/>
+                                    {children}
+                                </AlertProvider>
+                            </PopupProvider>
+                        </PageWrapper>
+                    </DocumentProvider>
+                    <Footer/>
+                </GeneralProvider>
+            </ErrorBoundaryWrapper>
+        </Blocker>
         </body>
         </html>
     );
