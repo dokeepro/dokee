@@ -52,7 +52,7 @@ export default async function RootLayout({
     return (
         <html lang="en">
         <body>
-        <ErrorBoundaryWrapper>
+        {/*<ErrorBoundaryWrapper>
             <WayforpayScript/>
             <GeneralProvider initialDocuments={documents} initialGeneral={general}>
                 <Header/>
@@ -68,7 +68,7 @@ export default async function RootLayout({
                 </DocumentProvider>
                 <Footer/>
             </GeneralProvider>
-        </ErrorBoundaryWrapper>
+        </ErrorBoundaryWrapper>*/}
         </body>
         </html>
     );
