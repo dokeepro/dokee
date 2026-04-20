@@ -51,8 +51,8 @@ const LenisScriptLoader: React.FC = () => {
                 infinite: false,
             });
 
-            lenis.on('scroll', ({ scroll, limit, velocity, direction, progress }: ScrollEventParams) => {
-                console.log({ scroll, limit, velocity, direction, progress });
+            lenis.on('scroll', () => {
+                // scroll event handled by lenis
             });
 
             function raf(time: number) {

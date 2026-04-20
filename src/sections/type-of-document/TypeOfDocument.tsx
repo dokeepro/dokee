@@ -1013,21 +1013,6 @@ const TypeOfDocument = () => {
         }
     }
 
-    useEffect(() => {
-        const orderData = {
-            selectedSamples,
-            fromLanguage,
-            toLanguage,
-            selectedTariff: tariff,
-            selectedDate: selectedDate ? selectedDate.toISOString() : null,
-            uploadedFiles: uploadedFiles.map(f => ({
-                name: f.name,
-                type: f.type,
-                size: f.size,
-            })),
-        };
-        Cookies.set("wayforpay_order_data", JSON.stringify(orderData), {expires: 1});
-    }, [selectedSamples, fromLanguage, toLanguage, tariff, selectedDate, uploadedFiles]);
 
     const renderContent = () => {
         switch (activePage) {

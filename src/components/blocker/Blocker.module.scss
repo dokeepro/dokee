@@ -1,8 +1,8 @@
 .blocker{
-  display: flex;
+  display: none;
   width: 100dvh;
   height: 100dvh;
   z-index: 9999;
   background: blue;
-  position: fixed;
+  position: absolute;
 }
