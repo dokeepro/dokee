@@ -1,7 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
-import {newRequest} from "@/utils/newRequest";
+import React, { useState } from "react";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 import Cookies from "js-cookie";
 
@@ -15,19 +14,18 @@ interface WayforpayRedirectButtonProps {
     products: Product[];
     totalValue: number | string;
     currency?: string;
-    loading?: boolean;
-    onSuccess?: () => Promise<{ success: boolean }>;
-    onBeforeRedirect?: () => Promise<void>;
+    // orderReference is provided so both this component and the callback use the same reference
+    onBeforeRedirect?: (orderReference: string) => Promise<void>;
 }
 
 const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
-                                                                             products,
-                                                                             totalValue,
-                                                                             currency = "KZT",
-                                                                             loading,
-                                                                             onBeforeRedirect,
-                                                                         }) => {
+    products,
+    totalValue,
+    currency = "KZT",
+    onBeforeRedirect,
+}) => {
     const [loader, setLoader] = useState(false);
+
     const handleClick = async () => {
         setLoader(true);
         try {
@@ -40,9 +38,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
 
             const orderReference = `order_${Date.now()}`;
             const orderDate = Math.floor(Date.now() / 1000);
-            if (onBeforeRedirect) {
-                await onBeforeRedirect();
-            }
+
             const productName = products.map((p) => p.sampleTitle);
             const productPrice = products.map((p) => String(p.price));
             const productCount = products.map((p) => String(p.count ?? 1));
@@ -53,29 +49,47 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                     ? window.location.origin
                     : process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
-            const returnUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/payment/redirect-to-dokee`;
+            // returnUrl: where WayForPay redirects the user after payment
+            const returnUrl = `${baseUrl}/check-payment-status`;
+            // serviceUrl: webhook that WayForPay calls server-to-server with payment result
             const serviceUrl = `${baseUrl}/api/wayforpay-callback`;
 
-            const res = await newRequest.post("/payment/generate-wayforpay-signature", {
-                merchantAccount,
-                merchantDomainName,
-                orderReference,
-                orderDate,
-                amount,
-                currency,
-                productName,
-                productPrice,
-                productCount,
-                returnUrl,
-                serviceUrl,
-            });
+            // Run pre-redirect save and signature generation in parallel for speed
+            const [, sigRes] = await Promise.all([
+                onBeforeRedirect ? onBeforeRedirect(orderReference) : Promise.resolve(),
+                fetch("/api/generate-wayforpay-signature", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        merchantAccount,
+                        merchantDomainName,
+                        orderReference,
+                        orderDate,
+                        amount,
+                        currency,
+                        productName,
+                        productPrice,
+                        productCount,
+                    }),
+                }),
+            ]);
 
-            const data = res.data;
+            const data = await sigRes.json();
             if (!data.signature) {
                 alert("No signature received from server");
                 return;
             }
 
+            // Persist order reference so check-payment-status can read it
+            const isLocalhost = window.location.hostname === "localhost";
+            localStorage.setItem("wayforpay_order_ref", orderReference);
+            Cookies.set("wayforpay_order_ref", orderReference, {
+                domain: isLocalhost ? undefined : "dokee.pro",
+                expires: 1,
+                secure: !isLocalhost,
+            });
+
+            // Build and submit WayForPay payment form
             const wayforpayData: Record<string, string | string[]> = {
                 merchantAccount,
                 merchantDomainName,
@@ -116,18 +130,7 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
             });
 
             document.body.appendChild(form);
-
-            localStorage.setItem("wayforpay_order_ref", orderReference);
-            const isLocalhost = window.location.hostname === "localhost";
-
-            Cookies.set("wayforpay_order_ref", orderReference, {
-                domain: isLocalhost ? undefined : "dokee.pro",
-                expires: 1,
-                secure: !isLocalhost,
-            });
-            console.log(loading)
             form.submit();
-            setLoader(false);
         } catch (err) {
             alert("Unexpected error: " + (err as Error).message);
             setLoader(false);

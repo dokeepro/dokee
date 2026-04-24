@@ -11,7 +11,6 @@ import DocumentItem from "@/components/document-item/DocumentItem";
 import {SelectedSample, useSampleStore} from '@/store/sampleStore';
 import {Select, Option} from '@mui/joy';
 import {Input} from '@mui/joy';
-import Cookies from "js-cookie";
 import {BsFillInfoSquareFill} from "react-icons/bs";
 import timeIcon from "@/assets/icons/box-time-icon.svg"
 import timeIconPurple from "@/assets/icons/box-time-purple.svg"
@@ -23,7 +22,6 @@ import dropFile from "@/assets/icons/file-download.svg"
 import lightning from "@/assets/icons/lighting-white.svg"
 import garry from "@/assets/icons/garry-icon.svg"
 import discount from "@/assets/icons/discount-icon.svg"
-import {newRequest} from '@/utils/newRequest';
 import {HiMiniArrowsRightLeft} from "react-icons/hi2";
 import TariffItem from '@/components/tariff-item/TariffItem';
 import {useDocumentContext} from "@/context/DocumentContext";
@@ -36,7 +34,6 @@ import {usePopup} from "@/context/PopupContext";
 import {TiTimes} from "react-icons/ti";
 import IconButton from '@mui/material/IconButton';
 import {useGeneral} from "@/context/GeneralContext";
-import {useAlert} from "@/context/AlertContext";
 import 'dayjs/locale/ru';
 import WayforpayRedirectButton from "@/components/wayforpay-button/WayforpayRedirectButton";
 
@@ -290,7 +287,6 @@ const TypeOfDocument = () => {
         setActivePage
     } = useDocumentContext();
 
-    const {showAlert} = useAlert();
 
 
 
@@ -310,7 +306,6 @@ const TypeOfDocument = () => {
     const [toLanguage, setToLanguage] = useState<string | null>("польский");
     const {openPopup, closePopup} = usePopup();
 
-    const [loading, setLoading] = useState(false);
     const [localLanguagePair, setLocalLanguagePair] = useState<string | null>("Русский - Польский");
     const isPage1Valid = selectedSamples.length > 0;
     const isPage2Valid = !!tariff && fromLanguage !== toLanguage;
@@ -685,26 +680,34 @@ const TypeOfDocument = () => {
 
     const selectedDate = useSampleStore(state => state.selectedDate);
 
-    const handleSendData = async (): Promise<{ success: boolean }> => {
-        setLoading(true);
-        try {
-            // функция для цены одного выбранного образца
-            const getSamplePrice = (sample: SelectedSample) => {
-                const toLangRaw = (toLanguage || "").toLowerCase().trim();
-                const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
-                const tariffKey = (tariff?.toLowerCase() || "normal") as "normal" | "express" | "fast";
-                const langTariff = sample.languageTariffs?.find(t => {
-                    if (!t.language) return false;
-                    const lang = t.language.toLowerCase();
-                    return lang.includes("_") || lang.includes("-")
-                        ? lang.split(/[_\s-]+/).includes(normalizedToLang)
-                        : lang === normalizedToLang;
-                });
-                return langTariff ? (langTariff[tariffKey] || 0) : 0;
-            };
+    const saveFullOrderData = async (orderReference: string): Promise<void> => {
+        const toLangRaw = (toLanguage || "").toLowerCase().trim();
+        const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
+        const tariffKey = (tariff?.toLowerCase() || "normal") as "normal" | "express" | "fast";
 
-            // массив для отправки (лёгкий + цена)
-            const samplesForEmail = selectedSamples.map(s => ({
+        const getSamplePrice = (sample: SelectedSample): number => {
+            const langTariff = sample.languageTariffs?.find(t => {
+                if (!t.language) return false;
+                const lang = t.language.toLowerCase();
+                return lang.includes("_") || lang.includes("-")
+                    ? lang.split(/[_\s-]+/).includes(normalizedToLang)
+                    : lang === normalizedToLang;
+            });
+            return langTariff ? (langTariff[tariffKey] || 0) : 0;
+        };
+
+        const total =
+            tariff === "Normal" ? totalPriceNormal :
+            tariff === "Express" ? totalPriceExpress :
+            tariff === "Fast" ? totalPriceFast : 0;
+
+        const lp = localLanguagePair?.trim()
+            ? localLanguagePair
+            : `${fromLanguage || ""} - ${toLanguage || ""}`;
+
+        const metadata = {
+            orderReference,
+            samples: selectedSamples.map(s => ({
                 id: s.id,
                 docName: s.docName,
                 sampleTitle: s.sampleTitle,
@@ -712,79 +715,24 @@ const TypeOfDocument = () => {
                 sealText: s.sealText || "",
                 stampText: s.stampText || "",
                 computedPrice: getSamplePrice(s),
-            }));
+            })),
+            languagePair: lp,
+            tariff: tariff || "",
+            totalValue: total,
+            selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
+        };
 
-            const total =
-                (tariff === "Normal") ? totalPriceNormal :
-                    (tariff === "Express") ? totalPriceExpress :
-                        (tariff === "Fast") ? totalPriceFast : 0;
+        // Store files natively in IndexedDB (instant, no network upload before payment)
+        // Store as {name, type, blob} so File objects can be reconstructed on return
+        const fileEntries = uploadedFiles.map(f => ({ name: f.name, type: f.type, blob: f as Blob }));
 
-            const lp = localLanguagePair && localLanguagePair.trim()
-                ? localLanguagePair
-                : `${fromLanguage || ""} - ${toLanguage || ""}`;
+        // Dynamic import keeps idb out of the SSR bundle (localStorage is browser-only)
+        const { saveOrderData } = await import('@/utils/indexDbOrder');
+        await Promise.all([
+            saveOrderData(`files_${orderReference}`, fileEntries),
+            saveOrderData(`metadata_${orderReference}`, metadata),
+        ]);
 
-            const formData = new FormData();
-            formData.append("email", "dokee.pro@gmail.com");
-            formData.append("languagePair", lp);
-            formData.append("tariff", tariff || "");
-            formData.append("samples", JSON.stringify(samplesForEmail));
-            formData.append("totalValue", String(total));
-            if (selectedDate) {
-                formData.append("selectedDate", selectedDate.locale("ru").format("D MMMM YYYY года"));
-            }
-            uploadedFiles.forEach((file) => formData.append("files", file, file.name || "file"));
-
-            const {status} = await newRequest.post("/documents/send-data", formData);
-            showAlert(status === 200 ? "Данные успешно отправлены на почту" : "Произошла ошибка при отправке данных",
-                status === 200 ? "success" : "error");
-
-            if (status === 200) {
-                setTimeout(() => window.location.reload(), 1500);
-                return {success: true};
-            }
-            return {success: false};
-        } catch (err) {
-            showAlert("Произошла ошибка при отправке данных", "error");
-            console.error("Error sending data:", err);
-            return {success: false};
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const saveFullOrderData: () => Promise<void> = async () => {
-        const orderReference = `order_${Date.now()}`;
-        const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-
-        Cookies.set("wayforpay_order_ref", orderReference, {
-            expires: 30,
-            domain: isLocalhost ? undefined : "dokee.pro",
-            secure: !isLocalhost,
-        });
-        localStorage.setItem("wayforpay_order_ref", orderReference);
-
-        const formData = new FormData();
-        formData.append("orderReference", orderReference);
-        formData.append("selectedSamples", JSON.stringify(selectedSamples));
-        formData.append("fromLanguage", fromLanguage || "");
-        formData.append("toLanguage", toLanguage || "");
-        formData.append("tariff", tariff || "");
-        formData.append("localLanguagePair", localLanguagePair || "");
-        formData.append("totalPriceNormal", String(totalPriceNormal));
-        formData.append("totalPriceExpress", String(totalPriceExpress));
-        formData.append("totalPriceFast", String(totalPriceFast));
-        if (selectedDate) formData.append("selectedDate", selectedDate.toISOString());
-
-        uploadedFiles.forEach((file, i) => {
-            formData.append("files", file, file.name || `file-${i}`);
-        });
-
-        try {
-            await newRequest.post("/order/save-order", formData);
-        } catch (e) {
-            showAlert("Не вдалося зберегти файли. Спробуйте знову.", "error");
-            throw e;
-        }
     };
 
     /*dokee.pro@gmail.com*/
@@ -922,7 +870,7 @@ const TypeOfDocument = () => {
 
     const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
     const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
-    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
+    const isNormalDisabled = false; // temp: always enabled for testing
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(
@@ -977,7 +925,6 @@ const TypeOfDocument = () => {
             case 'Штамп':
                 return (
                     <div className={styles.popupContent}>
-                        <button className={styles.buttonSendData} onClick={handleSendData}>Оплатить</button>
                         <div className={styles.column}>
                             <h3>Пример штампа</h3>
                             <Image src={stampExample} alt="image" width={281} height={211}/>
@@ -1519,7 +1466,6 @@ const TypeOfDocument = () => {
                                 Назад
                             </ButtonOutlined>
                             <WayforpayRedirectButton
-                                loading={loading}
                                 onBeforeRedirect={saveFullOrderData}
                                 products={selectedSamples.map(s => {
                                     const toLangRaw = toLanguage?.toLowerCase() || '';

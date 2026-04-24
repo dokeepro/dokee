@@ -10,7 +10,9 @@ interface CustomButtonProps extends ButtonProps {
     outlined?: boolean;
 }
 
-const CustomButton = styled(Button)<{ white?: boolean; outlined?: boolean }>(({ white, outlined }) => ({
+const CustomButton = styled(Button, {
+    shouldForwardProp: (prop) => prop !== 'white' && prop !== 'outlined',
+})<{ white?: boolean; outlined?: boolean }>(({ white, outlined }) => ({
     border: outlined ? '1px solid #d6e0ec' : white ? '3px solid #ffffff' : '3px solid #b1b4f1',
     color: outlined ? '#000000' : white ? '#000000' : '#ffffff',
     backgroundColor: outlined ? '#ffffff' : white ? '#ffffff' : '#565add',

@@ -20,7 +20,6 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
     const pathname = usePathname();
     const {general} = useGeneral();
     const { activePage } = useDocumentContext();
-    console.log("ACTIVE PAGE", activePage);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -34,9 +33,6 @@ const PageWrapper: FC<PageWrapperProps> = ({children}) => {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
-
-    console.log("GENERAL", general);
-
 
     return (
         <>

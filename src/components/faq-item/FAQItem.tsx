@@ -4,7 +4,6 @@ import {
     AccordionSummary,
     AccordionDetails,
     Typography,
-    Button
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -35,24 +34,24 @@ const FaqItem: FC<FaqItemProps> = ({ question, answer, isOpen, onToggle }) => {
                 <Typography variant="h6" sx={{ fontFamily: 'Involve, sans-serif' }}>
                     {question}
                 </Typography>
-                <Button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToggle();
-                    }}
-                    sx={{
+                <div
+                    style={{
                         marginLeft: 'auto',
                         maxWidth: "44px",
+                        minWidth: "44px",
+                        height: "44px",
                         display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "50%",
                         backgroundColor: isOpen ? '#4a3aff' : '#f7f7ff',
                         color: isOpen ? '#ffffff' : '#6f6c8f',
-                        '&:hover': {
-                            backgroundColor: isOpen ? '#3a2ecc' : '#e0e0f5',
-                        },
+                        cursor: "pointer",
+                        flexShrink: 0,
                     }}
                 >
                     {isOpen ? <RemoveIcon /> : <AddIcon />}
-                </Button>
+                </div>
             </AccordionSummary>
             <AccordionDetails>
                 <Typography

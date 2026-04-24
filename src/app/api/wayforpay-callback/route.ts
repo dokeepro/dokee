@@ -2,7 +2,6 @@ import {NextRequest, NextResponse} from "next/server";
 import crypto from "crypto";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://dokee-backend.onrender.com";
 
 type WayForPayPayload = Record<string, unknown>;
 
@@ -74,23 +73,11 @@ export async function POST(req: NextRequest) {
             return okAck(orderReference);
         }
 
-        // Після успішної валідації можна підтвердити статус на бекенді.
-        try {
-            const res = await fetch(`${BACKEND_URL}/check-wayforpay-status`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({orderReference}),
-            });
-
-            const data = await res.json();
-
-            if (data?.transactionStatus === "Approved") {
-                console.log("Payment approved for order:", orderReference);
-            } else {
-                console.log("Payment approved for order:", orderReference);
-            }
-        } catch (err) {
-            console.error(err)
+        const transactionStatus = asString(body.transactionStatus);
+        if (transactionStatus === "Approved") {
+            console.log("Payment approved for order:", orderReference);
+        } else {
+            console.log("Payment status for order:", orderReference, transactionStatus);
         }
 
         return okAck(orderReference);

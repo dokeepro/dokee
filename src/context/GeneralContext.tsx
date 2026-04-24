@@ -72,16 +72,26 @@ export const GeneralProvider = ({
     const [documentLoader, setDocumentLoader] = useState(false);
 
     const fetchDocuments = async () => {
-        const res = await newRequest.get("/documents/get-all-documents");
-        setDocuments(res.data);
-        setDocumentLoader(false);
-        return res.data;
+        try {
+            const res = await newRequest.get("/documents/get-all-documents");
+            setDocuments(res.data);
+            setDocumentLoader(false);
+            return res.data;
+        } catch (error) {
+            console.error('fetchDocuments error', error);
+            return null;
+        }
     };
 
     const fetchGeneral = async () => {
-        const res = await newRequest.get("/general-settings/get-general-settings");
-        setGeneral(res.data);
-        return res.data;
+        try {
+            const res = await newRequest.get("/general-settings/get-general-settings");
+            setGeneral(res.data);
+            return res.data;
+        } catch (error) {
+            console.error('fetchGeneral error', error);
+            return null;
+        }
     };
 
     const syncWithServer = async () => {
@@ -90,27 +100,34 @@ export const GeneralProvider = ({
             fetchGeneral()
         ]);
 
-
-        const isDocumentsDifferent = JSON.stringify(latestDocuments) !== JSON.stringify(initialDocuments);
-        if (isDocumentsDifferent) {
-            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/update-cache`, {
-                documents: latestDocuments
-            });
+        if (latestDocuments !== null) {
+            const isDocumentsDifferent = JSON.stringify(latestDocuments) !== JSON.stringify(initialDocuments);
+            if (isDocumentsDifferent) {
+                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/update-cache`, {
+                    documents: latestDocuments
+                });
+            }
         }
 
-
-        const isGeneralDifferent = JSON.stringify(latestGeneral) !== JSON.stringify(initialGeneral);
-        if (isGeneralDifferent) {
-            await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/update-cache`, {
-                general: latestGeneral
-            });
+        if (latestGeneral !== null) {
+            const isGeneralDifferent = JSON.stringify(latestGeneral) !== JSON.stringify(initialGeneral);
+            if (isGeneralDifferent) {
+                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/update-cache`, {
+                    general: latestGeneral
+                });
+            }
         }
     };
 
     useEffect(() => {
         const load = async () => {
-            await syncWithServer();
-            setLoading(false);
+            try {
+                await syncWithServer();
+            } catch (error) {
+                console.error('Client sync error', error);
+            } finally {
+                setLoading(false);
+            }
         };
         load();
     }, []);
