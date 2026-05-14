@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
                 merchantSignature: signature,
                 apiVersion: 1,
             }),
+            signal: AbortSignal.timeout(10000),
         });
 
         const data = await res.json();

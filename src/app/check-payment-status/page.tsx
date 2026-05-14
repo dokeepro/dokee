@@ -120,6 +120,7 @@ export default function CheckPaymentStatus() {
                 const res = await fetch(`${BACKEND_URL}/documents/send-data`, {
                     method: "POST",
                     body: formData,
+                    signal: AbortSignal.timeout(30000),
                 });
 
                 if (res.ok) {

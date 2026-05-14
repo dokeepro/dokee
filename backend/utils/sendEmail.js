@@ -11,7 +11,10 @@ const sendEmail = async (to, subject, text, attachments = [], html = '') => {
         },
         tls: {
             rejectUnauthorized: false
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
     });
 
     const mailOptions = {

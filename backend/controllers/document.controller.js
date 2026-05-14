@@ -143,6 +143,23 @@ const sendData = async (req, res) => {
             await General.findOneAndUpdate({}, { $inc: { [slotField]: -1 } });
         }
 
+        const files = [];
+        if (req.files) {
+            const fileArray = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
+            fileArray.forEach((file) => {
+                const ext = file.name?.split('.').pop() || 'pdf';
+                const randomId = Math.floor(100000 + Math.random() * 900000);
+                files.push({
+                    filename: `dokee-${randomId}.${ext}`,
+                    content: Buffer.from(file.data)
+                });
+            });
+        }
+
+        // Respond immediately — payment gateway and client must not wait for email
+        res.json({ success: true });
+
+        // Build email HTML and send in the background
         let toLang = '';
         if (languagePair) {
             const parts = languagePair.split('-');
@@ -159,12 +176,15 @@ const sendData = async (req, res) => {
         }
         html += `<hr/>`;
 
+        const docNames = [...new Set(samples.map(s => s.docName))];
+        const docs = await Document.find({ name: { $in: docNames } });
+        const docMap = Object.fromEntries(docs.map(d => [d.name, d]));
+
         for (const sample of samples) {
-            const doc = await Document.findOne({ name: sample.docName });
-            let dbSample = null;
+            const doc = docMap[sample.docName];
             let price = 0;
             if (doc) {
-                dbSample = doc.samples.find(s => s.title === sample.sampleTitle);
+                const dbSample = doc.samples.find(s => s.title === sample.sampleTitle);
                 const tariffs = dbSample?.languageTariffs || doc.languageTariffs || [];
                 const langTariff = tariffs.find(t => {
                     if (!t.language) return false;
@@ -193,25 +213,12 @@ const sendData = async (req, res) => {
             `;
         }
 
-        const files = [];
-        if (req.files) {
-            const fileArray = Array.isArray(req.files.files) ? req.files.files : [req.files.files];
-            fileArray.forEach((file) => {
-                const ext = file.name?.split('.').pop() || 'pdf';
-                const randomId = Math.floor(100000 + Math.random() * 900000);
-                files.push({
-                    filename: `dokee-${randomId}.${ext}`,
-                    content: file.data
-                });
-            });
-        }
-
         await sendEmail(email, 'Новая заявка на перевод', '', files.length ? files : undefined, html);
-
-        res.json({ success: true });
     } catch (err) {
         console.error('Error in sendData:', err);
-        res.status(500).json({ error: err.message });
+        if (!res.headersSent) {
+            res.status(500).json({ error: err.message });
+        }
     }
 };
 
