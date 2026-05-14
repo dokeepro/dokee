@@ -61,13 +61,8 @@ const DocumentItem: FC<DocumentItemProps> = ({
         setIsDialogOpen(true);
     };
 
-    const handleDialogClose = (
-        event: React.SyntheticEvent,
-        reason: "backdropClick" | "escapeKeyDown"
-    ) => {
+    const handleDialogClose = () => {
         setIsDialogOpen(false);
-        console.log(event);
-        console.log(reason);
     };
 
     const isEGov = title === "E-GOV" || title === "Дія";

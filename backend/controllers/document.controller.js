@@ -19,10 +19,6 @@ const langMap = {
 
 const createDocument = async (req, res) => {
     try {
-        console.log('--- Incoming request to /create-document ---');
-        console.log('req.body:', req.body);
-        console.log('req.files:', req.files);
-
         const lastDoc = await Document.findOne().sort({ order: -1 });
         const order = lastDoc ? lastDoc.order + 1 : 1;
 
@@ -35,7 +31,6 @@ const createDocument = async (req, res) => {
         if (typeof languageTariffs === 'string') {
             try {
                 parsedLanguageTariffs = JSON.parse(languageTariffs);
-                console.log('Parsed languageTariffs:', parsedLanguageTariffs);
             } catch (e) {
                 console.error('Failed to parse languageTariffs:', e);
             }
@@ -47,7 +42,6 @@ const createDocument = async (req, res) => {
         if (typeof samples === 'string') {
             try {
                 parsedSamples = JSON.parse(samples);
-                console.log('Parsed samples:', parsedSamples);
             } catch (e) {
                 console.error('Failed to parse samples:', e);
             }
@@ -96,7 +90,6 @@ const createDocument = async (req, res) => {
         });
 
         await doc.save();
-        console.log('Document saved:', doc);
         res.status(201).json(doc);
     } catch (err) {
         console.error('Error in createDocument:', err);
@@ -110,7 +103,7 @@ const getAllDocuments = async (req, res) => {
         const documents = await Document.find().sort({ order: 1 });
         res.status(200).json(documents);
     } catch (err) {
-        console.log('Error in getAllDocuments:', err);
+        console.error('Error in getAllDocuments:', err);
         res.status(500).json({ error: err.message });
     }
 };
@@ -125,10 +118,8 @@ const initTariffsForSamples = async () => {
                     languageTariffs: doc.languageTariffs
                 }));
                 await doc.save();
-                console.log(`Updated document ${doc._id} samples with languageTariffs`);
             }
         }
-        console.log('All documents updated.');
     } catch (err) {
         console.error('Error in initTariffsForSamples:', err);
     }
@@ -243,10 +234,8 @@ const initRussianTariffForUaSamples = async () => {
             }
             if (updated) {
                 await doc.save();
-                console.log(`Updated document ${doc._id}: changed "русский" to "ru" in sample tariffs`);
             }
         }
-        console.log('All UA documents processed.');
     } catch (err) {
         console.error('Error in initRussianTariffForUaSamples:', err);
     }

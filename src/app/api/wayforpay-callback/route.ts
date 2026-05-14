@@ -73,13 +73,6 @@ export async function POST(req: NextRequest) {
             return okAck(orderReference);
         }
 
-        const transactionStatus = asString(body.transactionStatus);
-        if (transactionStatus === "Approved") {
-            console.log("Payment approved for order:", orderReference);
-        } else {
-            console.log("Payment status for order:", orderReference, transactionStatus);
-        }
-
         return okAck(orderReference);
     } catch (e) {
         console.error(e)
