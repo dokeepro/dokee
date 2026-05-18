@@ -722,11 +722,8 @@ const TypeOfDocument = () => {
             selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
         };
 
-        // Store files natively in IndexedDB (instant, no network upload before payment)
-        // Store as {name, type, blob} so File objects can be reconstructed on return
         const fileEntries = uploadedFiles.map(f => ({ name: f.name, type: f.type, blob: f as Blob }));
 
-        // Dynamic import keeps idb out of the SSR bundle (localStorage is browser-only)
         const { saveOrderData } = await import('@/utils/indexDbOrder');
         await Promise.all([
             saveOrderData(`files_${orderReference}`, fileEntries),

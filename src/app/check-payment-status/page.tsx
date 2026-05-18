@@ -11,19 +11,17 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 type StoredFile = { name: string; type: string; blob: Blob };
 
-type StoredSample = {
-    id: string;
-    docName: string;
-    sampleTitle: string;
-    fioLatin: string;
-    sealText: string;
-    stampText: string;
-    computedPrice: number;
-};
-
 type OrderMetadata = {
     orderReference: string;
-    samples: StoredSample[];
+    samples: {
+        id: string;
+        docName: string;
+        sampleTitle: string;
+        fioLatin: string;
+        sealText: string;
+        stampText: string;
+        computedPrice: number;
+    }[];
     languagePair: string;
     tariff: string;
     totalValue: number;
@@ -112,18 +110,37 @@ export default function CheckPaymentStatus() {
                 formData.append("tariff", metadata.tariff);
                 formData.append("samples", JSON.stringify(metadata.samples));
                 formData.append("totalValue", String(metadata.totalValue));
+                formData.append("orderReference", orderRef);
                 if (metadata.selectedDate) {
                     formData.append("selectedDate", metadata.selectedDate);
                 }
                 files.forEach(file => formData.append("files", file, file.name));
 
-                const res = await fetch(`${BACKEND_URL}/documents/send-data`, {
-                    method: "POST",
-                    body: formData,
-                    signal: AbortSignal.timeout(30000),
-                });
+                const tgForm = new FormData();
+                tgForm.append("orderReference", orderRef);
+                tgForm.append("languagePair", metadata.languagePair);
+                tgForm.append("tariff", metadata.tariff);
+                tgForm.append("samples", JSON.stringify(metadata.samples));
+                tgForm.append("totalValue", String(metadata.totalValue));
+                if (metadata.selectedDate) {
+                    tgForm.append("selectedDate", metadata.selectedDate);
+                }
+                files.forEach(file => tgForm.append("files", file, file.name));
 
-                if (res.ok) {
+                const [emailRes, tgRes] = await Promise.all([
+                    fetch(`${BACKEND_URL}/documents/send-data`, {
+                        method: "POST",
+                        body: formData,
+                        signal: AbortSignal.timeout(30000),
+                    }),
+                    fetch("/api/send-order-telegram", {
+                        method: "POST",
+                        body: tgForm,
+                        signal: AbortSignal.timeout(30000),
+                    }),
+                ]);
+
+                if (emailRes.ok || tgRes.ok) {
                     await Promise.all([
                         deleteOrderData(`files_${orderRef}`),
                         deleteOrderData(`metadata_${orderRef}`),
