@@ -49,8 +49,9 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                     ? window.location.origin
                     : process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
-            // returnUrl: where WayForPay redirects the user after payment
-            const returnUrl = `${baseUrl}/check-payment-status`;
+            // returnUrl: WayForPay redirects via POST, so point to an API route
+            // that converts it to a GET redirect to /check-payment-status
+            const returnUrl = `${baseUrl}/api/payment-return`;
             // serviceUrl: webhook that WayForPay calls server-to-server with payment result
             const serviceUrl = `${baseUrl}/api/wayforpay-callback`;
 

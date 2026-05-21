@@ -7,15 +7,19 @@ import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 interface MessageProps {
     title?: string;
     description?: string;
+    autoRedirect?: boolean;
+    showButton?: boolean;
 }
 
-const Message:FC<MessageProps> = ({title, description}) => {
+const Message:FC<MessageProps> = ({title, description, autoRedirect = false, showButton = true}) => {
 
     useEffect(() => {
-        setTimeout(() => {
+        if (!autoRedirect) return;
+        const timer = setTimeout(() => {
             window.location.href = '/';
-        }, 5000)
-    })
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, [autoRedirect]);
 
     const handleRedirect = () => {
         window.location.href = '/';
@@ -25,9 +29,11 @@ const Message:FC<MessageProps> = ({title, description}) => {
         <div className={styles.wrapper}>
             <h1>{title}</h1>
             <p>{description}</p>
-            <ButtonOutlined onClick={handleRedirect}>
-                Вернуться на главную
-            </ButtonOutlined>
+            {showButton && (
+                <ButtonOutlined onClick={handleRedirect}>
+                    Вернуться на главную
+                </ButtonOutlined>
+            )}
         </div>
     );
 };

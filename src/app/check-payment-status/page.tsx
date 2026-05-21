@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
 import Message from "@/components/success-page/Message";
 import { getOrderData, deleteOrderData } from "@/utils/indexDbOrder";
 
@@ -28,44 +28,22 @@ type OrderMetadata = {
     selectedDate: string | null;
 };
 
-// Polls WayForPay CHECK_STATUS every 3s, up to 10 attempts (30s total).
-// Returns true only when transactionStatus === "Approved".
-async function pollPaymentApproval(orderRef: string): Promise<boolean> {
-    const MAX_ATTEMPTS = 10;
-    const INTERVAL_MS = 3000;
-
-    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-        if (attempt > 0) {
-            await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
-        }
-
-        try {
-            const res = await fetch(
-                `/api/check-wayforpay-status?orderRef=${encodeURIComponent(orderRef)}`
-            );
-            if (!res.ok) continue;
-
-            const { transactionStatus } = await res.json();
-
-            if (transactionStatus === "Approved") return true;
-
-            // Terminal non-approved states — stop polling immediately
-            if (["Declined", "Refunded", "Voided", "Expired"].includes(transactionStatus)) {
-                return false;
-            }
-
-            // InProcessing or unknown → keep polling
-        } catch {
-            // transient network error, retry next iteration
-        }
+async function checkPaymentStatus(orderRef: string): Promise<string> {
+    try {
+        const res = await fetch(
+            `/api/check-wayforpay-status?orderRef=${encodeURIComponent(orderRef)}`
+        );
+        if (!res.ok) return "unknown";
+        const { transactionStatus } = await res.json();
+        return transactionStatus || "unknown";
+    } catch {
+        return "unknown";
     }
-
-    return false; // timed out without approval
 }
 
-export default function CheckPaymentStatus() {
+function CheckPaymentContent() {
+    const searchParams = useSearchParams();
     const [status, setStatus] = useState<"checking" | "success" | "error">("checking");
-    const router = useRouter();
     const ran = useRef(false);
 
     useEffect(() => {
@@ -75,6 +53,7 @@ export default function CheckPaymentStatus() {
         (async () => {
             try {
                 const orderRef =
+                    searchParams.get("orderRef") ||
                     Cookies.get(COOKIE_KEY) ||
                     localStorage.getItem(COOKIE_KEY);
 
@@ -83,9 +62,9 @@ export default function CheckPaymentStatus() {
                     return;
                 }
 
-                // Verify payment is actually approved before processing anything
-                const approved = await pollPaymentApproval(orderRef);
-                if (!approved) {
+                const paymentStatus = await checkPaymentStatus(orderRef);
+
+                if (paymentStatus !== "Approved") {
                     setStatus("error");
                     return;
                 }
@@ -156,16 +135,41 @@ export default function CheckPaymentStatus() {
                 setStatus("error");
             }
         })();
-    }, []);
+    }, [searchParams]);
 
-    useEffect(() => {
-        if (status === "success") {
-            const timer = setTimeout(() => router.push("/"), 6000);
-            return () => clearTimeout(timer);
-        }
-    }, [status, router]);
+    if (status === "checking") {
+        return (
+            <Message
+                title="Проверяем оплату…"
+                description="Подождите, это займёт несколько секунд"
+                showButton={false}
+            />
+        );
+    }
 
-    if (status === "checking") return <Message title="Перевіряємо оплату…" description="Зачекайте, це займе до 30 секунд" />;
-    if (status === "success") return <Message title="Успех!" description="Данные отправлены на почту" />;
-    return <Message title="Ошибка" description="Попробуйте снова" />;
+    if (status === "success") {
+        return (
+            <Message
+                autoRedirect
+                title="Спасибо за оплату!"
+                description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
+            />
+        );
+    }
+
+    return (
+        <Message
+            autoRedirect
+            title="Ошибка оплаты"
+            description="Не удалось подтвердить оплату. Попробуйте снова или свяжитесь с поддержкой"
+        />
+    );
+}
+
+export default function CheckPaymentStatus() {
+    return (
+        <Suspense fallback={<Message title="Загрузка…" description="" showButton={false} />}>
+            <CheckPaymentContent />
+        </Suspense>
+    );
 }
