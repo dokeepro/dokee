@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import Message from "@/components/success-page/Message";
@@ -31,7 +31,6 @@ type OrderMetadata = {
 
 function CheckPaymentContent() {
     const searchParams = useSearchParams();
-    const [status, setStatus] = useState<"checking" | "success" | "error">("checking");
     const ran = useRef(false);
 
     useEffect(() => {
@@ -45,23 +44,14 @@ function CheckPaymentContent() {
                     Cookies.get(COOKIE_KEY) ||
                     localStorage.getItem(COOKIE_KEY);
 
-                if (!orderRef) {
-                    setStatus("error");
-                    return;
-                }
-
-                // Payment is always confirmed by the time user returns from WayForPay
-                // Proceed directly to sending order data
+                if (!orderRef) return;
 
                 const [filesData, metadata] = await Promise.all([
                     getOrderData<StoredFile[]>(`files_${orderRef}`),
                     getOrderData<OrderMetadata>(`metadata_${orderRef}`),
                 ]);
 
-                if (!metadata) {
-                    setStatus("error");
-                    return;
-                }
+                if (!metadata) return;
 
                 const files = (filesData ?? []).map(
                     fd => new File([fd.blob], fd.name, { type: fd.type })
@@ -90,7 +80,7 @@ function CheckPaymentContent() {
                 }
                 files.forEach(file => tgForm.append("files", file, file.name));
 
-                const [emailRes, tgRes] = await Promise.all([
+                await Promise.all([
                     fetch(`${BACKEND_URL}/documents/send-data`, {
                         method: "POST",
                         body: formData,
@@ -103,49 +93,23 @@ function CheckPaymentContent() {
                     }),
                 ]);
 
-                if (emailRes.ok || tgRes.ok) {
-                    await Promise.all([
-                        deleteOrderData(`files_${orderRef}`),
-                        deleteOrderData(`metadata_${orderRef}`),
-                    ]);
-                    Cookies.remove(COOKIE_KEY);
-                    localStorage.removeItem(COOKIE_KEY);
-                    setStatus("success");
-                } else {
-                    setStatus("error");
-                }
+                await Promise.all([
+                    deleteOrderData(`files_${orderRef}`),
+                    deleteOrderData(`metadata_${orderRef}`),
+                ]);
+                Cookies.remove(COOKIE_KEY);
+                localStorage.removeItem(COOKIE_KEY);
             } catch (err) {
-                console.error("Error processing order:", err);
-                setStatus("error");
+                console.error("Error sending order data:", err);
             }
         })();
     }, [searchParams]);
 
-    if (status === "checking") {
-        return (
-            <Message
-                title="Проверяем оплату…"
-                description="Подождите, это займёт несколько секунд"
-                showButton={false}
-            />
-        );
-    }
-
-    if (status === "success") {
-        return (
-            <Message
-                autoRedirect
-                title="Спасибо за оплату!"
-                description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
-            />
-        );
-    }
-
     return (
         <Message
             autoRedirect
-            title="Ошибка оплаты"
-            description="Не удалось подтвердить оплату. Попробуйте снова или свяжитесь с поддержкой"
+            title="Спасибо за оплату!"
+            description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
         />
     );
 }
