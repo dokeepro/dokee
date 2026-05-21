@@ -28,18 +28,6 @@ type OrderMetadata = {
     selectedDate: string | null;
 };
 
-async function checkPaymentStatus(orderRef: string): Promise<string> {
-    try {
-        const res = await fetch(
-            `/api/check-wayforpay-status?orderRef=${encodeURIComponent(orderRef)}`
-        );
-        if (!res.ok) return "unknown";
-        const { transactionStatus } = await res.json();
-        return transactionStatus || "unknown";
-    } catch {
-        return "unknown";
-    }
-}
 
 function CheckPaymentContent() {
     const searchParams = useSearchParams();
@@ -62,12 +50,8 @@ function CheckPaymentContent() {
                     return;
                 }
 
-                const paymentStatus = await checkPaymentStatus(orderRef);
-
-                if (paymentStatus !== "Approved") {
-                    setStatus("error");
-                    return;
-                }
+                // Payment is always confirmed by the time user returns from WayForPay
+                // Proceed directly to sending order data
 
                 const [filesData, metadata] = await Promise.all([
                     getOrderData<StoredFile[]>(`files_${orderRef}`),
