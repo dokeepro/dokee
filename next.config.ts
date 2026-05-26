@@ -1,4 +1,5 @@
 const nextConfig = {
+    transpilePackages: ['@vercel/blob'],
     images: {
         remotePatterns: [
             {

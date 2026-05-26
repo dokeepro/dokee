@@ -723,19 +723,15 @@ const TypeOfDocument = () => {
         };
 
         const { upload } = await import('@vercel/blob/client');
-        const blobResults = await Promise.all(
-            uploadedFiles.map(f =>
-                upload(f.name, f, {
+        const fileUrls = await Promise.all(
+            uploadedFiles.map(async (f) => {
+                const blob = await upload(f.name, f, {
                     access: 'public',
                     handleUploadUrl: '/api/blob-upload',
-                })
-            )
+                });
+                return { name: f.name, type: f.type, url: blob.url };
+            })
         );
-        const fileUrls = blobResults.map((b, i) => ({
-            name: uploadedFiles[i].name,
-            type: uploadedFiles[i].type,
-            url: b.url,
-        }));
 
         const { saveOrderData } = await import('@/utils/indexDbOrder');
         await Promise.all([
