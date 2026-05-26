@@ -1151,7 +1151,7 @@ const TypeOfDocument = () => {
                                 onSelect={() => handleTariffSelect('Express')}
                                 isSelected={tariff === 'Express'}
                                 selectedTariff={tariff || ""}
-                                disabled={isExpressDisabled || true}
+                                disabled={isExpressDisabled}
                             />
                             <TariffItem
                                 title="Fast"
@@ -1174,7 +1174,7 @@ const TypeOfDocument = () => {
                                 onSelect={() => handleTariffSelect('Fast')}
                                 isSelected={tariff === 'Fast'}
                                 selectedTariff={tariff || ""}
-                                disabled={isFastDisabled || true}
+                                disabled={isFastDisabled}
                             />
                         </div>
                         <div className={styles.mobileOnly} style={{margin: "5px auto", fontSize: "20px"}}>
