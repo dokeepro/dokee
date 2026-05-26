@@ -722,13 +722,23 @@ const TypeOfDocument = () => {
             selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
         };
 
-        const { upload } = await import('@vercel/blob/client');
         const fileUrls = await Promise.all(
             uploadedFiles.map(async (f) => {
-                const blob = await upload(f.name, f, {
-                    access: 'public',
-                    handleUploadUrl: '/api/blob-upload',
+                const tokenRes = await fetch('/api/blob-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pathname: f.name }),
                 });
+                if (!tokenRes.ok) throw new Error(`Token request failed: ${tokenRes.status}`);
+                const { uploadUrl } = await tokenRes.json();
+
+                const putRes = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': f.type || 'application/octet-stream' },
+                    body: f,
+                });
+                if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
+                const blob = await putRes.json();
                 return { name: f.name, type: f.type, url: blob.url };
             })
         );

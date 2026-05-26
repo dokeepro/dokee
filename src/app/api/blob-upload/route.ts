@@ -1,29 +1,28 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import { NextResponse } from 'next/server';
+import { issueSignedToken, presignUrl } from '@vercel/blob';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: NextRequest) {
     try {
-        const body = (await request.json()) as HandleUploadBody;
+        const { pathname } = await request.json();
 
-        const jsonResponse = await handleUpload({
-            body,
-            request,
-            token: process.env.BLOB_READ_WRITE_TOKEN,
-            onBeforeGenerateToken: async () => {
-                return {
-                    addRandomSuffix: true,
-                    tokenPayload: JSON.stringify({}),
-                };
-            },
-            onUploadCompleted: async () => {},
+        const signedToken = await issueSignedToken({
+            token: process.env.BLOB_READ_WRITE_TOKEN!,
+            pathname,
+            operations: ['put'],
         });
 
-        return NextResponse.json(jsonResponse);
+        const { presignedUrl } = await presignUrl(signedToken, {
+            pathname,
+            operation: 'put',
+            access: 'public',
+        });
+
+        return NextResponse.json({ uploadUrl: presignedUrl });
     } catch (error) {
-        console.error('Blob upload error:', error);
+        console.error('Blob presign error:', error);
         return NextResponse.json(
             { error: (error as Error).message },
-            { status: 400 },
+            { status: 500 },
         );
     }
 }
