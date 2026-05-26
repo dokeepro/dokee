@@ -12,24 +12,39 @@ type SamplePayload = {
     computedPrice?: number;
 };
 
+type FileEntry = {
+    name: string;
+    type: string;
+    url: string;
+};
+
+type OrderPayload = {
+    orderReference: string;
+    languagePair: string;
+    tariff: string;
+    totalValue: string | number;
+    selectedDate?: string;
+    samples: SamplePayload[];
+    files: FileEntry[];
+};
+
 export async function POST(req: NextRequest) {
     if (!BOT_TOKEN || !CHANNEL_ID) {
         return NextResponse.json({ error: "Telegram not configured" }, { status: 500 });
     }
 
     try {
-        const formData = await req.formData();
+        const body: OrderPayload = await req.json();
 
-        const orderReference = formData.get("orderReference") as string || "-";
-        const languagePair = formData.get("languagePair") as string || "-";
-        const tariff = formData.get("tariff") as string || "-";
-        const totalValue = formData.get("totalValue") as string || "0";
-        const selectedDate = formData.get("selectedDate") as string || "";
-
-        let samples: SamplePayload[] = [];
-        try {
-            samples = JSON.parse(formData.get("samples") as string || "[]");
-        } catch { /* empty */ }
+        const {
+            orderReference = "-",
+            languagePair = "-",
+            tariff = "-",
+            totalValue = "0",
+            selectedDate,
+            samples = [],
+            files = [],
+        } = body;
 
         let message = `<b>Нова заявка на переклад</b>\n\n`;
         message += `<b>Замовлення №:</b> ${orderReference}\n`;
@@ -63,12 +78,14 @@ export async function POST(req: NextRequest) {
             }),
         });
 
-        const files = formData.getAll("files") as File[];
         for (const file of files) {
+            const fileRes = await fetch(file.url);
+            const blob = await fileRes.blob();
+
             const tgForm = new FormData();
             tgForm.append("chat_id", CHANNEL_ID);
             tgForm.append("caption", file.name);
-            tgForm.append("document", file, file.name);
+            tgForm.append("document", blob, file.name);
 
             await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
                 method: "POST",

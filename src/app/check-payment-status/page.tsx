@@ -9,7 +9,7 @@ import { getOrderData, deleteOrderData } from "@/utils/indexDbOrder";
 const COOKIE_KEY = "wayforpay_order_ref";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-type StoredFile = { name: string; type: string; blob: Blob };
+type StoredFile = { name: string; type: string; url: string };
 
 type OrderMetadata = {
     orderReference: string;
@@ -53,42 +53,30 @@ function CheckPaymentContent() {
 
                 if (!metadata) return;
 
-                const files = (filesData ?? []).map(
-                    fd => new File([fd.blob], fd.name, { type: fd.type })
-                );
+                const fileUrls = filesData ?? [];
 
-                const formData = new FormData();
-                formData.append("email", "dokee.pro@gmail.com");
-                formData.append("languagePair", metadata.languagePair);
-                formData.append("tariff", metadata.tariff);
-                formData.append("samples", JSON.stringify(metadata.samples));
-                formData.append("totalValue", String(metadata.totalValue));
-                formData.append("orderReference", orderRef);
-                if (metadata.selectedDate) {
-                    formData.append("selectedDate", metadata.selectedDate);
-                }
-                files.forEach(file => formData.append("files", file, file.name));
-
-                const tgForm = new FormData();
-                tgForm.append("orderReference", orderRef);
-                tgForm.append("languagePair", metadata.languagePair);
-                tgForm.append("tariff", metadata.tariff);
-                tgForm.append("samples", JSON.stringify(metadata.samples));
-                tgForm.append("totalValue", String(metadata.totalValue));
-                if (metadata.selectedDate) {
-                    tgForm.append("selectedDate", metadata.selectedDate);
-                }
-                files.forEach(file => tgForm.append("files", file, file.name));
+                const payload = {
+                    email: "dokee.pro@gmail.com",
+                    orderReference: orderRef,
+                    languagePair: metadata.languagePair,
+                    tariff: metadata.tariff,
+                    samples: metadata.samples,
+                    totalValue: metadata.totalValue,
+                    selectedDate: metadata.selectedDate || undefined,
+                    files: fileUrls,
+                };
 
                 await Promise.all([
                     fetch(`${BACKEND_URL}/documents/send-data`, {
                         method: "POST",
-                        body: formData,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
                         signal: AbortSignal.timeout(30000),
                     }),
                     fetch("/api/send-order-telegram", {
                         method: "POST",
-                        body: tgForm,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
                         signal: AbortSignal.timeout(30000),
                     }),
                 ]);

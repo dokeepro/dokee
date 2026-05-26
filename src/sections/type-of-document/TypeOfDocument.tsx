@@ -722,11 +722,24 @@ const TypeOfDocument = () => {
             selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
         };
 
-        const fileEntries = uploadedFiles.map(f => ({ name: f.name, type: f.type, blob: f as Blob }));
+        const { upload } = await import('@vercel/blob/client');
+        const blobResults = await Promise.all(
+            uploadedFiles.map(f =>
+                upload(f.name, f, {
+                    access: 'public',
+                    handleUploadUrl: '/api/blob-upload',
+                })
+            )
+        );
+        const fileUrls = blobResults.map((b, i) => ({
+            name: uploadedFiles[i].name,
+            type: uploadedFiles[i].type,
+            url: b.url,
+        }));
 
         const { saveOrderData } = await import('@/utils/indexDbOrder');
         await Promise.all([
-            saveOrderData(`files_${orderReference}`, fileEntries),
+            saveOrderData(`files_${orderReference}`, fileUrls),
             saveOrderData(`metadata_${orderReference}`, metadata),
         ]);
 
