@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { head } from "@vercel/blob";
+import { get } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
@@ -90,32 +90,40 @@ export async function POST(req: NextRequest) {
                     console.error(`[TG] Skipping file with no URL: ${file.name}`);
                     continue;
                 }
-                console.log(`[TG] Fetching: ${file.name} (${file.type}) from ${file.url}`);
+                console.log(`[TG] Fetching private blob: ${file.name} (${file.type}) from ${file.url}`);
 
-                // Private blobs: get a temporary downloadUrl via head() then fetch it
-                let downloadUrl = file.url;
-                try {
-                    const meta = await head(file.url, { token: BLOB_TOKEN });
-                    downloadUrl = meta.downloadUrl || file.url;
-                } catch (headErr) {
-                    console.error(`[TG] head() failed for ${file.url}:`, headErr);
-                }
-
-                const fileRes = await fetch(downloadUrl, { redirect: "follow" });
-                if (!fileRes.ok) {
-                    console.error(`Failed to fetch blob: ${file.url} — ${fileRes.status}`);
+                const blobRes = await get(file.url, {
+                    access: 'private',
+                    token: BLOB_TOKEN,
+                });
+                if (!blobRes || blobRes.statusCode !== 200) {
+                    console.error(`[TG] get() failed for ${file.url}, statusCode:`, blobRes?.statusCode);
                     continue;
                 }
 
-                const arrayBuffer = await fileRes.arrayBuffer();
-                console.log(`Fetched ${file.name}: ${arrayBuffer.byteLength} bytes`);
+                const reader = blobRes.stream.getReader();
+                const chunks: Uint8Array[] = [];
+                let total = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    total += value.length;
+                }
+                const arrayBuffer = new Uint8Array(total);
+                let offset = 0;
+                for (const chunk of chunks) {
+                    arrayBuffer.set(chunk, offset);
+                    offset += chunk.length;
+                }
+                console.log(`[TG] Fetched ${file.name}: ${total} bytes (contentType: ${blobRes.blob.contentType})`);
 
-                if (arrayBuffer.byteLength < 100) {
-                    console.error(`Blob too small (${arrayBuffer.byteLength}B), skipping: ${file.url}`);
+                if (total < 50) {
+                    console.error(`[TG] Blob too small (${total}B), skipping: ${file.url}`);
                     continue;
                 }
 
-                const contentType = file.type || fileRes.headers.get("content-type") || "application/octet-stream";
+                const contentType = file.type || blobRes.blob.contentType || "application/octet-stream";
                 const fileBlob = new Blob([arrayBuffer], { type: contentType });
 
                 const tgForm = new FormData();
