@@ -724,23 +724,21 @@ const TypeOfDocument = () => {
 
         const fileUrls = await Promise.all(
             uploadedFiles.map(async (f) => {
-                const tokenRes = await fetch('/api/blob-upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pathname: f.name }),
-                });
-                if (!tokenRes.ok) throw new Error(`Token request failed: ${tokenRes.status}`);
-                const { uploadUrl } = await tokenRes.json();
+                const fd = new FormData();
+                fd.append('file', f);
+                fd.append('filename', f.name);
 
-                const putRes = await fetch(uploadUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': f.type || 'application/octet-stream' },
-                    body: f,
+                const res = await fetch('/api/blob-upload', {
+                    method: 'POST',
+                    body: fd,
                 });
-                if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
-                const blob = await putRes.json();
-                console.log("[blob-upload] response for", f.name, JSON.stringify(blob));
-                return { name: f.name, type: f.type, url: blob.url };
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`Upload failed: ${res.status} ${errText}`);
+                }
+                const { url } = await res.json();
+                console.log('[upload] uploaded', f.name, '->', url);
+                return { name: f.name, type: f.type, url };
             })
         );
 

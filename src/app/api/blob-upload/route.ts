@@ -1,5 +1,7 @@
-import { issueSignedToken, presignUrl } from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
+
+export const maxDuration = 60;
 
 function toSafePathname(original: string): string {
     const lastDot = original.lastIndexOf('.');
@@ -10,24 +12,27 @@ function toSafePathname(original: string): string {
 
 export async function POST(request: NextRequest) {
     try {
-        const { pathname } = await request.json();
-        const safePathname = toSafePathname(pathname);
+        const formData = await request.formData();
+        const file = formData.get('file');
 
-        const signedToken = await issueSignedToken({
-            token: process.env.BLOB_READ_WRITE_TOKEN!,
-            pathname: safePathname,
-            operations: ['put'],
-        });
+        if (!file || !(file instanceof Blob)) {
+            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+        }
 
-        const { presignedUrl } = await presignUrl(signedToken, {
-            pathname: safePathname,
-            operation: 'put',
+        const originalName = (formData.get('filename') as string) || 'upload';
+        const safePathname = toSafePathname(originalName);
+
+        const blob = await put(safePathname, file, {
             access: 'public',
+            addRandomSuffix: false,
+            token: process.env.BLOB_READ_WRITE_TOKEN,
         });
 
-        return NextResponse.json({ uploadUrl: presignedUrl });
+        console.log(`[blob-upload] uploaded ${originalName} -> ${blob.url} (${file.size} bytes)`);
+
+        return NextResponse.json({ url: blob.url });
     } catch (error) {
-        console.error('Blob presign error:', error);
+        console.error('[blob-upload] error:', error);
         return NextResponse.json(
             { error: (error as Error).message },
             { status: 500 },
