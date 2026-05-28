@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { head } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
+
+export const maxDuration = 60;
 
 type SamplePayload = {
     docName?: string;
@@ -87,7 +91,17 @@ export async function POST(req: NextRequest) {
                     continue;
                 }
                 console.log(`[TG] Fetching: ${file.name} (${file.type}) from ${file.url}`);
-                const fileRes = await fetch(file.url, { redirect: "follow" });
+
+                // Private blobs: get a temporary downloadUrl via head() then fetch it
+                let downloadUrl = file.url;
+                try {
+                    const meta = await head(file.url, { token: BLOB_TOKEN });
+                    downloadUrl = meta.downloadUrl || file.url;
+                } catch (headErr) {
+                    console.error(`[TG] head() failed for ${file.url}:`, headErr);
+                }
+
+                const fileRes = await fetch(downloadUrl, { redirect: "follow" });
                 if (!fileRes.ok) {
                     console.error(`Failed to fetch blob: ${file.url} — ${fileRes.status}`);
                     continue;

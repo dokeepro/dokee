@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         const safePathname = toSafePathname(originalName);
 
         const blob = await put(safePathname, file, {
-            access: 'public',
+            access: 'private',
             addRandomSuffix: false,
             token: process.env.BLOB_READ_WRITE_TOKEN,
         });
