@@ -739,6 +739,7 @@ const TypeOfDocument = () => {
                 });
                 if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
                 const blob = await putRes.json();
+                console.log("[blob-upload] response for", f.name, JSON.stringify(blob));
                 return { name: f.name, type: f.type, url: blob.url };
             })
         );

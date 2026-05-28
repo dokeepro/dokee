@@ -51,9 +51,14 @@ function CheckPaymentContent() {
                     getOrderData<OrderMetadata>(`metadata_${orderRef}`),
                 ]);
 
+                console.log("[checkout] orderRef:", orderRef);
+                console.log("[checkout] filesData from IndexedDB:", filesData);
+                console.log("[checkout] metadata from IndexedDB:", !!metadata);
+
                 if (!metadata) return;
 
                 const fileUrls = filesData ?? [];
+                console.log("[checkout] Sending", fileUrls.length, "file(s) to Telegram");
 
                 const payload = {
                     email: "dokee.pro@gmail.com",

@@ -78,11 +78,15 @@ export async function POST(req: NextRequest) {
             }),
         });
 
-        console.log(`Processing ${files.length} file(s) for order ${orderReference}`);
+        console.log(`[TG] Order ${orderReference}: ${files.length} file(s)`, JSON.stringify(files.map(f => ({ name: f.name, type: f.type, url: f.url?.slice(0, 80) }))));
 
         for (const file of files) {
             try {
-                console.log(`Fetching file: ${file.name} (${file.type}) from ${file.url}`);
+                if (!file.url) {
+                    console.error(`[TG] Skipping file with no URL: ${file.name}`);
+                    continue;
+                }
+                console.log(`[TG] Fetching: ${file.name} (${file.type}) from ${file.url}`);
                 const fileRes = await fetch(file.url, { redirect: "follow" });
                 if (!fileRes.ok) {
                     console.error(`Failed to fetch blob: ${file.url} — ${fileRes.status}`);
