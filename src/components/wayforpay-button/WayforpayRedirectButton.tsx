@@ -30,22 +30,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
         setLoader(true);
         try {
             const orderReference = `order_${Date.now()}`;
-
-            // TEST MODE: bypass WayForPay payment and go straight to checkout
-            const BYPASS_PAYMENT = true;
-            if (BYPASS_PAYMENT) {
-                if (onBeforeRedirect) await onBeforeRedirect(orderReference);
-                const isLocalhost = window.location.hostname === "localhost";
-                localStorage.setItem("wayforpay_order_ref", orderReference);
-                Cookies.set("wayforpay_order_ref", orderReference, {
-                    domain: isLocalhost ? undefined : "dokee.pro",
-                    expires: 1,
-                    secure: !isLocalhost,
-                });
-                window.location.href = `/check-payment-status?orderRef=${encodeURIComponent(orderReference)}`;
-                return;
-            }
-
             const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
             const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN_NAME;
             if (!merchantAccount || !merchantDomainName) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import Message from "@/components/success-page/Message";
@@ -32,7 +32,6 @@ type OrderMetadata = {
 function CheckPaymentContent() {
     const searchParams = useSearchParams();
     const ran = useRef(false);
-    const [debug, setDebug] = useState<string>("");
 
     useEffect(() => {
         if (ran.current) return;
@@ -52,17 +51,9 @@ function CheckPaymentContent() {
                     getOrderData<OrderMetadata>(`metadata_${orderRef}`),
                 ]);
 
-                console.log("[checkout] orderRef:", orderRef);
-                console.log("[checkout] filesData from IndexedDB:", filesData);
-                console.log("[checkout] metadata from IndexedDB:", !!metadata);
-
-                if (!metadata) {
-                    setDebug("ERROR: No metadata in IndexedDB");
-                    return;
-                }
+                if (!metadata) return;
 
                 const fileUrls = filesData ?? [];
-                console.log("[checkout] Sending", fileUrls.length, "file(s) to Telegram");
 
                 const payload = {
                     email: "dokee.pro@gmail.com",
@@ -75,7 +66,7 @@ function CheckPaymentContent() {
                     files: fileUrls,
                 };
 
-                const [, tgRes] = await Promise.all([
+                await Promise.all([
                     fetch(`${BACKEND_URL}/documents/send-data`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -90,44 +81,21 @@ function CheckPaymentContent() {
                     }),
                 ]);
 
-                const tgReport = await tgRes.json();
-                console.log("[checkout] Telegram report:", tgReport);
-                setDebug(JSON.stringify({ sent: fileUrls.length, report: tgReport }, null, 2));
-
                 await clearAllOrderData();
                 Cookies.remove(COOKIE_KEY);
                 localStorage.removeItem(COOKIE_KEY);
             } catch (err) {
                 console.error("Error sending order data:", err);
-                setDebug("EXCEPTION: " + (err as Error).message);
             }
         })();
     }, [searchParams]);
 
     return (
-        <>
-            <Message
-                autoRedirect={false}
-                title="Спасибо за оплату!"
-                description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
-            />
-            {debug && (
-                <pre style={{
-                    margin: "20px auto",
-                    maxWidth: 900,
-                    padding: 16,
-                    background: "#f6f8fa",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    overflow: "auto",
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-all",
-                }}>
-                    {debug}
-                </pre>
-            )}
-        </>
+        <Message
+            autoRedirect
+            title="Спасибо за оплату!"
+            description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
+        />
     );
 }
 
