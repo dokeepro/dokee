@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { get } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID;
@@ -32,9 +31,23 @@ type OrderPayload = {
     files: FileEntry[];
 };
 
+type FileReport = {
+    name: string;
+    url: string;
+    step: string;
+    ok: boolean;
+    info?: string;
+};
+
 export async function POST(req: NextRequest) {
+    const report: { textOk: boolean; filesReceived: number; files: FileReport[]; error?: string } = {
+        textOk: false,
+        filesReceived: 0,
+        files: [],
+    };
+
     if (!BOT_TOKEN || !CHANNEL_ID) {
-        return NextResponse.json({ error: "Telegram not configured" }, { status: 500 });
+        return NextResponse.json({ ...report, error: "Telegram not configured" }, { status: 500 });
     }
 
     try {
@@ -49,6 +62,8 @@ export async function POST(req: NextRequest) {
             samples = [],
             files = [],
         } = body;
+
+        report.filesReceived = files.length;
 
         let message = `<b>Нова заявка на переклад</b>\n\n`;
         message += `<b>Замовлення №:</b> ${orderReference}\n`;
@@ -71,7 +86,7 @@ export async function POST(req: NextRequest) {
             message += `\n<b>Обрана дата:</b> ${selectedDate}\n`;
         }
 
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const textRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -81,51 +96,45 @@ export async function POST(req: NextRequest) {
                 disable_web_page_preview: true,
             }),
         });
+        report.textOk = textRes.ok;
 
-        console.log(`[TG] Order ${orderReference}: ${files.length} file(s)`, JSON.stringify(files.map(f => ({ name: f.name, type: f.type, url: f.url?.slice(0, 80) }))));
+        console.log(`[TG] Order ${orderReference}: ${files.length} file(s) received`);
 
         for (const file of files) {
+            const fileReport: FileReport = { name: file.name, url: file.url, step: "start", ok: false };
+            report.files.push(fileReport);
             try {
                 if (!file.url) {
-                    console.error(`[TG] Skipping file with no URL: ${file.name}`);
+                    fileReport.step = "no-url";
+                    fileReport.info = "file.url is empty";
                     continue;
                 }
-                console.log(`[TG] Fetching private blob: ${file.name} (${file.type}) from ${file.url}`);
 
-                const blobRes = await get(file.url, {
-                    access: 'private',
-                    token: BLOB_TOKEN,
+                // Fetch private blob directly with Authorization header.
+                fileReport.step = "fetch-blob";
+                const fileRes = await fetch(file.url, {
+                    headers: { Authorization: `Bearer ${BLOB_TOKEN}` },
+                    redirect: "follow",
                 });
-                if (!blobRes || blobRes.statusCode !== 200) {
-                    console.error(`[TG] get() failed for ${file.url}, statusCode:`, blobRes?.statusCode);
+                if (!fileRes.ok) {
+                    fileReport.info = `blob fetch ${fileRes.status} ${(await fileRes.text()).slice(0, 200)}`;
                     continue;
                 }
 
-                const reader = blobRes.stream.getReader();
-                const chunks: Uint8Array[] = [];
-                let total = 0;
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    chunks.push(value);
-                    total += value.length;
-                }
-                const arrayBuffer = new Uint8Array(total);
-                let offset = 0;
-                for (const chunk of chunks) {
-                    arrayBuffer.set(chunk, offset);
-                    offset += chunk.length;
-                }
-                console.log(`[TG] Fetched ${file.name}: ${total} bytes (contentType: ${blobRes.blob.contentType})`);
+                fileReport.step = "read-bytes";
+                const arrayBuffer = await fileRes.arrayBuffer();
+                fileReport.info = `${arrayBuffer.byteLength} bytes`;
+                console.log(`[TG] Fetched ${file.name}: ${arrayBuffer.byteLength} bytes`);
 
-                if (total < 50) {
-                    console.error(`[TG] Blob too small (${total}B), skipping: ${file.url}`);
+                if (arrayBuffer.byteLength < 50) {
+                    fileReport.step = "too-small";
                     continue;
                 }
 
-                const contentType = file.type || blobRes.blob.contentType || "application/octet-stream";
+                const contentType = file.type || fileRes.headers.get("content-type") || "application/octet-stream";
                 const fileBlob = new Blob([arrayBuffer], { type: contentType });
 
+                fileReport.step = "send-telegram";
                 const tgForm = new FormData();
                 tgForm.append("chat_id", CHANNEL_ID);
                 tgForm.append("caption", file.name);
@@ -137,18 +146,23 @@ export async function POST(req: NextRequest) {
                 });
                 const tgBody = await tgRes.text();
                 if (!tgRes.ok) {
-                    console.error(`Telegram sendDocument failed for ${file.name}: ${tgRes.status} ${tgBody}`);
+                    fileReport.info = `telegram ${tgRes.status} ${tgBody.slice(0, 300)}`;
+                    console.error(`[TG] sendDocument failed for ${file.name}: ${tgRes.status} ${tgBody}`);
                 } else {
-                    console.log(`Sent ${file.name} to Telegram OK`);
+                    fileReport.ok = true;
+                    fileReport.step = "done";
+                    console.log(`[TG] Sent ${file.name} OK`);
                 }
             } catch (fileErr) {
-                console.error(`Error processing file ${file.name}:`, fileErr);
+                fileReport.info = `exception: ${(fileErr as Error).message}`;
+                console.error(`[TG] Error processing file ${file.name}:`, fileErr);
             }
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json(report);
     } catch (err) {
+        report.error = (err as Error).message;
         console.error("Telegram send error:", err);
-        return NextResponse.json({ error: "Failed to send to Telegram" }, { status: 500 });
+        return NextResponse.json(report, { status: 500 });
     }
 }
