@@ -885,7 +885,7 @@ const TypeOfDocument = () => {
 
     const isExpressDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 14);
     const isFastDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 16);
-    const isNormalDisabled = false; // TODO: restore time restriction — (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
+    const isNormalDisabled = (activeCountry === 'KZ' || activeCountry === 'UA') && isOutsideInterval(8, 21);
 
     const allAvailableToLanguages: string[] = Array.from(
         new Set(
