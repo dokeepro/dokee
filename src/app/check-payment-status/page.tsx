@@ -71,7 +71,7 @@ function CheckPaymentContent() {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload),
-                        signal: AbortSignal.timeout(30000),
+                        signal: AbortSignal.timeout(60000),
                     }),
                     fetch("/api/send-order-telegram", {
                         method: "POST",
@@ -86,13 +86,16 @@ function CheckPaymentContent() {
                 localStorage.removeItem(COOKIE_KEY);
             } catch (err) {
                 console.error("Error sending order data:", err);
+            } finally {
+                setTimeout(() => {
+                    window.location.href = "/";
+                }, 3000);
             }
         })();
     }, [searchParams]);
 
     return (
         <Message
-            autoRedirect
             title="Спасибо за оплату!"
             description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
         />
