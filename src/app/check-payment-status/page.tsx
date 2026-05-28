@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import Message from "@/components/success-page/Message";
-import { getOrderData, deleteOrderData } from "@/utils/indexDbOrder";
+import { getOrderData, clearAllOrderData } from "@/utils/indexDbOrder";
 
 const COOKIE_KEY = "wayforpay_order_ref";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -81,10 +81,7 @@ function CheckPaymentContent() {
                     }),
                 ]);
 
-                await Promise.all([
-                    deleteOrderData(`files_${orderRef}`),
-                    deleteOrderData(`metadata_${orderRef}`),
-                ]);
+                await clearAllOrderData();
                 Cookies.remove(COOKIE_KEY);
                 localStorage.removeItem(COOKIE_KEY);
             } catch (err) {

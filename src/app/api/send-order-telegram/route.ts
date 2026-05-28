@@ -78,18 +78,27 @@ export async function POST(req: NextRequest) {
             }),
         });
 
+        console.log(`Processing ${files.length} file(s) for order ${orderReference}`);
+
         for (const file of files) {
             try {
+                console.log(`Fetching file: ${file.name} (${file.type}) from ${file.url}`);
                 const fileRes = await fetch(file.url, { redirect: "follow" });
                 if (!fileRes.ok) {
                     console.error(`Failed to fetch blob: ${file.url} — ${fileRes.status}`);
                     continue;
                 }
-                const fileBlob = await fileRes.blob();
-                if (fileBlob.size < 100) {
-                    console.error(`Blob too small (${fileBlob.size}B), skipping: ${file.url}`);
+
+                const arrayBuffer = await fileRes.arrayBuffer();
+                console.log(`Fetched ${file.name}: ${arrayBuffer.byteLength} bytes`);
+
+                if (arrayBuffer.byteLength < 100) {
+                    console.error(`Blob too small (${arrayBuffer.byteLength}B), skipping: ${file.url}`);
                     continue;
                 }
+
+                const contentType = file.type || fileRes.headers.get("content-type") || "application/octet-stream";
+                const fileBlob = new Blob([arrayBuffer], { type: contentType });
 
                 const tgForm = new FormData();
                 tgForm.append("chat_id", CHANNEL_ID);
@@ -100,9 +109,11 @@ export async function POST(req: NextRequest) {
                     method: "POST",
                     body: tgForm,
                 });
+                const tgBody = await tgRes.text();
                 if (!tgRes.ok) {
-                    const errBody = await tgRes.text();
-                    console.error(`Telegram sendDocument failed: ${tgRes.status} ${errBody}`);
+                    console.error(`Telegram sendDocument failed for ${file.name}: ${tgRes.status} ${tgBody}`);
+                } else {
+                    console.log(`Sent ${file.name} to Telegram OK`);
                 }
             } catch (fileErr) {
                 console.error(`Error processing file ${file.name}:`, fileErr);

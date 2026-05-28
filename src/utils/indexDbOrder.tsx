@@ -29,3 +29,12 @@ export async function deleteOrderData(key: string) {
     });
     await db.delete(STORE_NAME, key);
 }
+
+export async function clearAllOrderData() {
+    const db = await openDB(DB_NAME, 1, {
+        upgrade(db) {
+            db.createObjectStore(STORE_NAME);
+        },
+    });
+    await db.clear(STORE_NAME);
+}
