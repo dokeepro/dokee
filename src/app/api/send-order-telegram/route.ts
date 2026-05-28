@@ -79,18 +79,34 @@ export async function POST(req: NextRequest) {
         });
 
         for (const file of files) {
-            const fileRes = await fetch(file.url);
-            const blob = await fileRes.blob();
+            try {
+                const fileRes = await fetch(file.url, { redirect: "follow" });
+                if (!fileRes.ok) {
+                    console.error(`Failed to fetch blob: ${file.url} — ${fileRes.status}`);
+                    continue;
+                }
+                const fileBlob = await fileRes.blob();
+                if (fileBlob.size < 100) {
+                    console.error(`Blob too small (${fileBlob.size}B), skipping: ${file.url}`);
+                    continue;
+                }
 
-            const tgForm = new FormData();
-            tgForm.append("chat_id", CHANNEL_ID);
-            tgForm.append("caption", file.name);
-            tgForm.append("document", blob, file.name);
+                const tgForm = new FormData();
+                tgForm.append("chat_id", CHANNEL_ID);
+                tgForm.append("caption", file.name);
+                tgForm.append("document", fileBlob, file.name);
 
-            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-                method: "POST",
-                body: tgForm,
-            });
+                const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+                    method: "POST",
+                    body: tgForm,
+                });
+                if (!tgRes.ok) {
+                    const errBody = await tgRes.text();
+                    console.error(`Telegram sendDocument failed: ${tgRes.status} ${errBody}`);
+                }
+            } catch (fileErr) {
+                console.error(`Error processing file ${file.name}:`, fileErr);
+            }
         }
 
         return NextResponse.json({ success: true });
