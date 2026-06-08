@@ -361,16 +361,35 @@ const TypeOfDocument = () => {
         }
     };
 
+    const MAX_FILE_SIZE_MB = 4;
+    const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+    const filterFiles = (files: File[]): File[] => {
+        const rejected: string[] = [];
+        const accepted = files.filter(f => {
+            if (f.type.startsWith('image/')) return true;
+            if (f.size > MAX_FILE_SIZE) {
+                rejected.push(`${f.name} (${(f.size / 1024 / 1024).toFixed(1)} МБ)`);
+                return false;
+            }
+            return true;
+        });
+        if (rejected.length) {
+            alert(`Файлы превышают ${MAX_FILE_SIZE_MB} МБ и не могут быть загружены:\n${rejected.join('\n')}\n\nПожалуйста, уменьшите размер файла или отправьте как скан-копию.`);
+        }
+        return accepted;
+    };
+
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        addUploadedFiles(files);
+        const files = filterFiles(e.target.files ? Array.from(e.target.files) : []);
+        if (files.length) addUploadedFiles(files);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        const files = Array.from(e.dataTransfer.files);
-        addUploadedFiles(files);
+        const files = filterFiles(Array.from(e.dataTransfer.files));
+        if (files.length) addUploadedFiles(files);
     };
 
     const handleRemoveFile = (index: number) => {
@@ -381,7 +400,7 @@ const TypeOfDocument = () => {
         const totalBytes = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
         return (totalBytes / (1024 * 1024)).toFixed(2);
     }, [uploadedFiles]);
-    const isFileSizeExceeded = parseFloat(totalFileSizeMB as string) > 15;
+    const isFileSizeExceeded = false;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const isNextDisabled = () => {
