@@ -390,8 +390,11 @@ const TypeOfDocument = () => {
 
     const uploadPromisesRef = useRef<Map<string, Promise<{ name: string; type: string; url: string } | null>>>(new Map());
     const [uploadingCount, setUploadingCount] = useState(0);
+    const [totalQueued, setTotalQueued] = useState(0);
+    const uploadProgress = totalQueued > 0 ? Math.round(((totalQueued - uploadingCount) / totalQueued) * 100) : 0;
 
     const uploadFileToBlob = (file: File, key: string) => {
+        setTotalQueued(q => q + 1);
         const promise = (async (): Promise<{ name: string; type: string; url: string } | null> => {
             try {
                 setUploadingCount(c => c + 1);
@@ -405,7 +408,10 @@ const TypeOfDocument = () => {
             } catch {
                 return null;
             } finally {
-                setUploadingCount(c => c - 1);
+                setUploadingCount(c => {
+                    if (c - 1 === 0) setTimeout(() => setTotalQueued(0), 500);
+                    return c - 1;
+                });
             }
         })();
         uploadPromisesRef.current.set(key, promise);
@@ -1226,9 +1232,26 @@ const TypeOfDocument = () => {
                             />
                         </label>
                         {uploadingCount > 0 && (
-                            <p style={{color: '#565add', fontSize: 14, margin: '8px 0'}}>
-                                Загрузка файлов... ({uploadingCount})
-                            </p>
+                            <div style={{margin: '12px 0', width: '100%', maxWidth: 320}}>
+                                <p style={{color: '#565add', fontSize: 14, margin: '0 0 6px'}}>
+                                    Загрузка файлов... {totalQueued - uploadingCount}/{totalQueued}
+                                </p>
+                                <div style={{
+                                    width: '100%',
+                                    height: 6,
+                                    borderRadius: 3,
+                                    backgroundColor: '#e0e0e0',
+                                    overflow: 'hidden',
+                                }}>
+                                    <div style={{
+                                        width: `${uploadProgress}%`,
+                                        height: '100%',
+                                        borderRadius: 3,
+                                        backgroundColor: '#565add',
+                                        transition: 'width 0.4s ease',
+                                    }} />
+                                </div>
+                            </div>
                         )}
                         {uploadedFiles.length > 0 && (
                             <ul className={styles.uploadedList}>
@@ -1435,11 +1458,31 @@ const TypeOfDocument = () => {
                             Назад
                         </ButtonOutlined>
                         <ButtonOutlined
-                            sx={nextButtonStyle}
+                            sx={{
+                                ...nextButtonStyle,
+                                position: 'relative',
+                                overflow: 'hidden',
+                                ...(uploadingCount > 0 && isPage3Valid ? {
+                                    '&::before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        left: 0,
+                                        top: 0,
+                                        height: '100%',
+                                        width: `${uploadProgress}%`,
+                                        backgroundColor: 'rgba(86, 90, 221, 0.15)',
+                                        transition: 'width 0.4s ease',
+                                        zIndex: 0,
+                                        borderRadius: 'inherit',
+                                    },
+                                } : {}),
+                            }}
                             onClick={handleNextStep}
                             disabled={!isPage3Valid || uploadingCount > 0}
                         >
-                            Продолжить
+                            {uploadingCount > 0 && isPage3Valid
+                                ? `Загрузка... ${uploadProgress}%`
+                                : 'Продолжить'}
                         </ButtonOutlined>
                     </div>
                 );

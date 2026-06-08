@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Message from "@/components/success-page/Message";
 
 function CheckPaymentContent() {
     const searchParams = useSearchParams();
     const ran = useRef(false);
+    const [status, setStatus] = useState<"processing" | "done">("processing");
 
     useEffect(() => {
         if (ran.current) return;
@@ -20,18 +21,31 @@ function CheckPaymentContent() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ orderReference: orderRef }),
                 signal: AbortSignal.timeout(90000),
-            }).catch(() => {});
+            })
+                .then(() => setStatus("done"))
+                .catch(() => setStatus("done"));
+        } else {
+            setStatus("done");
         }
-
-        setTimeout(() => {
-            window.location.href = "/";
-        }, 4000);
     }, [searchParams]);
+
+    useEffect(() => {
+        if (status === "done") {
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 3000);
+        }
+    }, [status]);
 
     return (
         <Message
-            title="Спасибо за оплату!"
-            description="Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
+            title={status === "processing" ? "Обработка заказа..." : "Спасибо за оплату!"}
+            description={
+                status === "processing"
+                    ? "Отправляем ваши документы. Пожалуйста, не закрывайте эту страницу"
+                    : "Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
+            }
+            showButton={status === "done"}
         />
     );
 }

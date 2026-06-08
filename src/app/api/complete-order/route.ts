@@ -27,6 +27,18 @@ type OrderData = {
     files: FileEntry[];
 };
 
+async function findOrder(orderReference: string): Promise<string | null> {
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const { blobs } = await list({
+            prefix: `orders/${orderReference}.json`,
+            token: BLOB_TOKEN,
+        });
+        if (blobs.length) return blobs[0].url;
+        await new Promise((r) => setTimeout(r, 2000));
+    }
+    return null;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { orderReference } = await req.json();
@@ -34,17 +46,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "orderReference required" }, { status: 400 });
         }
 
-        const { blobs } = await list({
-            prefix: `orders/${orderReference}.json`,
-            token: BLOB_TOKEN,
-        });
+        console.log(`[complete-order] starting for ${orderReference}`);
 
-        if (!blobs.length) {
+        const orderUrl = await findOrder(orderReference);
+        if (!orderUrl) {
+            console.log(`[complete-order] ${orderReference}: not found after retries (already processed or not saved yet)`);
             return NextResponse.json({ ok: true, alreadyProcessed: true });
         }
 
-        const metaRes = await fetch(blobs[0].url);
+        const metaRes = await fetch(orderUrl);
         if (!metaRes.ok) {
+            console.error(`[complete-order] failed to fetch order JSON: ${metaRes.status}`);
             return NextResponse.json({ error: "Failed to read order" }, { status: 500 });
         }
 
@@ -69,7 +81,7 @@ export async function POST(req: NextRequest) {
             message += `\n<b>Обрана дата:</b> ${order.selectedDate}\n`;
         }
 
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -79,12 +91,16 @@ export async function POST(req: NextRequest) {
                 disable_web_page_preview: true,
             }),
         });
+        console.log(`[complete-order] TG message sent: ${tgRes.status}`);
 
         for (const file of order.files) {
             if (!file.url) continue;
             try {
                 const fileRes = await fetch(file.url);
-                if (!fileRes.ok) continue;
+                if (!fileRes.ok) {
+                    console.error(`[complete-order] file download failed: ${file.name} ${fileRes.status}`);
+                    continue;
+                }
                 const buf = await fileRes.arrayBuffer();
                 if (buf.byteLength < 50) continue;
 
@@ -94,16 +110,17 @@ export async function POST(req: NextRequest) {
                 tgForm.append("caption", `📎 ${order.orderReference} — ${file.name}`);
                 tgForm.append("document", blob, file.name);
 
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
+                const docRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
                     method: "POST",
                     body: tgForm,
                 });
+                console.log(`[complete-order] TG file ${file.name}: ${docRes.status}`);
             } catch (fileErr) {
                 console.error(`[complete-order] file ${file.name} error:`, fileErr);
             }
         }
 
-        const urlsToDelete = [blobs[0].url, ...order.files.map((f) => f.url).filter(Boolean)];
+        const urlsToDelete = [orderUrl, ...order.files.map((f) => f.url).filter(Boolean)];
         await del(urlsToDelete, { token: BLOB_TOKEN }).catch((err) =>
             console.error("[complete-order] cleanup error:", err),
         );
