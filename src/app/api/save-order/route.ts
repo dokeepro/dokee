@@ -3,17 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
 
-export const maxDuration = 60;
-
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
-        const metadataRaw = formData.get("metadata");
-        if (!metadataRaw || typeof metadataRaw !== "string") {
-            return NextResponse.json({ error: "metadata required" }, { status: 400 });
-        }
+        const order = await req.json();
 
-        const order = JSON.parse(metadataRaw);
+        if (!order.orderReference) {
+            return NextResponse.json({ error: "orderReference required" }, { status: 400 });
+        }
 
         let message = `<b>⏳ Нове замовлення (очікує оплати)</b>\n\n`;
         message += `<b>Замовлення №:</b> ${order.orderReference}\n`;
@@ -44,21 +40,6 @@ export async function POST(req: NextRequest) {
                 disable_web_page_preview: true,
             }),
         });
-
-        for (const [key, value] of formData.entries()) {
-            if (key.startsWith("file_") && value instanceof Blob) {
-                const file = value as File;
-                const tgForm = new FormData();
-                tgForm.append("chat_id", CHANNEL_ID);
-                tgForm.append("caption", `📎 ${order.orderReference} — ${file.name}`);
-                tgForm.append("document", file, file.name);
-
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendDocument`, {
-                    method: "POST",
-                    body: tgForm,
-                });
-            }
-        }
 
         return NextResponse.json({ ok: true });
     } catch (err) {

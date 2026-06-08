@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Cookies from "js-cookie";
 import Message from "@/components/success-page/Message";
-
-const COOKIE_KEY = "wayforpay_order_ref";
 
 export default function CheckPaymentStatus() {
     const ran = useRef(false);
@@ -12,9 +9,6 @@ export default function CheckPaymentStatus() {
     useEffect(() => {
         if (ran.current) return;
         ran.current = true;
-
-        Cookies.remove(COOKIE_KEY);
-        localStorage.removeItem(COOKIE_KEY);
 
         setTimeout(() => {
             window.location.href = "/";

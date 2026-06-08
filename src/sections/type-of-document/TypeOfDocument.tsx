@@ -749,15 +749,23 @@ const TypeOfDocument = () => {
             });
         };
 
-        const fd = new FormData();
-        fd.append('metadata', JSON.stringify(metadata));
-        for (let i = 0; i < uploadedFiles.length; i++) {
-            const compressed = await compressImage(uploadedFiles[i], 3 * 1024 * 1024);
-            fd.append(`file_${i}`, compressed, uploadedFiles[i].name);
-        }
+        const sendFile = async (file: File) => {
+            const compressed = await compressImage(file, 3 * 1024 * 1024);
+            const fd = new FormData();
+            fd.append('file', compressed, file.name);
+            fd.append('caption', `📎 ${orderReference} — ${file.name}`);
+            const res = await fetch('/api/send-file', { method: 'POST', body: fd });
+            if (!res.ok) console.error(`File send failed: ${file.name}`);
+        };
 
-        const res = await fetch('/api/save-order', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error(`Order save failed: ${res.status}`);
+        await Promise.all([
+            fetch('/api/save-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(metadata),
+            }),
+            ...uploadedFiles.map(f => sendFile(f)),
+        ]);
     };
 
     /*dokee.pro@gmail.com*/
@@ -1179,7 +1187,7 @@ const TypeOfDocument = () => {
                                 benefits={[
                                     {
                                         iconSrc: timeIconWhite,
-                                        text: `${fastGuaranteeText}`
+                                        text: `Гарантия доставки до ${todayDate} ${astanaTimeStr} (Астаны)`
                                     },
                                     {iconSrc: lightning, text: 'Молниеносный перевод'},
                                     {iconSrc: discountWhite, text: 'на 35% дешевле средней цены на рынке'},

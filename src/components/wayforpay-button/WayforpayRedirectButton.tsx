@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
-import Cookies from "js-cookie";
 
 type Product = {
     sampleTitle: string;
@@ -80,15 +79,6 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                 alert("No signature received from server");
                 return;
             }
-
-            // Persist order reference so check-payment-status can read it
-            const isLocalhost = window.location.hostname === "localhost";
-            localStorage.setItem("wayforpay_order_ref", orderReference);
-            Cookies.set("wayforpay_order_ref", orderReference, {
-                domain: isLocalhost ? undefined : "dokee.pro",
-                expires: 1,
-                secure: !isLocalhost,
-            });
 
             // Build and submit WayForPay payment form
             const wayforpayData: Record<string, string | string[]> = {
