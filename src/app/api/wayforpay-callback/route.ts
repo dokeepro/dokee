@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import crypto from "crypto";
+import { completeOrder } from "@/lib/completeOrder";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
 
@@ -72,19 +73,12 @@ export async function POST(req: NextRequest) {
 
         const transactionStatus = asString(body.transactionStatus);
         if (transactionStatus === "Approved" || transactionStatus === "Completed") {
-            const baseUrl = req.nextUrl.origin;
-
             after(async () => {
                 try {
-                    const res = await fetch(`${baseUrl}/api/complete-order`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ orderReference }),
-                        signal: AbortSignal.timeout(100000),
-                    });
-                    console.log(`[wayforpay-callback] complete-order for ${orderReference}:`, await res.json());
+                    const result = await completeOrder(orderReference);
+                    console.log(`[wayforpay-callback] completeOrder for ${orderReference}:`, result);
                 } catch (err) {
-                    console.error(`[wayforpay-callback] complete-order failed:`, err);
+                    console.error(`[wayforpay-callback] completeOrder failed:`, err);
                 }
             });
         }
