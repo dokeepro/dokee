@@ -3,7 +3,7 @@ import { list, del } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
-const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN!;
+const BLOB_TOKEN = process.env.BLOB_PUBLIC_READ_WRITE_TOKEN!;
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 export const maxDuration = 120;

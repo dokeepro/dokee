@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
             access: "public",
             addRandomSuffix: false,
             contentType: "application/json",
-            token: process.env.BLOB_READ_WRITE_TOKEN,
+            token: process.env.BLOB_PUBLIC_READ_WRITE_TOKEN,
         });
 
         return NextResponse.json({ ok: true });
