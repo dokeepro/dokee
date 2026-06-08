@@ -1,4 +1,5 @@
 const Document = require('../models/document.model');
+const PendingOrder = require('../models/pendingOrder.model');
 const { uploadImage } = require('../utils/uploadImage');
 const sendEmail = require('../utils/sendEmail');
 const General = require('../models/general.model');
@@ -324,11 +325,72 @@ const newRequest = async (req, res) => {
     }
 };
 
+const savePendingOrder = async (req, res) => {
+    try {
+        const { orderReference, languagePair, tariff, totalValue, selectedDate, samples, files } = req.body;
+
+        await PendingOrder.findOneAndUpdate(
+            { orderReference },
+            { orderReference, languagePair, tariff, totalValue, selectedDate, samples, files, status: 'pending' },
+            { upsert: true, new: true }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error in savePendingOrder:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const claimPendingOrder = async (req, res) => {
+    try {
+        const { orderRef } = req.params;
+
+        const order = await PendingOrder.findOneAndUpdate(
+            { orderReference: orderRef, status: 'pending' },
+            { $set: { status: 'processing' } },
+            { new: true }
+        );
+
+        if (!order) {
+            const existing = await PendingOrder.findOne({ orderReference: orderRef });
+            if (existing) {
+                return res.json({ success: true, alreadyProcessed: true, status: existing.status });
+            }
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        res.json({ success: true, order });
+    } catch (err) {
+        console.error('Error in claimPendingOrder:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const markOrderCompleted = async (req, res) => {
+    try {
+        const { orderRef } = req.params;
+
+        await PendingOrder.findOneAndUpdate(
+            { orderReference: orderRef },
+            { $set: { status: 'completed' } }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error in markOrderCompleted:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 module.exports = {
     createDocument,
     getAllDocuments,
     sendData,
     initTariffsForSamples,
     updateSample,
-    newRequest
+    newRequest,
+    savePendingOrder,
+    claimPendingOrder,
+    markOrderCompleted,
 };

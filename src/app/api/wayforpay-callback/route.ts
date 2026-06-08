@@ -1,4 +1,5 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import crypto from "crypto";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
@@ -32,7 +33,6 @@ const generateSignature = (data: WayForPayPayload): string => {
 async function readWayForPayBody(req: NextRequest): Promise<WayForPayPayload> {
     const contentType = req.headers.get("content-type") || "";
 
-    // WayForPay часто шле form-urlencoded. Підтримуємо обидва варіанти.
     if (contentType.includes("application/x-www-form-urlencoded")) {
         const text = await req.text();
         const params = new URLSearchParams(text);
@@ -43,12 +43,10 @@ async function readWayForPayBody(req: NextRequest): Promise<WayForPayPayload> {
         return obj;
     }
 
-    // default: JSON
     return (await req.json()) as WayForPayPayload;
 }
 
 function okAck(orderReference: string) {
-    // Мінімальний ack, який приймає більшість інтеграцій WayForPay.
     return NextResponse.json({
         orderReference,
         status: "accept",
@@ -62,20 +60,39 @@ export async function POST(req: NextRequest) {
         const orderReference = asString(body.orderReference);
 
         if (!orderReference) {
-            return NextResponse.json({status: "accept", time: Date.now()});
+            return NextResponse.json({ status: "accept", time: Date.now() });
         }
 
         const receivedSignature = asString(body.merchantSignature);
         const expectedSignature = generateSignature(body);
 
         if (!receivedSignature || expectedSignature !== receivedSignature) {
-            // Не віддаємо 400 — лише ack 200.
             return okAck(orderReference);
+        }
+
+        const transactionStatus = asString(body.transactionStatus);
+        if (transactionStatus === "Approved" || transactionStatus === "Completed") {
+            const baseUrl = req.nextUrl.origin;
+
+            after(async () => {
+                try {
+                    const res = await fetch(`${baseUrl}/api/complete-order`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderReference }),
+                        signal: AbortSignal.timeout(90000),
+                    });
+                    const data = await res.json();
+                    console.log(`[wayforpay-callback] complete-order result for ${orderReference}:`, data);
+                } catch (err) {
+                    console.error(`[wayforpay-callback] complete-order failed for ${orderReference}:`, err);
+                }
+            });
         }
 
         return okAck(orderReference);
     } catch (e) {
-        console.error(e)
-        return NextResponse.json({status: "accept", time: Date.now()});
+        console.error(e);
+        return NextResponse.json({ status: "accept", time: Date.now() });
     }
 }

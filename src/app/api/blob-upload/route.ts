@@ -1,41 +1,36 @@
-import { put } from '@vercel/blob';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-function toSafePathname(original: string): string {
-    const lastDot = original.lastIndexOf('.');
-    const ext = lastDot !== -1 ? original.slice(lastDot) : '';
-    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    return `${stamp}${ext}`;
-}
-
 export async function POST(request: NextRequest) {
+    const body = (await request.json()) as HandleUploadBody;
+
     try {
-        const formData = await request.formData();
-        const file = formData.get('file');
-
-        if (!file || !(file instanceof Blob)) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-        }
-
-        const originalName = (formData.get('filename') as string) || 'upload';
-        const safePathname = toSafePathname(originalName);
-
-        const blob = await put(safePathname, file, {
-            access: 'private',
-            addRandomSuffix: false,
+        const jsonResponse = await handleUpload({
+            body,
+            request,
             token: process.env.BLOB_READ_WRITE_TOKEN,
+            onBeforeGenerateToken: async () => ({
+                allowedContentTypes: [
+                    'application/pdf',
+                    'image/jpeg',
+                    'image/png',
+                    'image/webp',
+                    'image/heic',
+                    'image/heif',
+                ],
+                maximumSizeInBytes: 10 * 1024 * 1024,
+                tokenPayload: JSON.stringify({}),
+            }),
+            onUploadCompleted: async () => {},
         });
 
-        console.log(`[blob-upload] uploaded ${originalName} -> ${blob.url} (${file.size} bytes)`);
-
-        return NextResponse.json({ url: blob.url });
+        return NextResponse.json(jsonResponse);
     } catch (error) {
-        console.error('[blob-upload] error:', error);
         return NextResponse.json(
             { error: (error as Error).message },
-            { status: 500 },
+            { status: 400 },
         );
     }
 }

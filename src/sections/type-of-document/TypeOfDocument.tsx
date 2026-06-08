@@ -722,31 +722,25 @@ const TypeOfDocument = () => {
             selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
         };
 
-        const fileUrls = await Promise.all(
-            uploadedFiles.map(async (f) => {
-                const fd = new FormData();
-                fd.append('file', f);
-                fd.append('filename', f.name);
+        const { upload } = await import('@vercel/blob/client');
 
-                const res = await fetch('/api/blob-upload', {
-                    method: 'POST',
-                    body: fd,
-                });
-                if (!res.ok) {
-                    const errText = await res.text();
-                    throw new Error(`Upload failed: ${res.status} ${errText}`);
-                }
-                const { url } = await res.json();
-                console.log('[upload] uploaded', f.name, '->', url);
-                return { name: f.name, type: f.type, url };
-            })
-        );
+        const fileUrls: { name: string; type: string; url: string }[] = [];
+        for (const f of uploadedFiles) {
+            const blob = await upload(f.name, f, {
+                access: 'public',
+                handleUploadUrl: '/api/blob-upload',
+            });
+            console.log('[upload] uploaded', f.name, '->', blob.url);
+            fileUrls.push({ name: f.name, type: f.type, url: blob.url });
+        }
 
-        const { saveOrderData } = await import('@/utils/indexDbOrder');
-        await Promise.all([
-            saveOrderData(`files_${orderReference}`, fileUrls),
-            saveOrderData(`metadata_${orderReference}`, metadata),
-        ]);
+        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+        await fetch(`${BACKEND_URL}/documents/save-pending-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...metadata, files: fileUrls }),
+            signal: AbortSignal.timeout(15000),
+        });
 
     };
 
@@ -818,7 +812,7 @@ const TypeOfDocument = () => {
 
         const guarantee = FAST_TABLE[slotHour];
 
-        return `${dateStr} доставка ${guarantee} (Астаны)`;
+        return `Гарантия доставки до ${dateStr} ${guarantee.replace('до ', '')} (Астаны)`;
     };
 
 
