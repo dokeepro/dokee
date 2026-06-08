@@ -749,26 +749,19 @@ const TypeOfDocument = () => {
             });
         };
 
-        const fileUrls: { name: string; type: string; url: string }[] = [];
+        await fetch('/api/send-order-telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(metadata),
+        });
+
         for (const f of uploadedFiles) {
             const compressed = await compressImage(f, 3 * 1024 * 1024);
             const fd = new FormData();
             fd.append('file', compressed);
-            fd.append('filename', f.name);
-            const res = await fetch('/api/blob-upload', { method: 'POST', body: fd });
-            if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
-            const { url } = await res.json();
-            console.log('[upload]', f.name, compressed.size, '->', url);
-            fileUrls.push({ name: f.name, type: f.type, url });
+            fd.append('caption', f.name);
+            await fetch('/api/send-telegram-file', { method: 'POST', body: fd });
         }
-
-        const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-        await fetch(`${BACKEND_URL}/documents/save-pending-order`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...metadata, files: fileUrls }),
-            signal: AbortSignal.timeout(15000),
-        });
 
     };
 
