@@ -361,46 +361,82 @@ const TypeOfDocument = () => {
         }
     };
 
-    const MAX_FILE_SIZE_MB = 4;
-    const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
-
-    const filterFiles = (files: File[]): File[] => {
-        const rejected: string[] = [];
-        const accepted = files.filter(f => {
-            if (f.type.startsWith('image/')) return true;
-            if (f.size > MAX_FILE_SIZE) {
-                rejected.push(`${f.name} (${(f.size / 1024 / 1024).toFixed(1)} МБ)`);
-                return false;
-            }
-            return true;
+    const compressImage = (file: File, maxBytes: number): Promise<File> => {
+        if (!file.type.startsWith('image/') || file.size <= maxBytes) return Promise.resolve(file);
+        return new Promise((resolve) => {
+            const img = new window.Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                const maxDim = 2048;
+                if (width > maxDim || height > maxDim) {
+                    const scale = maxDim / Math.max(width, height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+                canvas.toBlob(
+                    (blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file),
+                    'image/jpeg',
+                    0.8,
+                );
+            };
+            img.onerror = () => resolve(file);
+            img.src = URL.createObjectURL(file);
         });
-        if (rejected.length) {
-            alert(`Файлы превышают ${MAX_FILE_SIZE_MB} МБ и не могут быть загружены:\n${rejected.join('\n')}\n\nПожалуйста, уменьшите размер файла или отправьте как скан-копию.`);
-        }
-        return accepted;
+    };
+
+    const uploadPromisesRef = useRef<Map<string, Promise<{ name: string; type: string; url: string } | null>>>(new Map());
+    const [uploadingCount, setUploadingCount] = useState(0);
+
+    const uploadFileToBlob = (file: File, key: string) => {
+        const promise = (async (): Promise<{ name: string; type: string; url: string } | null> => {
+            try {
+                setUploadingCount(c => c + 1);
+                const compressed = await compressImage(file, 3 * 1024 * 1024);
+                const fd = new FormData();
+                fd.append('file', compressed, file.name);
+                const res = await fetch('/api/blob-upload', { method: 'POST', body: fd });
+                if (!res.ok) return null;
+                const { url } = await res.json();
+                return { name: file.name, type: file.type, url };
+            } catch {
+                return null;
+            } finally {
+                setUploadingCount(c => c - 1);
+            }
+        })();
+        uploadPromisesRef.current.set(key, promise);
     };
 
     const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = filterFiles(e.target.files ? Array.from(e.target.files) : []);
-        if (files.length) addUploadedFiles(files);
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length) {
+            const startIdx = uploadedFiles.length;
+            addUploadedFiles(files);
+            files.forEach((f, i) => uploadFileToBlob(f, `${startIdx + i}_${f.name}`));
+        }
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        const files = filterFiles(Array.from(e.dataTransfer.files));
-        if (files.length) addUploadedFiles(files);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length) {
+            const startIdx = uploadedFiles.length;
+            addUploadedFiles(files);
+            files.forEach((f, i) => uploadFileToBlob(f, `${startIdx + i}_${f.name}`));
+        }
     };
 
     const handleRemoveFile = (index: number) => {
+        const file = uploadedFiles[index];
+        const key = `${index}_${file.name}`;
+        uploadPromisesRef.current.delete(key);
         removeUploadedFile(index);
     };
-    const totalFileSizeMB = React.useMemo(() => {
-        if (!uploadedFiles.length) return 0;
-        const totalBytes = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
-        return (totalBytes / (1024 * 1024)).toFixed(2);
-    }, [uploadedFiles]);
-    const isFileSizeExceeded = false;
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const isNextDisabled = () => {
@@ -410,7 +446,7 @@ const TypeOfDocument = () => {
             case 2:
                 return !isPage2Valid || areAllTariffsDisabled;
             case 3:
-                return !isPage3Valid || isFileSizeExceeded;
+                return !isPage3Valid || uploadingCount > 0;
             case 4:
                 return !isPage4Valid;
             default:
@@ -724,67 +760,30 @@ const TypeOfDocument = () => {
             ? localLanguagePair
             : `${fromLanguage || ""} - ${toLanguage || ""}`;
 
-        const metadata = {
-            orderReference,
-            samples: selectedSamples.map(s => ({
-                id: s.id,
-                docName: s.docName,
-                sampleTitle: s.sampleTitle,
-                fioLatin: s.fioLatin || "",
-                sealText: s.sealText || "",
-                stampText: s.stampText || "",
-                computedPrice: getSamplePrice(s),
-            })),
-            languagePair: lp,
-            tariff: tariff || "",
-            totalValue: total,
-            selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
-        };
+        const results = await Promise.all(Array.from(uploadPromisesRef.current.values()));
+        const files = results.filter(Boolean) as { name: string; type: string; url: string }[];
 
-        const compressImage = (file: File, maxBytes: number): Promise<File> => {
-            if (!file.type.startsWith('image/') || file.size <= maxBytes) return Promise.resolve(file);
-            return new Promise((resolve) => {
-                const img = new window.Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let { width, height } = img;
-                    const maxDim = 2048;
-                    if (width > maxDim || height > maxDim) {
-                        const scale = maxDim / Math.max(width, height);
-                        width = Math.round(width * scale);
-                        height = Math.round(height * scale);
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
-                    canvas.toBlob(
-                        (blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file),
-                        'image/jpeg',
-                        0.8,
-                    );
-                };
-                img.onerror = () => resolve(file);
-                img.src = URL.createObjectURL(file);
-            });
-        };
-
-        const sendFile = async (file: File) => {
-            const compressed = await compressImage(file, 3 * 1024 * 1024);
-            const fd = new FormData();
-            fd.append('file', compressed, file.name);
-            fd.append('caption', `📎 ${orderReference} — ${file.name}`);
-            const res = await fetch('/api/send-file', { method: 'POST', body: fd });
-            if (!res.ok) console.error(`File send failed: ${file.name}`);
-        };
-
-        await Promise.all([
-            fetch('/api/save-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(metadata),
+        await fetch('/api/save-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderReference,
+                samples: selectedSamples.map(s => ({
+                    id: s.id,
+                    docName: s.docName,
+                    sampleTitle: s.sampleTitle,
+                    fioLatin: s.fioLatin || "",
+                    sealText: s.sealText || "",
+                    stampText: s.stampText || "",
+                    computedPrice: getSamplePrice(s),
+                })),
+                languagePair: lp,
+                tariff: tariff || "",
+                totalValue: total,
+                selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
+                files,
             }),
-            ...uploadedFiles.map(f => sendFile(f)),
-        ]);
+        });
     };
 
     /*dokee.pro@gmail.com*/
@@ -1232,9 +1231,6 @@ const TypeOfDocument = () => {
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                     >
-                        {/*<p className={styles.fileSizeCounter}>
-                            Загальний розмір файлів: <strong>{totalFileSizeMB} MB</strong> / 15 MB
-                        </p>*/}
                         <Image src={dropFile} alt="file" width={120} height={120}/>
                         <h5>ПРЕДОСТАВЬТЕ КАЧЕСТВЕННУЮ СКАН-КОПИЮ ИЛИ ФОТО ДОКУМЕНТОВ ДЛЯ ПЕРЕВОДА</h5>
                         <h4>
@@ -1266,10 +1262,9 @@ const TypeOfDocument = () => {
                                 style={{display: 'none'}}
                             />
                         </label>
-                        {isFileSizeExceeded && (
-                            <p className={styles.warning}>
-                                Максимально допустимый размер вложений — 15 МБ. Если файлов больше, отправляйте их как
-                                скан-копии в формате PDF.
+                        {uploadingCount > 0 && (
+                            <p style={{color: '#565add', fontSize: 14, margin: '8px 0'}}>
+                                Загрузка файлов... ({uploadingCount})
                             </p>
                         )}
                         {uploadedFiles.length > 0 && (
@@ -1479,7 +1474,7 @@ const TypeOfDocument = () => {
                         <ButtonOutlined
                             sx={nextButtonStyle}
                             onClick={handleNextStep}
-                            disabled={!isPage3Valid || isFileSizeExceeded}
+                            disabled={!isPage3Valid || uploadingCount > 0}
                         >
                             Продолжить
                         </ButtonOutlined>

@@ -1,4 +1,5 @@
 const nextConfig = {
+    transpilePackages: ['@vercel/blob'],
     experimental: {
         serverActions: {
             bodySizeLimit: '50mb',
