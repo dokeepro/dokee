@@ -1,4 +1,4 @@
-import { del } from "@vercel/blob";
+import { list, del } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
@@ -23,6 +23,21 @@ export type OrderData = {
     }[];
     files: FileEntry[];
 };
+
+export async function loadOrderFromBlob(orderReference: string): Promise<OrderData | null> {
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const { blobs } = await list({
+            prefix: `orders/${orderReference}.json`,
+            token: BLOB_TOKEN,
+        });
+        if (blobs.length) {
+            const res = await fetch(blobs[0].url);
+            if (res.ok) return res.json();
+        }
+        if (attempt < 4) await new Promise((r) => setTimeout(r, 2000));
+    }
+    return null;
+}
 
 export async function completeOrder(order: OrderData): Promise<{ ok: boolean }> {
     console.log(`[complete-order] starting for ${order.orderReference}, ${order.files.length} files`);
@@ -88,6 +103,9 @@ export async function completeOrder(order: OrderData): Promise<{ ok: boolean }> 
             console.error(`[complete-order] file ${file.name} error:`, fileErr);
         }
     }
+
+    const { blobs: orderBlobs } = await list({ prefix: `orders/${order.orderReference}.json`, token: BLOB_TOKEN }).catch(() => ({ blobs: [] }));
+    for (const b of orderBlobs) blobUrlsToDelete.push(b.url);
 
     if (blobUrlsToDelete.length) {
         await del(blobUrlsToDelete, { token: BLOB_TOKEN }).catch((err) =>

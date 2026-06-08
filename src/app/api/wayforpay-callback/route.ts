@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import crypto from "crypto";
+import { loadOrderFromBlob, completeOrder } from "@/lib/completeOrder";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
 
@@ -71,7 +73,19 @@ export async function POST(req: NextRequest) {
 
         const transactionStatus = asString(body.transactionStatus);
         if (transactionStatus === "Approved" || transactionStatus === "Completed") {
-            console.log(`[wayforpay-callback] payment approved for ${orderReference}, client will complete order`);
+            after(async () => {
+                try {
+                    const order = await loadOrderFromBlob(orderReference);
+                    if (!order) {
+                        console.log(`[wayforpay-callback] no order found for ${orderReference}, client will handle`);
+                        return;
+                    }
+                    const result = await completeOrder(order);
+                    console.log(`[wayforpay-callback] completeOrder for ${orderReference}:`, result);
+                } catch (err) {
+                    console.error(`[wayforpay-callback] completeOrder failed:`, err);
+                }
+            });
         }
 
         return okAck(orderReference);

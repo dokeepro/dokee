@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Message from "@/components/success-page/Message";
 
 export default function CheckPaymentStatus() {
     const ran = useRef(false);
-    const [status, setStatus] = useState<"processing" | "done">("processing");
 
     useEffect(() => {
         if (ran.current) return;
@@ -20,31 +19,19 @@ export default function CheckPaymentStatus() {
                 headers: { "Content-Type": "application/json" },
                 body: raw,
                 signal: AbortSignal.timeout(90000),
-            })
-                .then(() => setStatus("done"))
-                .catch(() => setStatus("done"));
-        } else {
-            setStatus("done");
+            }).catch(() => {});
         }
-    }, []);
 
-    useEffect(() => {
-        if (status === "done") {
-            setTimeout(() => {
-                window.location.href = "/";
-            }, 3000);
-        }
-    }, [status]);
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 3000);
+    }, []);
 
     return (
         <Message
-            title={status === "processing" ? "Обработка заказа..." : "Спасибо за оплату!"}
-            description={
-                status === "processing"
-                    ? "Отправляем ваши документы. Пожалуйста, не закрывайте эту страницу"
-                    : "Ваш заказ принят и данные отправлены. Вы будете перенаправлены на главную через несколько секунд"
-            }
-            showButton={status === "done"}
+            title="Спасибо за оплату!"
+            description="Ваш заказ принят. Вы будете перенаправлены на главную через несколько секунд"
+            showButton={true}
         />
     );
 }

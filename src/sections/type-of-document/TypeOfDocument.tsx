@@ -788,6 +788,12 @@ const TypeOfDocument = () => {
         };
 
         localStorage.setItem('pending_order', JSON.stringify(orderData));
+
+        await fetch('/api/save-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData),
+        }).catch((err) => console.error('[save-order] error:', err));
     };
 
     /*dokee.pro@gmail.com*/
