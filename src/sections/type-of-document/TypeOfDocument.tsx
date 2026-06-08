@@ -769,27 +769,25 @@ const TypeOfDocument = () => {
         const results = await Promise.all(Array.from(uploadPromisesRef.current.values()));
         const files = results.filter(Boolean) as { name: string; type: string; url: string }[];
 
-        await fetch('/api/save-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                orderReference,
-                samples: selectedSamples.map(s => ({
-                    id: s.id,
-                    docName: s.docName,
-                    sampleTitle: s.sampleTitle,
-                    fioLatin: s.fioLatin || "",
-                    sealText: s.sealText || "",
-                    stampText: s.stampText || "",
-                    computedPrice: getSamplePrice(s),
-                })),
-                languagePair: lp,
-                tariff: tariff || "",
-                totalValue: total,
-                selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
-                files,
-            }),
-        });
+        const orderData = {
+            orderReference,
+            samples: selectedSamples.map(s => ({
+                id: s.id,
+                docName: s.docName,
+                sampleTitle: s.sampleTitle,
+                fioLatin: s.fioLatin || "",
+                sealText: s.sealText || "",
+                stampText: s.stampText || "",
+                computedPrice: getSamplePrice(s),
+            })),
+            languagePair: lp,
+            tariff: tariff || "",
+            totalValue: total,
+            selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
+            files,
+        };
+
+        localStorage.setItem('pending_order', JSON.stringify(orderData));
     };
 
     /*dokee.pro@gmail.com*/

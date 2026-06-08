@@ -1,4 +1,4 @@
-import { list, del } from "@vercel/blob";
+import { del } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
@@ -7,7 +7,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 type FileEntry = { name: string; type: string; url: string };
 
-type OrderData = {
+export type OrderData = {
     orderReference: string;
     languagePair: string;
     tariff: string;
@@ -24,34 +24,8 @@ type OrderData = {
     files: FileEntry[];
 };
 
-async function findOrder(orderReference: string): Promise<string | null> {
-    for (let attempt = 0; attempt < 5; attempt++) {
-        const { blobs } = await list({
-            prefix: `orders/${orderReference}.json`,
-            token: BLOB_TOKEN,
-        });
-        if (blobs.length) return blobs[0].url;
-        if (attempt < 4) await new Promise((r) => setTimeout(r, 2000));
-    }
-    return null;
-}
-
-export async function completeOrder(orderReference: string): Promise<{ ok: boolean; alreadyProcessed?: boolean }> {
-    console.log(`[complete-order] starting for ${orderReference}`);
-
-    const orderUrl = await findOrder(orderReference);
-    if (!orderUrl) {
-        console.log(`[complete-order] ${orderReference}: not found after retries`);
-        return { ok: true, alreadyProcessed: true };
-    }
-
-    const metaRes = await fetch(orderUrl);
-    if (!metaRes.ok) {
-        console.error(`[complete-order] failed to fetch order JSON: ${metaRes.status}`);
-        throw new Error(`Failed to read order: ${metaRes.status}`);
-    }
-
-    const order: OrderData = await metaRes.json();
+export async function completeOrder(order: OrderData): Promise<{ ok: boolean }> {
+    console.log(`[complete-order] starting for ${order.orderReference}, ${order.files.length} files`);
 
     let message = `<b>✅ Нова заявка на переклад (оплачено)</b>\n\n`;
     message += `<b>Замовлення №:</b> ${order.orderReference}\n`;
@@ -84,6 +58,8 @@ export async function completeOrder(orderReference: string): Promise<{ ok: boole
     });
     console.log(`[complete-order] TG message: ${tgRes.status}`);
 
+    const blobUrlsToDelete: string[] = [];
+
     for (const file of order.files) {
         if (!file.url) continue;
         try {
@@ -106,15 +82,18 @@ export async function completeOrder(orderReference: string): Promise<{ ok: boole
                 body: tgForm,
             });
             console.log(`[complete-order] TG file ${file.name}: ${docRes.status}`);
+
+            blobUrlsToDelete.push(file.url);
         } catch (fileErr) {
             console.error(`[complete-order] file ${file.name} error:`, fileErr);
         }
     }
 
-    const urlsToDelete = [orderUrl, ...order.files.map((f) => f.url).filter(Boolean)];
-    await del(urlsToDelete, { token: BLOB_TOKEN }).catch((err) =>
-        console.error("[complete-order] cleanup error:", err),
-    );
+    if (blobUrlsToDelete.length) {
+        await del(blobUrlsToDelete, { token: BLOB_TOKEN }).catch((err) =>
+            console.error("[complete-order] cleanup error:", err),
+        );
+    }
 
     await fetch(`${BACKEND_URL}/documents/send-data`, {
         method: "POST",
@@ -131,6 +110,6 @@ export async function completeOrder(orderReference: string): Promise<{ ok: boole
         signal: AbortSignal.timeout(15000),
     }).catch((err) => console.error("[complete-order] email error:", err));
 
-    console.log(`[complete-order] ${orderReference}: done, ${order.files.length} files`);
+    console.log(`[complete-order] ${order.orderReference}: done`);
     return { ok: true };
 }

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
 import crypto from "crypto";
-import { completeOrder } from "@/lib/completeOrder";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
 
@@ -73,14 +71,7 @@ export async function POST(req: NextRequest) {
 
         const transactionStatus = asString(body.transactionStatus);
         if (transactionStatus === "Approved" || transactionStatus === "Completed") {
-            after(async () => {
-                try {
-                    const result = await completeOrder(orderReference);
-                    console.log(`[wayforpay-callback] completeOrder for ${orderReference}:`, result);
-                } catch (err) {
-                    console.error(`[wayforpay-callback] completeOrder failed:`, err);
-                }
-            });
+            console.log(`[wayforpay-callback] payment approved for ${orderReference}, client will complete order`);
         }
 
         return okAck(orderReference);

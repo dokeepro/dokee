@@ -5,12 +5,12 @@ export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
     try {
-        const { orderReference } = await req.json();
-        if (!orderReference) {
+        const order = await req.json();
+        if (!order?.orderReference) {
             return NextResponse.json({ error: "orderReference required" }, { status: 400 });
         }
 
-        const result = await completeOrder(orderReference);
+        const result = await completeOrder(order);
         return NextResponse.json(result);
     } catch (err) {
         console.error("[complete-order] error:", err);

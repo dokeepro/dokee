@@ -1,11 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import Message from "@/components/success-page/Message";
 
-function CheckPaymentContent() {
-    const searchParams = useSearchParams();
+export default function CheckPaymentStatus() {
     const ran = useRef(false);
     const [status, setStatus] = useState<"processing" | "done">("processing");
 
@@ -13,13 +11,14 @@ function CheckPaymentContent() {
         if (ran.current) return;
         ran.current = true;
 
-        const orderRef = searchParams.get("orderRef");
+        const raw = localStorage.getItem("pending_order");
+        localStorage.removeItem("pending_order");
 
-        if (orderRef) {
+        if (raw) {
             fetch("/api/complete-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ orderReference: orderRef }),
+                body: raw,
                 signal: AbortSignal.timeout(90000),
             })
                 .then(() => setStatus("done"))
@@ -27,7 +26,7 @@ function CheckPaymentContent() {
         } else {
             setStatus("done");
         }
-    }, [searchParams]);
+    }, []);
 
     useEffect(() => {
         if (status === "done") {
@@ -47,13 +46,5 @@ function CheckPaymentContent() {
             }
             showButton={status === "done"}
         />
-    );
-}
-
-export default function CheckPaymentStatus() {
-    return (
-        <Suspense fallback={<Message title="Загрузка…" description="" showButton={false} />}>
-            <CheckPaymentContent />
-        </Suspense>
     );
 }
