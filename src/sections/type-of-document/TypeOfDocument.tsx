@@ -826,43 +826,6 @@ const TypeOfDocument = () => {
         return new Date(utc + 5 * 60 * 60 * 1000);
     };
 
-    const FAST_TABLE: Record<number, string> = {
-        8: "до 11:00",
-        9: "до 12:00",
-        10: "до 13:00",
-        11: "до 14:00",
-        12: "до 15:00",
-        13: "до 16:00",
-        14: "до 17:00",
-        15: "до 18:00",
-    };
-
-    const getFastText = () => {
-        const astana = getAstanaTime();
-        const hour = astana.getHours();
-
-        // Вибір правильного слоту без переносів
-        let slotHour = hour;
-
-        if (hour < 8) slotHour = 8;
-        if (hour > 15) slotHour = 15;
-
-        const dateStr = astana.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "long",
-        });
-
-        const guarantee = FAST_TABLE[slotHour];
-
-        return `Гарантия доставки до ${dateStr} ${guarantee.replace('до ', '')} (Астаны)`;
-    };
-
-
-
-
-
-    const fastGuaranteeText = getFastText();
-
     const astanaNow = getAstanaTime();
     const todayDate = astanaNow.toLocaleDateString("ru-RU", {
         day: "2-digit",
