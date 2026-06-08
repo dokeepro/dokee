@@ -749,24 +749,15 @@ const TypeOfDocument = () => {
             });
         };
 
-        const fileUrls: { name: string; type: string; url: string }[] = [];
-        for (const f of uploadedFiles) {
-            const compressed = await compressImage(f, 3 * 1024 * 1024);
-            const fd = new FormData();
-            fd.append('file', compressed);
-            fd.append('filename', f.name);
-            const res = await fetch('/api/blob-upload', { method: 'POST', body: fd });
-            if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
-            const { url } = await res.json();
-            fileUrls.push({ name: f.name, type: f.type, url });
+        const fd = new FormData();
+        fd.append('metadata', JSON.stringify(metadata));
+        for (let i = 0; i < uploadedFiles.length; i++) {
+            const compressed = await compressImage(uploadedFiles[i], 3 * 1024 * 1024);
+            fd.append(`file_${i}`, compressed, uploadedFiles[i].name);
         }
 
-        await fetch('/api/save-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...metadata, files: fileUrls }),
-        });
-
+        const res = await fetch('/api/save-order', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(`Order save failed: ${res.status}`);
     };
 
     /*dokee.pro@gmail.com*/

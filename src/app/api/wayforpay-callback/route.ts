@@ -3,6 +3,9 @@ import { after } from "next/server";
 import crypto from "crypto";
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
+const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
 type WayForPayPayload = Record<string, unknown>;
 
@@ -72,19 +75,32 @@ export async function POST(req: NextRequest) {
 
         const transactionStatus = asString(body.transactionStatus);
         if (transactionStatus === "Approved" || transactionStatus === "Completed") {
-            const baseUrl = req.nextUrl.origin;
+            const amount = asString(body.amount);
 
             after(async () => {
                 try {
-                    const res = await fetch(`${baseUrl}/api/complete-order`, {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ orderReference }),
-                        signal: AbortSignal.timeout(100000),
+                        body: JSON.stringify({
+                            chat_id: CHANNEL_ID,
+                            text: `✅ <b>Оплата підтверджена</b>\n\n<b>Замовлення №:</b> ${orderReference}\n<b>Сума:</b> ${amount} ₸`,
+                            parse_mode: "HTML",
+                        }),
                     });
-                    console.log(`[wayforpay-callback] complete-order for ${orderReference}:`, await res.json());
+
+                    await fetch(`${BACKEND_URL}/documents/send-data`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            email: "dokee.pro@gmail.com",
+                            orderReference,
+                            totalValue: amount,
+                        }),
+                        signal: AbortSignal.timeout(15000),
+                    }).catch((err) => console.error("[wayforpay-callback] email error:", err));
                 } catch (err) {
-                    console.error(`[wayforpay-callback] complete-order failed:`, err);
+                    console.error(`[wayforpay-callback] post-payment error:`, err);
                 }
             });
         }
