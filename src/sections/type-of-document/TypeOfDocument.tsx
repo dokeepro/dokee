@@ -722,16 +722,44 @@ const TypeOfDocument = () => {
             selectedDate: selectedDate ? selectedDate.locale("ru").format("D MMMM YYYY года") : null,
         };
 
-        const { upload } = await import('@vercel/blob/client');
+        const compressImage = (file: File, maxBytes: number): Promise<File> => {
+            if (!file.type.startsWith('image/') || file.size <= maxBytes) return Promise.resolve(file);
+            return new Promise((resolve) => {
+                const img = new window.Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    const maxDim = 2048;
+                    if (width > maxDim || height > maxDim) {
+                        const scale = maxDim / Math.max(width, height);
+                        width = Math.round(width * scale);
+                        height = Math.round(height * scale);
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                        (blob) => resolve(blob ? new File([blob], file.name, { type: 'image/jpeg' }) : file),
+                        'image/jpeg',
+                        0.8,
+                    );
+                };
+                img.onerror = () => resolve(file);
+                img.src = URL.createObjectURL(file);
+            });
+        };
 
         const fileUrls: { name: string; type: string; url: string }[] = [];
         for (const f of uploadedFiles) {
-            const blob = await upload(f.name, f, {
-                access: 'public',
-                handleUploadUrl: '/api/blob-upload',
-            });
-            console.log('[upload] uploaded', f.name, '->', blob.url);
-            fileUrls.push({ name: f.name, type: f.type, url: blob.url });
+            const compressed = await compressImage(f, 3 * 1024 * 1024);
+            const fd = new FormData();
+            fd.append('file', compressed);
+            fd.append('filename', f.name);
+            const res = await fetch('/api/blob-upload', { method: 'POST', body: fd });
+            if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+            const { url } = await res.json();
+            console.log('[upload]', f.name, compressed.size, '->', url);
+            fileUrls.push({ name: f.name, type: f.type, url });
         }
 
         const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
