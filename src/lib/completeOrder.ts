@@ -1,4 +1,4 @@
-import { list, del } from "@vercel/blob";
+import { list, del, put } from "@vercel/blob";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
 const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
@@ -39,7 +39,25 @@ export async function loadOrderFromBlob(orderReference: string): Promise<OrderDa
     return null;
 }
 
-export async function completeOrder(order: OrderData): Promise<{ ok: boolean }> {
+export async function completeOrder(order: OrderData): Promise<{ ok: boolean; skipped?: boolean }> {
+    // Idempotency claim: atomically create a lock blob. put() with allowOverwrite:false
+    // throws if the lock already exists, so only the FIRST caller proceeds. Every other
+    // trigger (the WayForPay webhook, the client check-payment-status fetch, repeated
+    // logo reloads, stale localStorage from another device) is skipped — guaranteeing
+    // exactly one Telegram delivery per order.
+    try {
+        await put(`orders/${order.orderReference}.lock`, "1", {
+            access: "public",
+            addRandomSuffix: false,
+            allowOverwrite: false,
+            contentType: "text/plain",
+            token: BLOB_TOKEN,
+        });
+    } catch {
+        console.log(`[complete-order] ${order.orderReference}: already claimed, skipping`);
+        return { ok: true, skipped: true };
+    }
+
     console.log(`[complete-order] starting for ${order.orderReference}, ${order.files.length} files`);
 
     let message = `<b>✅ Нова заявка на переклад (оплачено)</b>\n\n`;

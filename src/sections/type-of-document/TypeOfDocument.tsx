@@ -36,6 +36,7 @@ import IconButton from '@mui/material/IconButton';
 import {useGeneral} from "@/context/GeneralContext";
 import 'dayjs/locale/ru';
 import WayforpayRedirectButton from "@/components/wayforpay-button/WayforpayRedirectButton";
+import { upload } from "@vercel/blob/client";
 
 type WayforpayPaymentData = {
     merchantAccount: string;
@@ -391,7 +392,11 @@ const TypeOfDocument = () => {
     const uploadPromisesRef = useRef<Map<string, Promise<{ name: string; type: string; url: string } | null>>>(new Map());
     const [uploadingCount, setUploadingCount] = useState(0);
     const [totalQueued, setTotalQueued] = useState(0);
+    // Tracks the outcome of each upload (key -> success). Lets us block payment
+    // when any file failed to upload, so an order never proceeds with missing files.
+    const [uploadStatus, setUploadStatus] = useState<Record<string, boolean>>({});
     const uploadProgress = totalQueued > 0 ? Math.round(((totalQueued - uploadingCount) / totalQueued) * 100) : 0;
+    const hasFailedUpload = Object.values(uploadStatus).some((ok) => ok === false);
 
     const uploadFileToBlob = (file: File, key: string) => {
         setTotalQueued(q => q + 1);
@@ -399,13 +404,19 @@ const TypeOfDocument = () => {
             try {
                 setUploadingCount(c => c + 1);
                 const compressed = await compressImage(file, 3 * 1024 * 1024);
-                const fd = new FormData();
-                fd.append('file', compressed, file.name);
-                const res = await fetch('/api/blob-upload', { method: 'POST', body: fd });
-                if (!res.ok) return null;
-                const { url } = await res.json();
-                return { name: file.name, type: file.type, url };
-            } catch {
+                const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+                const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+                // Direct browser -> Vercel Blob upload (bypasses the 4.5MB function limit).
+                const blob = await upload(safeName, compressed, {
+                    access: "public",
+                    handleUploadUrl: "/api/blob-upload",
+                    contentType: file.type || undefined,
+                });
+                setUploadStatus(s => ({ ...s, [key]: true }));
+                return { name: file.name, type: file.type, url: blob.url };
+            } catch (err) {
+                console.error("[upload] failed:", file.name, err);
+                setUploadStatus(s => ({ ...s, [key]: false }));
                 return null;
             } finally {
                 setUploadingCount(c => {
@@ -441,6 +452,11 @@ const TypeOfDocument = () => {
         const file = uploadedFiles[index];
         const key = `${index}_${file.name}`;
         uploadPromisesRef.current.delete(key);
+        setUploadStatus(s => {
+            const next = { ...s };
+            delete next[key];
+            return next;
+        });
         removeUploadedFile(index);
     };
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -452,7 +468,7 @@ const TypeOfDocument = () => {
             case 2:
                 return !isPage2Valid || areAllTariffsDisabled;
             case 3:
-                return !isPage3Valid || uploadingCount > 0;
+                return !isPage3Valid || uploadingCount > 0 || hasFailedUpload;
             case 4:
                 return !isPage4Valid;
             default:
@@ -769,6 +785,14 @@ const TypeOfDocument = () => {
         const results = await Promise.all(Array.from(uploadPromisesRef.current.values()));
         const files = results.filter(Boolean) as { name: string; type: string; url: string }[];
 
+        // Guard: never proceed to payment if any attached file failed to upload.
+        // Otherwise the order would be paid for but arrive without files.
+        if (files.length !== results.length) {
+            throw new Error(
+                "Не все файлы загрузились. Удалите проблемный файл и прикрепите заново, затем повторите оплату.",
+            );
+        }
+
         const orderData = {
             orderReference,
             samples: selectedSamples.map(s => ({
@@ -789,11 +813,21 @@ const TypeOfDocument = () => {
 
         localStorage.setItem('pending_order', JSON.stringify(orderData));
 
-        await fetch('/api/save-order', {
+        // The order MUST be persisted to Blob before redirecting to payment:
+        // the WayForPay webhook completes the order by reading this blob, which
+        // makes delivery independent of the client device (fixes orders lost on
+        // older phones, e.g. iPhone 7, where the client may crash after payment).
+        const saveRes = await fetch('/api/save-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData),
-        }).catch((err) => console.error('[save-order] error:', err));
+        }).catch(() => null);
+
+        if (!saveRes || !saveRes.ok) {
+            throw new Error(
+                "Не удалось сохранить заказ. Проверьте интернет-соединение и попробуйте снова.",
+            );
+        }
     };
 
     /*dokee.pro@gmail.com*/
