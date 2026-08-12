@@ -69,9 +69,32 @@ const AdminContent = () => {
         sample: Sample;
     } | null>(null);
 
+    const [addSampleDocId, setAddSampleDocId] = useState<string | null>(null);
+    const [addSampleTitle, setAddSampleTitle] = useState('');
+    const [addSampleImage, setAddSampleImage] = useState<File | null>(null);
+    const [addSamplePreview, setAddSamplePreview] = useState<string | null>(null);
+
     const handleEditSample = (docId: string, sampleIdx: number, sample: Sample) => {
         setEditingSample({docId, sampleIdx, sample: {...sample}});
         setEditSampleDialogOpen(true);
+    };
+
+    const handleAddSampleToDocument = async () => {
+        if (!addSampleDocId || !addSampleTitle) return;
+        const formData = new FormData();
+        formData.append('title', addSampleTitle);
+        if (addSampleImage) formData.append('image', addSampleImage);
+        try {
+            await newRequest.post(`/documents/${addSampleDocId}/samples`, formData);
+            await fetchDocuments();
+            showAlert('Образец успешно добавлен', 'success');
+            setAddSampleDocId(null);
+            setAddSampleTitle('');
+            setAddSampleImage(null);
+            setAddSamplePreview(null);
+        } catch {
+            showAlert('Ошибка при добавлении образца', 'error');
+        }
     };
 
     const allLanguages = [
@@ -256,12 +279,7 @@ const AdminContent = () => {
 
         await newRequest.patch(
             `/documents/${editingSample.docId}/samples/${editingSample.sampleIdx}`,
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
+            formData
         );
         await fetchDocuments();
         showAlert('Образец успешно обновлен', 'success');
@@ -323,9 +341,11 @@ const AdminContent = () => {
                 formData.append(`samples[${idx}][image]`, sample.imageFile);
             });
 
-            await newRequest.post('/documents/create-document', formData, {
-                headers: {'Content-Type': 'multipart/form-data'}
-            });
+            // Do NOT set Content-Type manually: the browser must attach the
+            // multipart boundary itself, otherwise the server can't parse the
+            // body and samples/languageTariffs are lost (document ends up empty:
+            // no image, no prices, not orderable).
+            await newRequest.post('/documents/create-document', formData);
             await fetchDocuments();
             showAlert('Документ успешно добавлен', 'success');
             setOpen(false);
@@ -585,6 +605,32 @@ const AdminContent = () => {
                         </div>
                     </Dialog>
 
+                    <Dialog open={!!addSampleDocId} onClose={() => setAddSampleDocId(null)}>
+                        <div className={styles.sampleImageWrapper}>
+                            <Separator title="Добавить образец к документу"
+                                       description="Загрузите фото и укажите название образца. Цены наследуются из тарифов документа."/>
+                            <TextField label="Название образца" value={addSampleTitle}
+                                       onChange={e => setAddSampleTitle(e.target.value)} fullWidth/>
+                            <ButtonOutlined variant="outlined" component="label" fullWidth startIcon={<FiImage/>}>
+                                Загрузить изображение
+                                <input type="file" accept="image/*" hidden onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setAddSampleImage(file);
+                                        setAddSamplePreview(URL.createObjectURL(file));
+                                    }
+                                }}/>
+                            </ButtonOutlined>
+                            {addSamplePreview &&
+                                <Image src={addSamplePreview} className={styles.samplePreviewPhoto} alt="preview"
+                                       width={100} height={100} style={{maxWidth: 120, marginTop: 8}}/>}
+                        </div>
+                        <DialogActions>
+                            <ButtonOutlined white onClick={() => setAddSampleDocId(null)}>Отмена</ButtonOutlined>
+                            <ButtonOutlined variant="contained" onClick={handleAddSampleToDocument}
+                                            disabled={!addSampleTitle}>Сохранить</ButtonOutlined>
+                        </DialogActions>
+                    </Dialog>
                     <Dialog open={editSampleDialogOpen} onClose={() => setEditSampleDialogOpen(false)}>
                         <div className={styles.sampleEditContent}>
                             <Separator title="Изменить Образец"
@@ -986,6 +1032,18 @@ const AdminContent = () => {
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                        <ButtonOutlined
+                                                            variant="outlined"
+                                                            startIcon={<HiOutlineDocumentAdd/>}
+                                                            onClick={() => {
+                                                                setAddSampleDocId(doc._id);
+                                                                setAddSampleTitle('');
+                                                                setAddSampleImage(null);
+                                                                setAddSamplePreview(null);
+                                                            }}
+                                                        >
+                                                            Добавить образец
+                                                        </ButtonOutlined>
                                                     </div>
                                                 </div>
                                             ))
@@ -1028,6 +1086,18 @@ const AdminContent = () => {
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                        <ButtonOutlined
+                                                            variant="outlined"
+                                                            startIcon={<HiOutlineDocumentAdd/>}
+                                                            onClick={() => {
+                                                                setAddSampleDocId(doc._id);
+                                                                setAddSampleTitle('');
+                                                                setAddSampleImage(null);
+                                                                setAddSamplePreview(null);
+                                                            }}
+                                                        >
+                                                            Добавить образец
+                                                        </ButtonOutlined>
                                                     </div>
                                                 </div>
                                             ))

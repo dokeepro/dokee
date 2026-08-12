@@ -292,6 +292,50 @@ const updateSample = async (req, res) => {
     }
 };
 
+const addSample = async (req, res) => {
+    try {
+        const { docId } = req.params;
+        const doc = await Document.findById(docId);
+        if (!doc) return res.status(404).json({ error: 'Document not found' });
+
+        const { title } = req.body;
+
+        let languageTariffs = req.body.languageTariffs;
+        if (typeof languageTariffs === 'string') {
+            try {
+                languageTariffs = JSON.parse(languageTariffs);
+            } catch (e) {
+                languageTariffs = null;
+            }
+        }
+
+        // By default a new sample inherits the document's tariffs so it is
+        // immediately orderable with correct prices.
+        const tariffs = Array.isArray(languageTariffs) && languageTariffs.length
+            ? languageTariffs
+            : (doc.languageTariffs || []);
+
+        let imageUrl = '';
+        if (req.files && req.files.image) {
+            const ext = req.files.image.name ? req.files.image.name.split('.').pop() : 'jpg';
+            const fileName = `document-sample-${docId}-${Date.now()}.${ext}`;
+            imageUrl = await uploadImage(req.files.image, fileName);
+        }
+
+        doc.samples.push({
+            title: title || `Образец ${doc.samples.length + 1}`,
+            imageUrl,
+            languageTariffs: tariffs,
+        });
+
+        await doc.save();
+        res.status(201).json(doc.samples[doc.samples.length - 1]);
+    } catch (err) {
+        console.error('addSample error:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 const newRequest = async (req, res) => {
     try {
         const files = [];
@@ -389,6 +433,7 @@ module.exports = {
     sendData,
     initTariffsForSamples,
     updateSample,
+    addSample,
     newRequest,
     savePendingOrder,
     claimPendingOrder,

@@ -811,8 +811,6 @@ const TypeOfDocument = () => {
             files,
         };
 
-        localStorage.setItem('pending_order', JSON.stringify(orderData));
-
         // The order MUST be persisted to Blob before redirecting to payment:
         // the WayForPay webhook completes the order by reading this blob, which
         // makes delivery independent of the client device (fixes orders lost on
