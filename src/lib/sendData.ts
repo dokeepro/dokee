@@ -77,15 +77,21 @@ export async function sendOrderData(input: SendDataInput): Promise<void> {
         if (doc) {
             const dbSample = doc.samples.find((s) => s.title === sample.sampleTitle);
             const tariffs = dbSample?.languageTariffs || doc.languageTariffs || [];
-            const langTariff = tariffs.find((t) => {
+            const matchLang = (iso: string) => tariffs.find((t) => {
                 if (!t.language) return false;
                 const lang = t.language.toLowerCase();
                 if (lang.includes("_") || lang.includes("-")) {
-                    return lang.split(/[_\s-]+/).includes(toLang);
+                    return lang.split(/[_\s-]+/).includes(iso);
                 }
-                return lang === toLang;
+                return lang === iso;
             });
-            price = langTariff ? (langTariff[tariffKey as "normal" | "express" | "fast"] as number) || 0 : 0;
+            const key = tariffKey as "normal" | "express" | "fast";
+            let langTariff = matchLang(toLang);
+            // UA orders are uk→ru; fall back to the uk tariff when ru is missing/0.
+            if ((!langTariff || ((langTariff[key] as number) || 0) === 0) && toLang === "ru") {
+                langTariff = matchLang("uk");
+            }
+            price = langTariff ? (langTariff[key] as number) || 0 : 0;
         }
 
         const baseName = (sample.docName || "").replace(/\s*\(.*?\)/, "");

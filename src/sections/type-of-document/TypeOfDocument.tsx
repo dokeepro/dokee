@@ -685,14 +685,20 @@ const TypeOfDocument = () => {
 
 
         selectedSamples.forEach((sample) => {
-            const foundMatch = sample.languageTariffs?.find(
+            let foundMatch = sample.languageTariffs?.find(
                 (tariffObj) => normalize(tariffObj.language || '') === normalizedGroupKey
             );
 
+            // UA orders are uk→ru, but some samples have no ru tariff (or it's 0).
+            // Fall back to the uk tariff so the price is never 0 (a free order).
+            if ((!foundMatch || (foundMatch[tariff] || 0) === 0) && effectiveToLang === 'ru') {
+                foundMatch = sample.languageTariffs?.find(
+                    (tariffObj) => normalize(tariffObj.language || '') === 'uk'
+                );
+            }
+
             if (foundMatch) {
-                const price = foundMatch[tariff] || 0;
-                total += price;
-            } else {
+                total += foundMatch[tariff] || 0;
             }
         });
 
@@ -763,13 +769,18 @@ const TypeOfDocument = () => {
         const tariffKey = (tariff?.toLowerCase() || "normal") as "normal" | "express" | "fast";
 
         const getSamplePrice = (sample: SelectedSample): number => {
-            const langTariff = sample.languageTariffs?.find(t => {
+            const matchLang = (iso: string) => sample.languageTariffs?.find(t => {
                 if (!t.language) return false;
                 const lang = t.language.toLowerCase();
                 return lang.includes("_") || lang.includes("-")
-                    ? lang.split(/[_\s-]+/).includes(normalizedToLang)
-                    : lang === normalizedToLang;
+                    ? lang.split(/[_\s-]+/).includes(iso)
+                    : lang === iso;
             });
+            let langTariff = matchLang(normalizedToLang);
+            // UA orders are uk→ru; fall back to the uk tariff when ru is missing/0.
+            if ((!langTariff || (langTariff[tariffKey] || 0) === 0) && normalizedToLang === "ru") {
+                langTariff = matchLang("uk");
+            }
             return langTariff ? (langTariff[tariffKey] || 0) : 0;
         };
 
@@ -1396,16 +1407,18 @@ const TypeOfDocument = () => {
                                 const toLangRaw = toLanguage?.toLowerCase() || '';
                                 const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
                                 const tariffKey = (tariff?.toLowerCase() || 'normal') as 'normal' | 'express' | 'fast';
-                                const langTariff = sample.languageTariffs.find(t => {
+                                const matchLang = (iso: string) => sample.languageTariffs.find(t => {
                                     if (!t.language) return false;
                                     const lang = t.language.toLowerCase();
-
                                     if (lang.includes('_') || lang.includes('-')) {
-                                        return lang.split(/[_\s-]+/).includes(normalizedToLang);
+                                        return lang.split(/[_\s-]+/).includes(iso);
                                     }
-
-                                    return lang === normalizedToLang;
+                                    return lang === iso;
                                 });
+                                let langTariff = matchLang(normalizedToLang);
+                                if ((!langTariff || (langTariff[tariffKey] || 0) === 0) && normalizedToLang === 'ru') {
+                                    langTariff = matchLang('uk');
+                                }
                                 return langTariff ? langTariff[tariffKey] || 0 : 0;
                             };
                             return (
@@ -1560,14 +1573,18 @@ const TypeOfDocument = () => {
                                     const toLangRaw = toLanguage?.toLowerCase() || '';
                                     const normalizedToLang = toLangMap[toLangRaw] || toLangRaw;
                                     const tariffKey = (tariff?.toLowerCase() || 'normal') as 'normal' | 'express' | 'fast';
-                                    const langTariff = s.languageTariffs.find(t => {
+                                    const matchLang = (iso: string) => s.languageTariffs.find(t => {
                                         if (!t.language) return false;
                                         const lang = t.language.toLowerCase();
                                         if (lang.includes('_') || lang.includes('-')) {
-                                            return lang.split(/[_\s-]+/).includes(normalizedToLang);
+                                            return lang.split(/[_\s-]+/).includes(iso);
                                         }
-                                        return lang === normalizedToLang;
+                                        return lang === iso;
                                     });
+                                    let langTariff = matchLang(normalizedToLang);
+                                    if ((!langTariff || (langTariff[tariffKey] || 0) === 0) && normalizedToLang === 'ru') {
+                                        langTariff = matchLang('uk');
+                                    }
                                     const price = langTariff ? langTariff[tariffKey] || 0 : 0;
                                     const baseName = s.docName.replace(/\s*\(.*?\)/, '');
                                     const fullName = `${baseName}${s.sampleTitle ? ` (${s.sampleTitle})` : ''} - ${price}₸`;
