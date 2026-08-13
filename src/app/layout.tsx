@@ -11,6 +11,7 @@ import WayforpayScript from "@/utils/WayforpayScript";
 import ErrorBoundaryWrapper from "@/components/error-boundary/ErrorBoundaryWrapper";
 import {getInitialGeneralData} from "@/utils/getInitialGeneralData";
 import type {Metadata} from "next";
+import {Analytics} from "@vercel/analytics/next";
 
 export const generateMetadata = async (): Promise<Metadata> => ({
     title: "Dokee — сервис для перевода документов",
@@ -69,6 +70,7 @@ export default async function RootLayout({
                     <Footer/>
                 </GeneralProvider>
             </ErrorBoundaryWrapper>
+            <Analytics />
         </body>
         </html>
     );
