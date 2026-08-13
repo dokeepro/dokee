@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextRequest, NextResponse } from "next/server";
+import { BLOB_PUBLIC_READ_WRITE_TOKEN } from "@/lib/env";
 
 // This route no longer receives the file bytes. The browser uploads the file
 // DIRECTLY to Vercel Blob using a short-lived client token issued here, which
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             request: req,
             // Use the same public store the rest of the app reads/writes, so the
             // webhook (complete-order) can find and delete these blobs.
-            token: process.env.BLOB_PUBLIC_READ_WRITE_TOKEN,
+            token: BLOB_PUBLIC_READ_WRITE_TOKEN,
             onBeforeGenerateToken: async () => ({
                 allowedContentTypes: [
                     "image/*",

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+// All backend logic now lives in Next.js route handlers under /api on the same
+// origin — no external Node server anymore.
+const BACKEND_URL = '/api';
 
 let token = '';
 if (typeof window !== 'undefined') {
@@ -12,7 +14,7 @@ if (typeof window !== 'undefined') {
 
 export const newRequest = axios.create({
     baseURL: `${BACKEND_URL}`,
-    timeout: 15000,
+    timeout: 30000,
     withCredentials: true,
     headers: {
         Authorization: `Bearer ${token}`,

@@ -62,6 +62,7 @@ const AdminContent = () => {
         Object.fromEntries(languageOptions.map(opt => [opt.value, {normal: '', express: '', fast: ''}]))
     );
 
+    const [deleteSampleConfirmOpen, setDeleteSampleConfirmOpen] = useState(false);
     const [editSampleDialogOpen, setEditSampleDialogOpen] = useState(false);
     const [editingSample, setEditingSample] = useState<{
         docId: string;
@@ -73,16 +74,59 @@ const AdminContent = () => {
     const [addSampleTitle, setAddSampleTitle] = useState('');
     const [addSampleImage, setAddSampleImage] = useState<File | null>(null);
     const [addSamplePreview, setAddSamplePreview] = useState<string | null>(null);
+    const [addSampleTariffs, setAddSampleTariffs] = useState<LanguageTariff[]>([]);
+
+    const handleOpenAddSample = (doc: { _id: string; languageTariffs?: LanguageTariff[] }) => {
+        setAddSampleDocId(doc._id);
+        setAddSampleTitle('');
+        setAddSampleImage(null);
+        setAddSamplePreview(null);
+        setAddSampleTariffs(
+            (doc.languageTariffs || []).map(t => ({
+                language: t.language,
+                normal: t.normal,
+                express: t.express,
+                fast: t.fast,
+            }))
+        );
+    };
+
+    const handleAddSampleTariffChange = (
+        lang: string,
+        field: keyof Omit<LanguageTariff, 'language' | '_id'>,
+        value: string
+    ) => {
+        setAddSampleTariffs(prev =>
+            prev.map(t => (t.language === lang ? {...t, [field]: Number(value)} : t))
+        );
+    };
 
     const handleEditSample = (docId: string, sampleIdx: number, sample: Sample) => {
         setEditingSample({docId, sampleIdx, sample: {...sample}});
         setEditSampleDialogOpen(true);
     };
 
+    const handleDeleteSample = async () => {
+        if (!editingSample) return;
+        try {
+            await newRequest.delete(
+                `/documents/${editingSample.docId}/samples/${editingSample.sampleIdx}`
+            );
+            await fetchDocuments();
+            showAlert('Образец успешно удален', 'success');
+            setDeleteSampleConfirmOpen(false);
+            setEditSampleDialogOpen(false);
+            setEditingSample(null);
+        } catch {
+            showAlert('Ошибка при удалении образца', 'error');
+        }
+    };
+
     const handleAddSampleToDocument = async () => {
         if (!addSampleDocId || !addSampleTitle) return;
         const formData = new FormData();
         formData.append('title', addSampleTitle);
+        formData.append('languageTariffs', JSON.stringify(addSampleTariffs));
         if (addSampleImage) formData.append('image', addSampleImage);
         try {
             await newRequest.post(`/documents/${addSampleDocId}/samples`, formData);
@@ -92,6 +136,7 @@ const AdminContent = () => {
             setAddSampleTitle('');
             setAddSampleImage(null);
             setAddSamplePreview(null);
+            setAddSampleTariffs([]);
         } catch {
             showAlert('Ошибка при добавлении образца', 'error');
         }
@@ -608,7 +653,7 @@ const AdminContent = () => {
                     <Dialog open={!!addSampleDocId} onClose={() => setAddSampleDocId(null)}>
                         <div className={styles.sampleImageWrapper}>
                             <Separator title="Добавить образец к документу"
-                                       description="Загрузите фото и укажите название образца. Цены наследуются из тарифов документа."/>
+                                       description="Загрузите фото, укажите название и цены образца. По умолчанию цены наследуются из тарифов документа."/>
                             <TextField label="Название образца" value={addSampleTitle}
                                        onChange={e => setAddSampleTitle(e.target.value)} fullWidth/>
                             <ButtonOutlined variant="outlined" component="label" fullWidth startIcon={<FiImage/>}>
@@ -624,6 +669,48 @@ const AdminContent = () => {
                             {addSamplePreview &&
                                 <Image src={addSamplePreview} className={styles.samplePreviewPhoto} alt="preview"
                                        width={100} height={100} style={{maxWidth: 120, marginTop: 8}}/>}
+                            {addSampleTariffs.map(tariff => (
+                                <div key={tariff.language} style={{marginBottom: 12}}>
+                                    <Separator
+                                        title={langCodeToName[tariff.language] || tariff.language}
+                                        description="Тарифы для этого языка"
+                                    />
+                                    <div className={styles.flex}>
+                                        <TextField
+                                            label="Normal"
+                                            type="number"
+                                            value={tariff.normal}
+                                            inputProps={{min: 0, inputMode: "numeric", pattern: "[0-9]*"}}
+                                            onKeyDown={e => {
+                                                if (e.key === '-' || e.key === 'e' || e.key === '+') e.preventDefault();
+                                            }}
+                                            onChange={e => handleAddSampleTariffChange(tariff.language, 'normal', e.target.value.replace(/\D/g, ''))}
+                                            style={{marginRight: 8}}
+                                        />
+                                        <TextField
+                                            label="Express"
+                                            type="number"
+                                            value={tariff.express}
+                                            inputProps={{min: 0, inputMode: "numeric", pattern: "[0-9]*"}}
+                                            onKeyDown={e => {
+                                                if (e.key === '-' || e.key === 'e' || e.key === '+') e.preventDefault();
+                                            }}
+                                            onChange={e => handleAddSampleTariffChange(tariff.language, 'express', e.target.value.replace(/\D/g, ''))}
+                                            style={{marginRight: 8}}
+                                        />
+                                        <TextField
+                                            label="Fast"
+                                            type="number"
+                                            value={tariff.fast}
+                                            inputProps={{min: 0, inputMode: "numeric", pattern: "[0-9]*"}}
+                                            onKeyDown={e => {
+                                                if (e.key === '-' || e.key === 'e' || e.key === '+') e.preventDefault();
+                                            }}
+                                            onChange={e => handleAddSampleTariffChange(tariff.language, 'fast', e.target.value.replace(/\D/g, ''))}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                         <DialogActions>
                             <ButtonOutlined white onClick={() => setAddSampleDocId(null)}>Отмена</ButtonOutlined>
@@ -747,11 +834,33 @@ const AdminContent = () => {
                                 </div>
                             )}
                             <DialogActions>
+                                <ButtonOutlined
+                                    variant="contained"
+                                    color="error"
+                                    startIcon={<MdDelete/>}
+                                    onClick={() => setDeleteSampleConfirmOpen(true)}
+                                >
+                                    Удалить
+                                </ButtonOutlined>
                                 <ButtonOutlined onClick={() => setEditSampleDialogOpen(false)} white>
                                     Отменить
                                 </ButtonOutlined>
                                 <ButtonOutlined variant="contained" onClick={handleSaveEditedSample}>
                                     Сохранить
+                                </ButtonOutlined>
+                            </DialogActions>
+                        </div>
+                    </Dialog>
+                    <Dialog open={deleteSampleConfirmOpen} onClose={() => setDeleteSampleConfirmOpen(false)}>
+                        <div style={{padding: 24}}>
+                            <Separator title="Удалить образец?"
+                                       description="Вы уверены, что хотите удалить этот образец? Это действие нельзя отменить."/>
+                            <DialogActions>
+                                <ButtonOutlined onClick={() => setDeleteSampleConfirmOpen(false)} white>
+                                    Отмена
+                                </ButtonOutlined>
+                                <ButtonOutlined variant="contained" color="error" onClick={handleDeleteSample}>
+                                    Удалить
                                 </ButtonOutlined>
                             </DialogActions>
                         </div>
@@ -1035,12 +1144,7 @@ const AdminContent = () => {
                                                         <ButtonOutlined
                                                             variant="outlined"
                                                             startIcon={<HiOutlineDocumentAdd/>}
-                                                            onClick={() => {
-                                                                setAddSampleDocId(doc._id);
-                                                                setAddSampleTitle('');
-                                                                setAddSampleImage(null);
-                                                                setAddSamplePreview(null);
-                                                            }}
+                                                            onClick={() => handleOpenAddSample(doc)}
                                                         >
                                                             Добавить образец
                                                         </ButtonOutlined>
@@ -1089,12 +1193,7 @@ const AdminContent = () => {
                                                         <ButtonOutlined
                                                             variant="outlined"
                                                             startIcon={<HiOutlineDocumentAdd/>}
-                                                            onClick={() => {
-                                                                setAddSampleDocId(doc._id);
-                                                                setAddSampleTitle('');
-                                                                setAddSampleImage(null);
-                                                                setAddSamplePreview(null);
-                                                            }}
+                                                            onClick={() => handleOpenAddSample(doc)}
                                                         >
                                                             Добавить образец
                                                         </ButtonOutlined>

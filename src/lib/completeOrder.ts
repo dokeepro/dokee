@@ -1,9 +1,14 @@
 import { list, del, put } from "@vercel/blob";
+import { sendOrderData } from "@/lib/sendData";
+import {
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHANNEL_ID,
+    BLOB_PUBLIC_READ_WRITE_TOKEN,
+} from "@/lib/env";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
-const CHANNEL_ID = process.env.TELEGRAM_CHANNEL_ID!;
-const BLOB_TOKEN = process.env.BLOB_PUBLIC_READ_WRITE_TOKEN!;
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
+const BOT_TOKEN = TELEGRAM_BOT_TOKEN;
+const CHANNEL_ID = TELEGRAM_CHANNEL_ID;
+const BLOB_TOKEN = BLOB_PUBLIC_READ_WRITE_TOKEN;
 
 type FileEntry = { name: string; type: string; url: string };
 
@@ -131,19 +136,13 @@ export async function completeOrder(order: OrderData): Promise<{ ok: boolean; sk
         );
     }
 
-    await fetch(`${BACKEND_URL}/documents/send-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: "dokee.pro@gmail.com",
-            orderReference: order.orderReference,
-            languagePair: order.languagePair,
-            tariff: order.tariff,
-            samples: order.samples,
-            totalValue: order.totalValue,
-            selectedDate: order.selectedDate,
-        }),
-        signal: AbortSignal.timeout(15000),
+    await sendOrderData({
+        email: "dokee.pro@gmail.com",
+        languagePair: order.languagePair,
+        tariff: order.tariff,
+        samples: order.samples,
+        totalValue: order.totalValue,
+        selectedDate: order.selectedDate,
     }).catch((err) => console.error("[complete-order] email error:", err));
 
     console.log(`[complete-order] ${order.orderReference}: done`);

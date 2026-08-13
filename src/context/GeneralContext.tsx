@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { newRequest } from '@/utils/newRequest';
 import { LanguageTariff } from '@/store/sampleStore';
-import axios from 'axios';
 
 export interface GeneralSettings {
     sitePaused: boolean;
@@ -95,28 +94,7 @@ export const GeneralProvider = ({
     };
 
     const syncWithServer = async () => {
-        const [latestDocuments, latestGeneral] = await Promise.all([
-            fetchDocuments(),
-            fetchGeneral()
-        ]);
-
-        if (latestDocuments !== null) {
-            const isDocumentsDifferent = JSON.stringify(latestDocuments) !== JSON.stringify(initialDocuments);
-            if (isDocumentsDifferent) {
-                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/update-cache`, {
-                    documents: latestDocuments
-                });
-            }
-        }
-
-        if (latestGeneral !== null) {
-            const isGeneralDifferent = JSON.stringify(latestGeneral) !== JSON.stringify(initialGeneral);
-            if (isGeneralDifferent) {
-                await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/update-cache`, {
-                    general: latestGeneral
-                });
-            }
-        }
+        await Promise.all([fetchDocuments(), fetchGeneral()]);
     };
 
     useEffect(() => {

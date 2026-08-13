@@ -1,21 +1,26 @@
-import axios from 'axios';
+import { dbConnect } from "@/lib/db";
+import DocumentModel from "@/models/Document";
+import GeneralModel from "@/models/General";
 
 export const getInitialGeneralData = async () => {
     try {
-        const [documentsRes, generalRes] = await Promise.all([
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/documents/get-all-documents`),
-            axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/general-settings/get-general-settings`)
+        await dbConnect();
+
+        const [documents, general] = await Promise.all([
+            DocumentModel.find().sort({ order: 1 }).lean(),
+            GeneralModel.findOne().lean(),
         ]);
 
+        // Serialize ObjectId/Date so the payload can cross the server/client boundary.
         return {
-            documents: documentsRes.data,
-            general: generalRes.data
+            documents: JSON.parse(JSON.stringify(documents)),
+            general: general ? JSON.parse(JSON.stringify(general)) : null,
         };
     } catch (error) {
-        console.error('SSR fetch error', error);
+        console.error("SSR fetch error", error);
         return {
             documents: [],
-            general: null
+            general: null,
         };
     }
 };
