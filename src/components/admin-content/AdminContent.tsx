@@ -76,19 +76,24 @@ const AdminContent = () => {
     const [addSamplePreview, setAddSamplePreview] = useState<string | null>(null);
     const [addSampleTariffs, setAddSampleTariffs] = useState<LanguageTariff[]>([]);
 
-    const handleOpenAddSample = (doc: { _id: string; languageTariffs?: LanguageTariff[] }) => {
+    const handleOpenAddSample = (doc: { _id: string; documentCountry?: string; languageTariffs?: LanguageTariff[] }) => {
         setAddSampleDocId(doc._id);
         setAddSampleTitle('');
         setAddSampleImage(null);
         setAddSamplePreview(null);
-        setAddSampleTariffs(
-            (doc.languageTariffs || []).map(t => ({
-                language: t.language,
-                normal: t.normal,
-                express: t.express,
-                fast: t.fast,
-            }))
-        );
+        const seeded = (doc.languageTariffs || []).map(t => ({
+            language: t.language,
+            normal: t.normal,
+            express: t.express,
+            fast: t.fast,
+        }));
+        // UA orders are always uk→ru, but doc-level tariffs have no `ru` row, so a
+        // new sample would carry no Russian price and show 0 on step 2. Seed an
+        // empty `ru` row so the admin can enter it right away.
+        if (doc.documentCountry === 'ua' && !seeded.some(t => t.language === 'ru')) {
+            seeded.push({ language: 'ru', normal: 0, express: 0, fast: 0 });
+        }
+        setAddSampleTariffs(seeded);
     };
 
     const handleAddSampleTariffChange = (
