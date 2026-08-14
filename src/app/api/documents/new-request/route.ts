@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
                       <p>Документ прикреплённый ниже</p>`;
 
         await sendEmail(
-            "yaroslav7v@gmail.com",
+            "dokee.pro@gmail.com",
             "Предложение на перевод документа",
             "",
             attachments.length ? attachments : [],
