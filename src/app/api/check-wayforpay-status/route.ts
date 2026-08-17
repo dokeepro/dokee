@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { WAYFORPAY_SECRET_KEY } from "@/lib/env";
 
-const SECRET_KEY =
-    process.env.WAYFORPAY_MERCHANT_SECRET_KEY ||
-    process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY;
+const SECRET_KEY = WAYFORPAY_SECRET_KEY;
 const MERCHANT_ACCOUNT = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
 
 export async function GET(req: NextRequest) {

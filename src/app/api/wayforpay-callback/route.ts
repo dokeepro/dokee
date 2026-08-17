@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { after } from "next/server";
 import crypto from "crypto";
 import { loadOrderFromBlob, completeOrder } from "@/lib/completeOrder";
+import { WAYFORPAY_SECRET_KEY } from "@/lib/env";
 
-const SECRET_KEY = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_SECRET_KEY!;
+export const maxDuration = 120;
+
+const SECRET_KEY = WAYFORPAY_SECRET_KEY;
 
 type WayForPayPayload = Record<string, unknown>;
 
