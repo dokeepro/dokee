@@ -1,6 +1,6 @@
 import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
-import { BLOB_PUBLIC_READ_WRITE_TOKEN } from "@/lib/env";
+import { BLOB_READ_WRITE_TOKEN } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
             access: "public",
             addRandomSuffix: false,
             contentType: "application/json",
-            token: BLOB_PUBLIC_READ_WRITE_TOKEN,
+            token: BLOB_READ_WRITE_TOKEN,
         });
 
         return NextResponse.json({ ok: true });

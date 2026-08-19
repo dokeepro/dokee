@@ -3,12 +3,12 @@ import { sendOrderData } from "@/lib/sendData";
 import {
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHANNEL_ID,
-    BLOB_PUBLIC_READ_WRITE_TOKEN,
+    BLOB_READ_WRITE_TOKEN,
 } from "@/lib/env";
 
 const BOT_TOKEN = TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = TELEGRAM_CHANNEL_ID;
-const BLOB_TOKEN = BLOB_PUBLIC_READ_WRITE_TOKEN;
+const BLOB_TOKEN = BLOB_READ_WRITE_TOKEN;
 
 type FileEntry = { name: string; type: string; url: string };
 

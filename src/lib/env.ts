@@ -6,9 +6,9 @@ export const MONGODB_URI =
     process.env.MONGODB_URI ||
     "mongodb+srv://yaroslavtsarenko:qlKClTLv1d7rUCOR@allshipai-db.zrjqe.mongodb.net/?retryWrites=true&w=majority&appName=allshipai-db";
 
-export const BLOB_PUBLIC_READ_WRITE_TOKEN =
-    process.env.BLOB_PUBLIC_READ_WRITE_TOKEN ||
-    "vercel_blob_rw_NsLhVj6umEp1NlvV_g0TfFThYGi4vPmyTR2nLPJ1n3DxfD5";
+export const BLOB_READ_WRITE_TOKEN =
+    process.env.BLOB_READ_WRITE_TOKEN ||
+    "vercel_blob_rw_iol2NjjmBAYXAoaP_22zZJdqw1yBAWX8N59eCBayWrSpQwd";
 
 export const TELEGRAM_BOT_TOKEN =
     process.env.TELEGRAM_BOT_TOKEN ||
