@@ -3,6 +3,11 @@
 import React, { useState } from "react";
 import ButtonOutlined from "@/components/custom-button/ButtonOutlined";
 
+// TEMP: when true, the "Перейти к оплате" button skips the WayForPay gateway and
+// delivers the order straight to Telegram (for testing the form → TG flow on prod).
+// Flip back to false to re-enable real payments.
+const BYPASS_PAYMENT = true;
+
 type Product = {
     sampleTitle: string;
     price: number | string;
@@ -29,6 +34,21 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
         setLoader(true);
         try {
             const orderReference = `order_${Date.now()}`;
+
+            // TEMP bypass: save the order and deliver it to Telegram right away,
+            // without redirecting to the WayForPay payment page.
+            if (BYPASS_PAYMENT) {
+                if (onBeforeRedirect) await onBeforeRedirect(orderReference);
+                await fetch("/api/complete-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderReference }),
+                    signal: AbortSignal.timeout(110000),
+                });
+                window.location.href = "/check-payment-status";
+                return;
+            }
+
             const merchantAccount = process.env.NEXT_PUBLIC_WAYFORPAY_MERCHANT_ACCOUNT;
             const merchantDomainName = process.env.NEXT_PUBLIC_WAYFORPAY_DOMAIN_NAME;
             if (!merchantAccount || !merchantDomainName) {
