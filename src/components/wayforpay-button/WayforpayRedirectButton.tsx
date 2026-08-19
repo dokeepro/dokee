@@ -49,8 +49,11 @@ const WayforpayRedirectButton: React.FC<WayforpayRedirectButtonProps> = ({
                     : process.env.NEXT_PUBLIC_FRONTEND_URL || "";
 
             // returnUrl: WayForPay redirects via POST, so point to an API route
-            // that converts it to a GET redirect to /check-payment-status
-            const returnUrl = `${baseUrl}/api/payment-return`;
+            // that converts it to a GET redirect to /check-payment-status.
+            // We embed orderReference in the query ourselves — WayForPay preserves
+            // the returnUrl query string, so delivery never depends on parsing
+            // WayForPay's (mangled) POST body to recover the reference.
+            const returnUrl = `${baseUrl}/api/payment-return?orderReference=${encodeURIComponent(orderReference)}`;
             // serviceUrl: webhook that WayForPay calls server-to-server with payment result
             const serviceUrl = `${baseUrl}/api/wayforpay-callback`;
 
