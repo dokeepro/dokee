@@ -34,20 +34,44 @@ const generateSignature = (data: WayForPayPayload): string => {
     return crypto.createHmac("md5", SECRET_KEY).update(signatureString).digest("hex");
 };
 
-async function readWayForPayBody(req: NextRequest): Promise<WayForPayPayload> {
-    const contentType = req.headers.get("content-type") || "";
+// WayForPay's serviceUrl callback is inconsistent: it may arrive as plain JSON,
+// or as x-www-form-urlencoded where the ENTIRE JSON payload is a single key with
+// an empty value (their PHP client does http_build_query on a JSON string). Naively
+// running URLSearchParams over that mangles the payload and loses orderReference,
+// so we try every shape until we get a real object.
+function tryParseJson(text: string): WayForPayPayload | null {
+    try {
+        const parsed = JSON.parse(text);
+        return parsed && typeof parsed === "object" ? (parsed as WayForPayPayload) : null;
+    } catch {
+        return null;
+    }
+}
 
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-        const text = await req.text();
-        const params = new URLSearchParams(text);
-        const obj: Record<string, string> = {};
-        params.forEach((value, key) => {
-            obj[key] = value;
-        });
-        return obj;
+async function readWayForPayBody(req: NextRequest): Promise<WayForPayPayload> {
+    const raw = (await req.text()).trim();
+    if (!raw) return {};
+
+    // 1. Plain JSON body.
+    const asJson = tryParseJson(raw);
+    if (asJson) return asJson;
+
+    // 2. urlencoded — the JSON payload is usually the key (value empty), sometimes
+    //    the value. Decode and try to JSON-parse each side.
+    const params = new URLSearchParams(raw);
+    for (const [key, value] of params) {
+        const fromValue = value && tryParseJson(value);
+        if (fromValue) return fromValue;
+        const fromKey = tryParseJson(key);
+        if (fromKey) return fromKey;
     }
 
-    return (await req.json()) as WayForPayPayload;
+    // 3. Genuine key=value form encoding.
+    const obj: Record<string, string> = {};
+    params.forEach((value, key) => {
+        obj[key] = value;
+    });
+    return obj;
 }
 
 function okAck(orderReference: string) {
@@ -62,8 +86,10 @@ export async function POST(req: NextRequest) {
     try {
         const body = await readWayForPayBody(req);
         const orderReference = asString(body.orderReference);
+        console.log(`[wayforpay-callback] keys=${Object.keys(body).join(",")} ref=${orderReference} status=${asString(body.transactionStatus)}`);
 
         if (!orderReference) {
+            console.warn("[wayforpay-callback] no orderReference in body — parse/format issue");
             return NextResponse.json({ status: "accept", time: Date.now() });
         }
 
@@ -71,6 +97,7 @@ export async function POST(req: NextRequest) {
         const expectedSignature = generateSignature(body);
 
         if (!receivedSignature || expectedSignature !== receivedSignature) {
+            console.warn(`[wayforpay-callback] signature mismatch for ${orderReference} (received=${receivedSignature ? "yes" : "no"})`);
             return okAck(orderReference);
         }
 
