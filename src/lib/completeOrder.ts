@@ -1,5 +1,4 @@
 import { list, del, put } from "@vercel/blob";
-import { sendOrderData } from "@/lib/sendData";
 import {
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHANNEL_ID,
@@ -136,15 +135,6 @@ export async function completeOrder(order: OrderData): Promise<{ ok: boolean; sk
                 console.error("[complete-order] cleanup error:", err),
             );
         }
-
-        await sendOrderData({
-            email: "dokee.pro@gmail.com",
-            languagePair: order.languagePair,
-            tariff: order.tariff,
-            samples: order.samples,
-            totalValue: order.totalValue,
-            selectedDate: order.selectedDate,
-        }).catch((err) => console.error("[complete-order] email error:", err));
 
         console.log(`[complete-order] ${order.orderReference}: done`);
         return { ok: true };
